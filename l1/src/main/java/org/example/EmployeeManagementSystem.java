@@ -1,9 +1,5 @@
 package org.example;
 
-
-import org.example.Employee;
-import org.example.Position;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,62 +10,68 @@ public class EmployeeManagementSystem {
         this.employees = new HashSet<>();
     }
 
-    // Zarządzanie pracownikami
+    // ===== ZARZĄDZANIE PRACOWNIKAMI =====
 
     /**
-     * Dodaje nowego pracownika do systemu z walidacją unikalności email
+     * Dodaje nowego pracownika do systemu z walidacją unikalności adresu email
      */
-//    public boolean addEmployee(Employee employee) {
-//        if (employee == null) {
-//            throw new IllegalArgumentException("Employee cannot be null");
-//        }
-//
-////        // Sprawdź unikalność email
-////        boolean emailExists = employees.stream()
-////                .anyMatch(emp -> emp.getEmail().equalsIgnoreCase(employee.getEmail()));
-////
-////        if (emailExists) {
-////            throw new IllegalArgumentException("Employee with email " + employee.getEmail() + " already exists");
-////        }
-//
-//        // HashSet sam odrzuci duplikat email dzięki equals() i hashCode()
-//
-//        return employees.add(employee);
-//    }
+    public boolean addEmployee(Employee employee) {
+        validateEmployee(employee);
 
-public boolean addEmployee(Employee employee) {
-    if (employee == null) {
-        throw new IllegalArgumentException("Employee cannot be null");
+        if (!employees.add(employee)) {
+            throw new IllegalArgumentException(
+                    "Employee with email " + employee.getEmail() + " already exists"
+            );
+        }
+        return true;
     }
-
-    boolean added = employees.add(employee);
-    if (!added) {
-        // Obsługa „błędu” – pracownik z takim samym emailem już istnieje
-        throw new IllegalArgumentException(
-                "Employee with email " + employee.getEmail() + " already exists"
-        );
-    }
-
-    return true; // dodano pomyślnie
-}
-
 
     /**
-     * Wyświetla listę wszystkich pracowników
+     * Wyświetla listę wszystkich pracowników w systemie
      */
     public List<Employee> getAllEmployees() {
         return new ArrayList<>(employees);
     }
 
-    // Operacje analityczne
+    /**
+     * Usuwa pracownika na podstawie emailu
+     */
+    public boolean removeEmployee(String email) {
+        validateEmail(email);
+
+        Optional<Employee> employee = findEmployeeByEmail(email);
+        if (employee.isPresent()) {
+            employees.remove(employee.get());
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Znajduje pracownika po emailu
+     */
+    public Optional<Employee> findEmployeeByEmail(String email) {
+        validateEmail(email);
+
+        return employees.stream()
+                .filter(emp -> emp.getEmail().equalsIgnoreCase(email.trim()))
+                .findFirst();
+    }
+
+    /**
+     * Sprawdza czy pracownik o podanym emailu istnieje
+     */
+    public boolean employeeExists(String email) {
+        return findEmployeeByEmail(email).isPresent();
+    }
+
+    // ===== OPERACJE ANALITYCZNE =====
 
     /**
      * Wyszukuje pracowników zatrudnionych w konkretnej firmie
      */
     public List<Employee> findEmployeesByCompany(String company) {
-        if (company == null || company.trim().isEmpty()) {
-            throw new IllegalArgumentException("Company name cannot be null or empty");
-        }
+        validateCompany(company);
 
         return employees.stream()
                 .filter(employee -> employee.getCompany().equalsIgnoreCase(company.trim()))
@@ -81,10 +83,8 @@ public boolean addEmployee(Employee employee) {
      */
     public List<Employee> sortEmployeesByName() {
         return employees.stream()
-                .sorted(Comparator.comparing(employee -> {
-                    String[] nameParts = employee.getName().split(" ");
-                    return nameParts[nameParts.length - 1]; // Ostatni element to nazwisko
-                }))
+                .sorted(Comparator.comparing(Employee::getLastName)
+                        .thenComparing(Employee::getFirstName))
                 .collect(Collectors.toList());
     }
 
@@ -92,48 +92,65 @@ public boolean addEmployee(Employee employee) {
      * Grupuje pracowników według zajmowanego stanowiska
      */
     public Map<Position, List<Employee>> groupEmployeesByPosition() {
-//        return employees.stream()
-//                .collect(Collectors.groupingBy(
-//                        Employee::getPosition,
-//                        TreeMap::new, // Sortowanie według hierarchii stanowisk
-//                        Collectors.toList()
-//                ));
-
         return employees.stream()
-                .collect(Collectors.groupingBy(Employee::getPosition));
+                .collect(Collectors.groupingBy(
+                        Employee::getPosition,
+                        TreeMap::new, // Sortowanie według hierarchii stanowisk
+                        Collectors.toList()
+                ));
     }
 
     /**
      * Zlicza liczbę pracowników na każdym stanowisku
      */
-//    public Map<Position, Long> countEmployeesByPosition() {
-//        return employees.stream()
-//                .collect(Collectors.groupingBy(
-//                        Employee::getPosition,
-//                        TreeMap::new,
-//                        Collectors.counting()
-//                ));
-//    }
-
     public Map<Position, Long> countEmployeesByPosition() {
         return employees.stream()
                 .collect(Collectors.groupingBy(
-                        Employee::getPosition,  // klucz: stanowisko
-                        Collectors.counting()   // wartość: liczba pracowników
+                        Employee::getPosition,
+                        TreeMap::new, // Sortowanie według hierarchii
+                        Collectors.counting()
                 ));
     }
 
+    /**
+     * Grupuje pracowników według firmy
+     */
+    public Map<String, List<Employee>> groupEmployeesByCompany() {
+        return employees.stream()
+                .collect(Collectors.groupingBy(
+                        Employee::getCompany,
+                        TreeMap::new, // Sortowanie alfabetyczne firm
+                        Collectors.toList()
+                ));
+    }
 
-    // Statystyki finansowe
+    // ===== STATYSTYKI FINANSOWE =====
 
     /**
      * Oblicza średnie wynagrodzenie w całej organizacji
      */
-    public double calculateAverageSalary() {
+    public OptionalDouble calculateAverageSalary() {
+        if (employees.isEmpty()) {
+            return OptionalDouble.empty();
+        }
+        return OptionalDouble.of(
+                employees.stream()
+                        .mapToDouble(Employee::getSalary)
+                        .average()
+                        .orElse(0.0)
+        );
+    }
+
+    /**
+     * Oblicza średnie wynagrodzenie w konkretnej firmie
+     */
+    public OptionalDouble calculateAverageSalaryByCompany(String company) {
+        validateCompany(company);
+
         return employees.stream()
+                .filter(emp -> emp.getCompany().equalsIgnoreCase(company.trim()))
                 .mapToDouble(Employee::getSalary)
-                .average()
-                .orElse(0.0);
+                .average();
     }
 
     /**
@@ -145,24 +162,78 @@ public boolean addEmployee(Employee employee) {
     }
 
     /**
+     * Identyfikuje pracownika z najniższym wynagrodzeniem
+     */
+    public Optional<Employee> findLowestPaidEmployee() {
+        return employees.stream()
+                .min(Comparator.comparingDouble(Employee::getSalary));
+    }
+
+    /**
+     * Oblicza całkowity koszt wynagrodzeń
+     */
+    public double calculateTotalSalaryCost() {
+        return employees.stream()
+                .mapToDouble(Employee::getSalary)
+                .sum();
+    }
+
+    /**
+     * Oblicza całkowity koszt wynagrodzeń w firmie
+     */
+    public double calculateTotalSalaryCostByCompany(String company) {
+        validateCompany(company);
+
+        return employees.stream()
+                .filter(emp -> emp.getCompany().equalsIgnoreCase(company.trim()))
+                .mapToDouble(Employee::getSalary)
+                .sum();
+    }
+
+    // ===== METODY POMOCNICZE =====
+
+    /**
      * Zwraca liczbę pracowników w systemie
      */
     public int getEmployeeCount() {
         return employees.size();
     }
-//
-//    /**
-//     * Sprawdza czy pracownik o podanym emailu istnieje
-//     */
-//    public boolean employeeExists(String email) {
-//        return employees.stream()
-//                .anyMatch(emp -> emp.getEmail().equalsIgnoreCase(email));
-//    }
-//
-//    /**
-//     * Usuwa pracownika na podstawie emailu
-//     */
-//    public boolean removeEmployee(String email) {
-//        return employees.removeIf(emp -> emp.getEmail().equalsIgnoreCase(email));
-//    }
+
+    /**
+     * Zwraca liczbę pracowników w konkretnej firmie
+     */
+    public long getEmployeeCountByCompany(String company) {
+        validateCompany(company);
+
+        return employees.stream()
+                .filter(emp -> emp.getCompany().equalsIgnoreCase(company.trim()))
+                .count();
+    }
+
+    /**
+     * Sprawdza czy system jest pusty
+     */
+    public boolean isEmpty() {
+        return employees.isEmpty();
+    }
+
+    // ===== WALIDACJA =====
+
+    private void validateEmployee(Employee employee) {
+        if (employee == null) {
+            throw new IllegalArgumentException("Employee cannot be null");
+        }
+    }
+
+    private void validateEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be null or empty");
+        }
+    }
+
+    private void validateCompany(String company) {
+        if (company == null || company.trim().isEmpty()) {
+            throw new IllegalArgumentException("Company name cannot be null or empty");
+        }
+    }
 }

@@ -1,6 +1,5 @@
 package org.example;
 
-
 import java.util.Objects;
 
 public class Employee {
@@ -11,27 +10,13 @@ public class Employee {
     private final double salary;
 
     public Employee(String name, String email, String company, Position position, double salary) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name cannot be null or empty");
-        }
-        if (email == null || email.trim().isEmpty()) {
-            throw new IllegalArgumentException("Email cannot be null or empty");
-        }
-        if (company == null || company.trim().isEmpty()) {
-            throw new IllegalArgumentException("Company cannot be null or empty");
-        }
-        if (position == null) {
-            throw new IllegalArgumentException("Position cannot be null");
-        }
-        if (salary < 0) {
-            throw new IllegalArgumentException("Salary cannot be negative");
-        }
+        validateInputs(name, email, company, position, salary);
 
         this.name = name.trim();
         this.email = email.trim().toLowerCase();
         this.company = company.trim();
         this.position = position;
-        this.salary = salary;
+        this.salary = Math.max(salary, position.getBaseSalary()); // Pensja nie może być niższa od bazowej
     }
 
     public Employee(String name, String email, String company, Position position) {
@@ -41,6 +26,16 @@ public class Employee {
     // Gettery
     public String getName() {
         return name;
+    }
+
+    public String getFirstName() {
+        String[] names = name.split(" ");
+        return names.length > 0 ? names[0] : name;
+    }
+
+    public String getLastName() {
+        String[] names = name.split(" ");
+        return names.length > 1 ? names[names.length - 1] : name;
     }
 
     public String getEmail() {
@@ -77,5 +72,23 @@ public class Employee {
     public String toString() {
         return String.format("Employee{name='%s', email='%s', company='%s', position=%s, salary=%.2f}",
                 name, email, company, position, salary);
+    }
+
+    private void validateInputs(String name, String email, String company, Position position, double salary) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be null or empty");
+        }
+        if (email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be null or empty");
+        }
+        if (company == null || company.trim().isEmpty()) {
+            throw new IllegalArgumentException("Company cannot be null or empty");
+        }
+        if (position == null) {
+            throw new IllegalArgumentException("Position cannot be null");
+        }
+        if (salary < 0) {
+            throw new IllegalArgumentException("Salary cannot be negative");
+        }
     }
 }
