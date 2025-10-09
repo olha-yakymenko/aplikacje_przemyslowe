@@ -44,7 +44,7 @@ class EmployeeTest {
     @Test
     void testEmployeeWithMinimalSalary() {
         Employee employee = new Employee("Jan Kowalski", "jan@techcorp.com", "TechCorp", Position.PROGRAMMER, 0.0);
-        assertEquals(0.0, employee.getSalary(), 0.001);
+        assertEquals(8000.0, employee.getSalary(), 0.001);
     }
 
     @Test

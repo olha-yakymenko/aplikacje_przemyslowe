@@ -3,11 +3,12 @@ package org.example;
 import java.util.Objects;
 
 public class Employee {
-    private final String name;
+    private String name;
     private final String email;
-    private final String company;
-    private final Position position;
-    private final double salary;
+    private String company;
+    private Position position;
+    private double salary;
+
 
     public Employee(String name, String email, String company, Position position, double salary) {
         validateInputs(name, email, company, position, salary);
@@ -70,9 +71,11 @@ public class Employee {
 
     @Override
     public String toString() {
-        return String.format("Employee{name='%s', email='%s', company='%s', position=%s, salary=%.2f}",
+        return String.format(java.util.Locale.US,
+                "Employee{name='%s', email='%s', company='%s', position=%s, salary=%.2f}",
                 name, email, company, position, salary);
     }
+
 
     private void validateInputs(String name, String email, String company, Position position, double salary) {
         if (name == null || name.trim().isEmpty()) {
@@ -91,4 +94,36 @@ public class Employee {
             throw new IllegalArgumentException("Salary cannot be negative");
         }
     }
+
+
+
+    public void setName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be null or empty");
+        }
+        this.name = name.trim();
+    }
+
+    public void setCompany(String company) {
+        if (company == null || company.trim().isEmpty()) {
+            throw new IllegalArgumentException("Company cannot be null or empty");
+        }
+        this.company = company.trim();
+    }
+
+    public void setPosition(Position position) {
+        if (position == null) {
+            throw new IllegalArgumentException("Position cannot be null");
+        }
+        this.position = position;
+        this.salary = Math.max(this.salary, position.getBaseSalary());
+    }
+
+    public void setSalary(double salary) {
+        if (salary < 0) {
+            throw new IllegalArgumentException("Salary cannot be negative");
+        }
+        this.salary = Math.max(salary, position.getBaseSalary());
+    }
+
 }
