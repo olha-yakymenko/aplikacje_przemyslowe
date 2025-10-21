@@ -303,7 +303,7 @@ class ApiServiceTest {
         // When
         apiService.fetchEmployeesFromApi();
 
-        // Then -
+        // Then
         verify(mockClient, times(1)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
     }
 
