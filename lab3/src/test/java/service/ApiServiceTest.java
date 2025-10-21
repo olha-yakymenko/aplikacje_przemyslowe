@@ -1,532 +1,4 @@
-package service;//import org.junit.jupiter.api.AfterEach;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.DisplayName;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.MockedStatic;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import src.exception.ApiException;
-//import src.model.Employee;
-//import src.model.Position;
-//import src.service.ApiService;
-//
-//import java.net.http.HttpClient;
-//import java.net.http.HttpRequest;
-//import java.net.http.HttpResponse;
-//import java.util.List;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class service.ApiServiceTest {
-//
-//    private ApiService apiService;
-//    private HttpClient mockHttpClient;
-//    private HttpResponse<String> mockHttpResponse;
-//    private MockedStatic<HttpClient> httpClientMock;
-//
-//    @BeforeEach
-//    void setUp() {
-//        apiService = new ApiService();
-//        mockHttpClient = mock(HttpClient.class);
-//        mockHttpResponse = mock(HttpResponse.class);
-//        httpClientMock = mockStatic(HttpClient.class);
-//    }
-//
-//    @AfterEach
-//    void tearDown() {
-//        httpClientMock.close();
-//    }
-//
-//    @Test
-//    @DisplayName("Should fetch employees from API successfully")
-//    void fetchEmployeesFromApi_WithValidResponse_ShouldReturnEmployees() throws Exception {
-//        // Given
-//        String jsonResponse = """
-//            [
-//                {
-//                    "id": 1,
-//                    "name": "Leanne Graham",
-//                    "email": "leanne.graham@test.com",
-//                    "company": {
-//                        "name": "Romaguera-Crona"
-//                    }
-//                },
-//                {
-//                    "id": 2,
-//                    "name": "Ervin Howell",
-//                    "email": "ervin.howell@test.com",
-//                    "company": {
-//                        "name": "Deckow-Crist"
-//                    }
-//                }
-//            ]
-//            """;
-//
-//        when(mockHttpResponse.statusCode()).thenReturn(200);
-//        when(mockHttpResponse.body()).thenReturn(jsonResponse);
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockHttpResponse);
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When
-//        List<Employee> employees = apiService.fetchEmployeesFromApi();
-//
-//        // Then
-//        assertAll(
-//                () -> assertEquals(2, employees.size()),
-//                () -> assertEquals("Leanne Graham", employees.get(0).getName()),
-//                () -> assertEquals("leanne.graham@test.com", employees.get(0).getEmail()),
-//                () -> assertEquals("Romaguera-Crona", employees.get(0).getCompany()),
-//                () -> assertEquals(Position.PROGRAMMER, employees.get(0).getPosition()),
-//                () -> assertEquals(Position.PROGRAMMER.getBaseSalary(), employees.get(0).getSalary()),
-//                () -> assertEquals("Ervin Howell", employees.get(1).getName()),
-//                () -> assertEquals("ervin.howell@test.com", employees.get(1).getEmail()),
-//                () -> assertEquals("Deckow-Crist", employees.get(1).getCompany()),
-//                () -> assertEquals(Position.PROGRAMMER, employees.get(1).getPosition()),
-//                () -> assertEquals(Position.PROGRAMMER.getBaseSalary(), employees.get(1).getSalary())
-//        );
-//    }
-//
-//    @Test
-//    @DisplayName("Should throw ApiException when HTTP status is not 200")
-//    void fetchEmployeesFromApi_WithNon200Status_ShouldThrowException() throws Exception {
-//        // Given
-//        when(mockHttpResponse.statusCode()).thenReturn(404);
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockHttpResponse);
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("HTTP error: 404"));
-//    }
-//
-//    @Test
-//    @DisplayName("Should throw ApiException when IO error occurs")
-//    void fetchEmployeesFromApi_WithIOException_ShouldThrowException() throws Exception {
-//        // Given
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new java.io.IOException("Connection failed"));
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("Network/IO error while fetching from API"));
-//    }
-//
-//
-//    @Test
-//    @DisplayName("Should throw ApiException when JSON parsing fails")
-//    void fetchEmployeesFromApi_WithInvalidJson_ShouldThrowException() throws Exception {
-//        // Given
-//        String invalidJson = "invalid json";
-//
-//        when(mockHttpResponse.statusCode()).thenReturn(200);
-//        when(mockHttpResponse.body()).thenReturn(invalidJson);
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockHttpResponse);
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("Failed to parse API response"));
-//    }
-//
-//    @Test
-//    @DisplayName("Should handle empty API response")
-//    void fetchEmployeesFromApi_WithEmptyResponse_ShouldReturnEmptyList() throws Exception {
-//        // Given
-//        String emptyJson = "[]";
-//
-//        when(mockHttpResponse.statusCode()).thenReturn(200);
-//        when(mockHttpResponse.body()).thenReturn(emptyJson);
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockHttpResponse);
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        List<Employee> employees = apiService.fetchEmployeesFromApi();
-//        assertTrue(employees.isEmpty());
-//    }
-//
-//    @Test
-//    @DisplayName("Should handle malformed user object in JSON")
-//    void fetchEmployeesFromApi_WithMalformedUserObject_ShouldThrowException() throws Exception {
-//        // Given
-//        String malformedJson = """
-//            [
-//                {
-//                    "id": 1,
-//                    "name": "Leanne Graham"
-//                }
-//            ]
-//            """;
-//
-//        when(mockHttpResponse.statusCode()).thenReturn(200);
-//        when(mockHttpResponse.body()).thenReturn(malformedJson);
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockHttpResponse);
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("Failed to parse API response"));
-//    }
-//
-//    @Test
-//    @DisplayName("Should handle null values in JSON response")
-//    void fetchEmployeesFromApi_WithNullValues_ShouldThrowException() throws Exception {
-//        // Given
-//        String jsonWithNulls = """
-//        [
-//            {
-//                "id": 1,
-//                "name": null,
-//                "email": "test@test.com",
-//                "company": {
-//                    "name": "Test Corp"
-//                }
-//            }
-//        ]
-//        """;
-//
-//        when(mockHttpResponse.statusCode()).thenReturn(200);
-//        when(mockHttpResponse.body()).thenReturn(jsonWithNulls);
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockHttpResponse);
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("Failed to parse API response"));
-//    }
-//
-//    @Test
-//    @DisplayName("Should handle unexpected exception")
-//    void fetchEmployeesFromApi_WithUnexpectedException_ShouldThrowApiException() throws Exception {
-//        // Given
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new RuntimeException("Unexpected error"));
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("Unexpected error while fetching from API"));
-//    }
-//
-//    @Test
-//    @DisplayName("Should handle timeout scenarios")
-//    void fetchEmployeesFromApi_WithTimeout_ShouldThrowException() throws Exception {
-//        // Given
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new java.net.http.HttpTimeoutException("Request timed out"));
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("Network/IO error while fetching from API"));
-//    }
-//
-//    @Test
-//    @DisplayName("Should handle IllegalArgumentException")
-//    void fetchEmployeesFromApi_WithIllegalArgumentException_ShouldThrowException() throws Exception {
-//        // Given
-//        when(mockHttpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new IllegalArgumentException("Invalid URI"));
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockHttpClient);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () -> apiService.fetchEmployeesFromApi());
-//        assertTrue(exception.getMessage().contains("Data validation error in API response"));
-//    }
-//}
-
-
-
-
-
-
-
-
-
-
-
-
-//
-//import src.service.*;
-//
-//import org.junit.jupiter.api.AfterEach;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.MockedStatic;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import src.exception.ApiException;
-//import src.model.Employee;
-//import src.model.Position;
-//
-//import java.io.IOException;
-//import java.net.http.HttpClient;
-//import java.net.http.HttpRequest;
-//import java.net.http.HttpResponse;
-//import java.util.List;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class service.ApiServiceTest {
-//
-//    private MockedStatic<HttpClient> httpClientMock;
-//    private HttpClient mockClient;
-//    private HttpResponse<String> mockResponse;
-//    private ApiService apiService;
-//
-//    private final String validJsonResponse = """
-//        [
-//            {
-//                "id": 1,
-//                "name": "Leanne Graham",
-//                "email": "incere@april.biz",
-//                "company": {
-//                    "name": "Romaguera-Crona"
-//                }
-//            },
-//            {
-//                "id": 2,
-//                "name": "Ervin Howell",
-//                "email": "shanna@melissa.tv",
-//                "company": {
-//                    "name": "Deckow-Crist"
-//                }
-//            }
-//        ]
-//        """;
-//
-//    @BeforeEach
-//    void setUp() {
-//        mockClient = mock(HttpClient.class);
-//        mockResponse = mock(HttpResponse.class);
-//        httpClientMock = mockStatic(HttpClient.class);
-//        apiService = new ApiService();
-//
-//        httpClientMock.when(HttpClient::newHttpClient).thenReturn(mockClient);
-//    }
-//
-//    @AfterEach
-//    void tearDown() {
-//        if (httpClientMock != null) {
-//            httpClientMock.close();
-//        }
-//    }
-//
-//    @Test
-//    void shouldReturnListOfEmployees_whenApiReturnsValidJsonResponse() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockResponse);
-//        when(mockResponse.statusCode()).thenReturn(200);
-//        when(mockResponse.body()).thenReturn(validJsonResponse);
-//
-//        // When
-//        List<Employee> employees = apiService.fetchEmployeesFromApi();
-//
-//        // Then
-//        assertNotNull(employees);
-//        assertEquals(2, employees.size());
-//
-//        Employee firstEmployee = employees.get(0);
-//        assertEquals("Leanne Graham", firstEmployee.getName());
-//        assertEquals("incere@april.biz", firstEmployee.getEmail());
-//        assertEquals("Romaguera-Crona", firstEmployee.getCompany());
-//        assertEquals(Position.PROGRAMMER, firstEmployee.getPosition());
-//        assertEquals(Position.PROGRAMMER.getBaseSalary(), firstEmployee.getSalary());
-//
-//        Employee secondEmployee = employees.get(1);
-//        assertEquals("Ervin Howell", secondEmployee.getName());
-//        assertEquals("shanna@melissa.tv", secondEmployee.getEmail());
-//        assertEquals("Deckow-Crist", secondEmployee.getCompany());
-//        assertEquals(Position.PROGRAMMER, secondEmployee.getPosition());
-//    }
-//
-//    @Test
-//    void shouldThrowApiExceptionWithHttpErrorDetails_whenApiReturnsNon200StatusCode() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockResponse);
-//        when(mockResponse.statusCode()).thenReturn(404);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () ->
-//                apiService.fetchEmployeesFromApi()
-//        );
-//
-//        assertTrue(exception.getMessage().contains("HTTP error: 404"));
-//    }
-//
-//    @Test
-//    void shouldThrowApiExceptionWithNetworkErrorDetails_whenIOExceptionOccursDuringHttpRequest() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new IOException("Connection timeout"));
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () ->
-//                apiService.fetchEmployeesFromApi()
-//        );
-//
-//        assertTrue(exception.getMessage().contains("Network/IO error while fetching from API"));
-//        assertTrue(exception.getMessage().contains("Connection timeout"));
-//        assertNotNull(exception.getCause());
-//    }
-//
-//    @Test
-//    void shouldThrowApiExceptionWithDataValidationError_whenIllegalArgumentExceptionOccurs() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new IllegalArgumentException("Invalid URI"));
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () ->
-//                apiService.fetchEmployeesFromApi()
-//        );
-//
-//        assertTrue(exception.getMessage().contains("Data validation error in API response"));
-//        assertTrue(exception.getMessage().contains("Invalid URI"));
-//        assertNotNull(exception.getCause());
-//    }
-//
-//    @Test
-//    void shouldThrowApiExceptionWithUnexpectedErrorDetails_whenUnexpectedExceptionOccurs() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new RuntimeException("Unexpected error"));
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () ->
-//                apiService.fetchEmployeesFromApi()
-//        );
-//
-//        assertTrue(exception.getMessage().contains("Unexpected error while fetching from API"));
-//        assertTrue(exception.getMessage().contains("Unexpected error"));
-//        assertNotNull(exception.getCause());
-//    }
-//
-//    @Test
-//    void shouldParseSingleEmployeeCorrectly_whenJsonContainsOneUser() throws Exception {
-//        // Given
-//        String singleUserJson = """
-//            [
-//                {
-//                    "id": 1,
-//                    "name": "Test User",
-//                    "email": "test@example.com",
-//                    "company": {
-//                        "name": "Test Company"
-//                    }
-//                }
-//            ]
-//            """;
-//
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockResponse);
-//        when(mockResponse.statusCode()).thenReturn(200);
-//        when(mockResponse.body()).thenReturn(singleUserJson);
-//
-//        // When
-//        List<Employee> employees = apiService.fetchEmployeesFromApi();
-//
-//        // Then
-//        assertEquals(1, employees.size());
-//        Employee employee = employees.get(0);
-//        assertEquals("Test User", employee.getName());
-//        assertEquals("test@example.com", employee.getEmail());
-//        assertEquals("Test Company", employee.getCompany());
-//        assertEquals(Position.PROGRAMMER, employee.getPosition());
-//    }
-//
-//    @Test
-//    void shouldReturnEmptyList_whenApiReturnsEmptyJsonArray() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockResponse);
-//        when(mockResponse.statusCode()).thenReturn(200);
-//        when(mockResponse.body()).thenReturn("[]");
-//
-//        // When
-//        List<Employee> employees = apiService.fetchEmployeesFromApi();
-//
-//        // Then
-//        assertNotNull(employees);
-//        assertTrue(employees.isEmpty());
-//    }
-//
-//    @Test
-//    void shouldThrowApiExceptionWithParsingErrorDetails_whenJsonResponseIsMalformed() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockResponse);
-//        when(mockResponse.statusCode()).thenReturn(200);
-//        when(mockResponse.body()).thenReturn("invalid json");
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () ->
-//                apiService.fetchEmployeesFromApi()
-//        );
-//
-//        assertTrue(exception.getMessage().contains("Failed to parse API response"));
-//        assertNotNull(exception.getCause());
-//    }
-//
-//    @Test
-//    void shouldThrowApiExceptionWithParsingErrorDetails_whenJsonResponseHasMissingRequiredFields() throws Exception {
-//        // Given
-//        String jsonWithMissingFields = """
-//            [
-//                {
-//                    "id": 1,
-//                    "email": "test@example.com"
-//                }
-//            ]
-//            """;
-//
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenReturn(mockResponse);
-//        when(mockResponse.statusCode()).thenReturn(200);
-//        when(mockResponse.body()).thenReturn(jsonWithMissingFields);
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () ->
-//                apiService.fetchEmployeesFromApi()
-//        );
-//
-//        assertTrue(exception.getMessage().contains("Failed to parse API response"));
-//        assertNotNull(exception.getCause());
-//    }
-//
-//    @Test
-//    void shouldHandleHttpTimeoutException() throws Exception {
-//        // Given
-//        when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
-//                .thenThrow(new java.net.http.HttpTimeoutException("Request timed out"));
-//
-//        // When & Then
-//        ApiException exception = assertThrows(ApiException.class, () ->
-//                apiService.fetchEmployeesFromApi()
-//        );
-//
-//        assertTrue(exception.getMessage().contains("Network/IO error while fetching from API"));
-//        assertNotNull(exception.getCause());
-//    }
-//
-//}
-
-
-
+package service;
 
 import src.service.*;
 
@@ -650,7 +122,7 @@ class ApiServiceTest {
                 .thenReturn(mockResponse);
         when(mockResponse.statusCode()).thenReturn(500);
 
-        // When & Then - jedna asercja
+        // When & Then
         ApiException exception = assertThrows(ApiException.class, () ->
                 apiService.fetchEmployeesFromApi()
         );
@@ -683,7 +155,7 @@ class ApiServiceTest {
         // When
         List<Employee> employees = apiService.fetchEmployeesFromApi();
 
-        // Then - jedna asercja z assertAll
+        // Then
         assertAll("Should correctly map all JSON fields to Employee object",
                 () -> assertEquals(1, employees.size(), "Should return exactly one employee"),
                 () -> assertEquals("John Doe", employees.get(0).getName(), "Name should be correctly mapped"),
@@ -701,7 +173,7 @@ class ApiServiceTest {
         when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new IOException("Connection refused"));
 
-        // When & Then - jedna asercja z assertAll
+        // When & Then
         ApiException exception = assertThrows(ApiException.class, () ->
                 apiService.fetchEmployeesFromApi()
         );
@@ -721,7 +193,7 @@ class ApiServiceTest {
         when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new IllegalArgumentException("Invalid URL format"));
 
-        // When & Then - jedna asercja z assertAll
+        // When & Then
         ApiException exception = assertThrows(ApiException.class, () ->
                 apiService.fetchEmployeesFromApi()
         );
@@ -743,7 +215,7 @@ class ApiServiceTest {
         when(mockResponse.statusCode()).thenReturn(200);
         when(mockResponse.body()).thenReturn("invalid json format");
 
-        // When & Then - jedna asercja z assertAll
+        // When & Then
         ApiException exception = assertThrows(ApiException.class, () ->
                 apiService.fetchEmployeesFromApi()
         );
@@ -772,7 +244,7 @@ class ApiServiceTest {
         when(mockResponse.statusCode()).thenReturn(200);
         when(mockResponse.body()).thenReturn(jsonMissingFields);
 
-        // When & Then - jedna asercja z assertAll
+        // When & Then
         ApiException exception = assertThrows(ApiException.class, () ->
                 apiService.fetchEmployeesFromApi()
         );
@@ -795,7 +267,7 @@ class ApiServiceTest {
         // When
         List<Employee> employees = apiService.fetchEmployeesFromApi();
 
-        // Then - jedna asercja
+        // Then
         assertTrue(employees.isEmpty(), "Should return empty list for empty JSON array");
     }
 
@@ -806,7 +278,7 @@ class ApiServiceTest {
         when(mockClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                 .thenThrow(new RuntimeException("Unexpected system error"));
 
-        // When & Then - jedna asercja z assertAll
+        // When & Then
         ApiException exception = assertThrows(ApiException.class, () ->
                 apiService.fetchEmployeesFromApi()
         );
@@ -831,7 +303,7 @@ class ApiServiceTest {
         // When
         apiService.fetchEmployeesFromApi();
 
-        // Then - jedna asercja
+        // Then -
         verify(mockClient, times(1)).send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class));
     }
 
@@ -878,7 +350,7 @@ class ApiServiceTest {
         // When
         List<Employee> employees = apiService.fetchEmployeesFromApi();
 
-        // Then - jedna asercja z assertAll
+        // Then
         assertAll("Should correctly parse single employee from JSON",
                 () -> assertEquals(1, employees.size(), "Should return exactly one employee"),
                 () -> assertEquals("Test User", employees.get(0).getName(), "Name should match"),
