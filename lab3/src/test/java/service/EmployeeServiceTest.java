@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import src.exception.InvalidDataException;
 import src.model.CompanyStatistics;
 import src.model.Employee;
@@ -69,36 +70,18 @@ class EmployeeServiceTest {
     // ===== TESTOWANIE OPERACJI PODSTAWOWYCH =====
 
     @Test
-    @DisplayName("Should return true when adding employee with unique email")
-    void addEmployee_WithUniqueEmail_ShouldReturnTrue() throws InvalidDataException {
+    @DisplayName("Should add employee with unique email successfully")
+    void addEmployee_WithUniqueEmail_ShouldSucceed() throws InvalidDataException {
         EmployeeService emptyService = new EmployeeService();
         Employee newEmployee = new Employee("Test Employee", "test@test.com", "TestCorp", Position.PROGRAMMER, 5000);
 
         boolean result = emptyService.addEmployee(newEmployee);
 
-        assertTrue(result);
-    }
-
-    @Test
-    @DisplayName("Should increment employee count after adding employee")
-    void addEmployee_WithUniqueEmail_ShouldIncrementCount() throws InvalidDataException {
-        EmployeeService emptyService = new EmployeeService();
-        Employee newEmployee = new Employee("Test Employee", "test@test.com", "TestCorp", Position.PROGRAMMER, 5000);
-
-        emptyService.addEmployee(newEmployee);
-
-        assertEquals(1, emptyService.getEmployeeCount());
-    }
-
-    @Test
-    @DisplayName("Should mark employee as existing after addition")
-    void addEmployee_WithUniqueEmail_ShouldMarkEmployeeAsExisting() throws InvalidDataException {
-        EmployeeService emptyService = new EmployeeService();
-        Employee newEmployee = new Employee("Test Employee", "test@test.com", "TestCorp", Position.PROGRAMMER, 5000);
-
-        emptyService.addEmployee(newEmployee);
-
-        assertTrue(emptyService.employeeExists(newEmployee.getEmail()));
+        assertAll(
+                () -> assertTrue(result),
+                () -> assertEquals(1, emptyService.getEmployeeCount()),
+                () -> assertTrue(emptyService.employeeExists(newEmployee.getEmail()))
+        );
     }
 
     @Test
@@ -117,26 +100,10 @@ class EmployeeServiceTest {
                 () -> employeeService.addEmployee(duplicateEmployee)
         );
 
-        assertTrue(exception.getMessage().contains("already exists"));
-    }
-
-    @Test
-    @DisplayName("Should include email in duplicate exception message")
-    void addEmployee_WithDuplicateEmail_ShouldIncludeEmailInMessage() throws InvalidDataException {
-        Employee duplicateEmployee = new Employee(
-                "Different Name",
-                employee1.getEmail(),
-                "Different Corp",
-                Position.PROGRAMMER,
-                8000
+        assertAll(
+                () -> assertTrue(exception.getMessage().contains("already exists")),
+                () -> assertTrue(exception.getMessage().contains(employee1.getEmail()))
         );
-
-        InvalidDataException exception = assertThrows(
-                InvalidDataException.class,
-                () -> employeeService.addEmployee(duplicateEmployee)
-        );
-
-        assertTrue(exception.getMessage().contains(employee1.getEmail()));
     }
 
     @Test
@@ -150,76 +117,49 @@ class EmployeeServiceTest {
         assertEquals("Employee cannot be null", exception.getMessage());
     }
 
-    @Test
-    @DisplayName("Should return true when removing existing employee")
-    void removeEmployee_WithExistingEmail_ShouldReturnTrue() {
-        boolean result = employeeService.removeEmployee(employee1.getEmail());
+    @ParameterizedTest
+    @CsvSource({
+            "jan.kowalski@techcorp.com, true, 2, false",   // email, expectedResult, expectedCount, shouldExistAfter
+            "nonexisting@email.com, false, 3, false"       // email, expectedResult, expectedCount, shouldExistAfter
+    })
+    @DisplayName("Should remove employee correctly based on email")
+    void removeEmployee_WithVariousEmails_ShouldBehaveCorrectly(
+            String email, boolean expectedResult, int expectedCount, boolean shouldExistAfter) {
 
-        assertTrue(result);
+        boolean result = employeeService.removeEmployee(email);
+
+        assertAll(
+                () -> assertEquals(expectedResult, result),
+                () -> assertEquals(expectedCount, employeeService.getEmployeeCount()),
+                () -> assertEquals(shouldExistAfter, employeeService.employeeExists(email))
+        );
     }
 
-    @Test
-    @DisplayName("Should decrement count after removing employee")
-    void removeEmployee_WithExistingEmail_ShouldDecrementCount() {
-        employeeService.removeEmployee(employee1.getEmail());
+    @ParameterizedTest
+    @CsvSource({
+            "jan.kowalski@techcorp.com, JAN.KOWALSKI@TECHCORP.COM, jan.kowalski@techcorp.com, Jan Kowalski",
+            "anna.nowak@techcorp.com, ANNA.NOWAK@TECHCORP.COM, anna.nowak@techcorp.com, Anna Nowak",
+            "TEST@example.com, test@EXAMPLE.COM, test@example.com, Test User"
+    })
+    @DisplayName("Should handle email case insensitivity consistently across operations")
+    void emailOperations_WithCaseVariations_ShouldBeConsistent(
+            String originalEmail, String searchEmail, String expectedStoredEmail, String name) throws InvalidDataException {
 
-        assertEquals(2, employeeService.getEmployeeCount());
-    }
+        EmployeeService service = new EmployeeService();
+        Employee employee = new Employee(name, originalEmail, "Company", Position.PROGRAMMER, 5000);
 
-    @Test
-    @DisplayName("Should mark employee as non-existent after removal")
-    void removeEmployee_WithExistingEmail_ShouldRemoveEmployeeExistence() {
-        employeeService.removeEmployee(employee1.getEmail());
+        // Test dodawania i wyszukiwania
+        service.addEmployee(employee);
 
-        assertFalse(employeeService.employeeExists(employee1.getEmail()));
-    }
+        Optional<Employee> found = service.findEmployeeByEmail(searchEmail);
 
-    @Test
-    @DisplayName("Should preserve other employees after removal")
-    void removeEmployee_WithExistingEmail_ShouldPreserveOtherEmployees() {
-        employeeService.removeEmployee(employee1.getEmail());
-
-        assertTrue(employeeService.employeeExists(employee2.getEmail()));
-    }
-
-    @Test
-    @DisplayName("Should return false when removing non-existing employee")
-    void removeEmployee_WithNonExistingEmail_ShouldReturnFalse() {
-        boolean result = employeeService.removeEmployee("nonexisting@email.com");
-
-        assertFalse(result);
-    }
-
-    @Test
-    @DisplayName("Should maintain count when removing non-existing employee")
-    void removeEmployee_WithNonExistingEmail_ShouldMaintainCount() {
-        employeeService.removeEmployee("nonexisting@email.com");
-
-        assertEquals(3, employeeService.getEmployeeCount());
-    }
-
-    @Test
-    @DisplayName("Should find employee by email ignoring case")
-    void findEmployeeByEmail_WithExistingEmail_ShouldReturnEmployee() {
-        Optional<Employee> found = employeeService.findEmployeeByEmail(employee1.getEmail().toUpperCase());
-
-        assertTrue(found.isPresent());
-    }
-
-    @Test
-    @DisplayName("Should return correct email when finding employee")
-    void findEmployeeByEmail_WithExistingEmail_ShouldReturnCorrectEmail() {
-        Optional<Employee> found = employeeService.findEmployeeByEmail(employee1.getEmail().toUpperCase());
-
-        assertEquals(employee1.getEmail(), found.get().getEmail());
-    }
-
-    @Test
-    @DisplayName("Should return correct first name when finding employee")
-    void findEmployeeByEmail_WithExistingEmail_ShouldReturnCorrectFirstName() {
-        Optional<Employee> found = employeeService.findEmployeeByEmail(employee1.getEmail().toUpperCase());
-
-        assertEquals(employee1.getFirstName(), found.get().getFirstName());
+        assertAll(
+                () -> assertTrue(found.isPresent(), "Should find employee with case-insensitive email"),
+                () -> assertEquals(expectedStoredEmail, found.get().getEmail(), "Should store email in consistent case"),
+                () -> assertEquals(name, found.get().getName()),
+                () -> assertTrue(service.employeeExists(searchEmail), "Should exist when searched with different case"),
+                () -> assertTrue(service.employeeExists(originalEmail), "Should exist when searched with original case")
+        );
     }
 
     @Test
@@ -231,19 +171,12 @@ class EmployeeServiceTest {
     }
 
     @Test
-    @DisplayName("Should return correct number of all employees")
-    void getAllEmployees_ShouldReturnCorrectCount() {
-        List<Employee> allEmployees = employeeService.getAllEmployees();
-
-        assertEquals(3, allEmployees.size());
-    }
-
-    @Test
-    @DisplayName("Should include all employees in returned list")
-    void getAllEmployees_ShouldIncludeAllEmployees() {
+    @DisplayName("Should return all employees correctly")
+    void getAllEmployees_ShouldReturnAllEmployees() {
         List<Employee> allEmployees = employeeService.getAllEmployees();
 
         assertAll(
+                () -> assertEquals(3, allEmployees.size()),
                 () -> assertTrue(allEmployees.contains(employee1)),
                 () -> assertTrue(allEmployees.contains(employee2)),
                 () -> assertTrue(allEmployees.contains(employee3))
@@ -252,28 +185,28 @@ class EmployeeServiceTest {
 
     // ===== TESTOWANIE OPERACJI ANALITYCZNYCH =====
 
-    @Test
-    @DisplayName("Should return correct number of employees for company")
-    void findEmployeesByCompany_WithExistingCompany_ShouldReturnCorrectCount() {
-        List<Employee> techCorpEmployees = employeeService.findEmployeesByCompany("TechCorp");
+    @ParameterizedTest
+    @CsvSource({
+            "TechCorp, 2, true",
+            "OtherCorp, 1, true",
+            "NonExistingCorp, 0, false",
+            "techcorp, 2, true",
+            "TECHCORP, 2, true"
+    })
+    @DisplayName("Should find employees by company with case insensitivity")
+    void findEmployeesByCompany_WithVariousCompanies_ShouldReturnCorrectResults(
+            String company, int expectedCount, boolean shouldContainEmployees) {
 
-        assertEquals(2, techCorpEmployees.size());
-    }
+        List<Employee> employees = employeeService.findEmployeesByCompany(company);
 
-    @Test
-    @DisplayName("Should return only employees from specified company")
-    void findEmployeesByCompany_WithExistingCompany_ShouldReturnOnlyCompanyEmployees() {
-        List<Employee> techCorpEmployees = employeeService.findEmployeesByCompany("TechCorp");
-
-        assertTrue(techCorpEmployees.stream().allMatch(emp -> emp.getCompany().equals("TechCorp")));
-    }
-
-    @Test
-    @DisplayName("Should return empty list for non-existing company")
-    void findEmployeesByCompany_WithNonExistingCompany_ShouldReturnEmptyList() {
-        List<Employee> employees = employeeService.findEmployeesByCompany("NonExistingCorp");
-
-        assertTrue(employees.isEmpty());
+        assertAll(
+                () -> assertEquals(expectedCount, employees.size()),
+                () -> {
+                    if (shouldContainEmployees) {
+                        assertTrue(employees.stream().allMatch(emp -> emp.getCompany().equalsIgnoreCase(company)));
+                    }
+                }
+        );
     }
 
     @ParameterizedTest
@@ -290,19 +223,12 @@ class EmployeeServiceTest {
     }
 
     @Test
-    @DisplayName("Should return sorted list of employees")
+    @DisplayName("Should sort employees by last name correctly")
     void sortEmployeesByName_ShouldReturnSortedList() {
         List<Employee> sorted = employeeService.sortEmployeesByName();
 
-        assertEquals(3, sorted.size());
-    }
-
-    @Test
-    @DisplayName("Should sort employees by last name in correct order")
-    void sortEmployeesByName_ShouldSortByLastName() {
-        List<Employee> sorted = employeeService.sortEmployeesByName();
-
         assertAll(
+                () -> assertEquals(3, sorted.size()),
                 () -> assertEquals("Kowalski", sorted.get(0).getLastName()),
                 () -> assertEquals("Nowak", sorted.get(1).getLastName()),
                 () -> assertEquals("Wiśniewski", sorted.get(2).getLastName())
@@ -310,19 +236,12 @@ class EmployeeServiceTest {
     }
 
     @Test
-    @DisplayName("Should group employees into correct number of position groups")
-    void groupEmployeesByPosition_ShouldReturnCorrectNumberOfGroups() {
-        Map<Position, List<Employee>> grouped = employeeService.groupEmployeesByPosition();
-
-        assertEquals(3, grouped.size());
-    }
-
-    @Test
-    @DisplayName("Should have correct employee count per position")
-    void groupEmployeesByPosition_ShouldHaveCorrectCountsPerPosition() {
+    @DisplayName("Should group employees by position correctly")
+    void groupEmployeesByPosition_ShouldReturnCorrectGroups() {
         Map<Position, List<Employee>> grouped = employeeService.groupEmployeesByPosition();
 
         assertAll(
+                () -> assertEquals(3, grouped.size()),
                 () -> assertEquals(1, grouped.get(Position.MANAGER).size()),
                 () -> assertEquals(1, grouped.get(Position.PROGRAMMER).size()),
                 () -> assertEquals(1, grouped.get(Position.INTERN).size())
@@ -331,127 +250,109 @@ class EmployeeServiceTest {
 
     // ===== TESTOWANIE STATYSTYK FINANSOWYCH =====
 
-    @Test
-    @DisplayName("Should return non-empty optional when calculating average salary")
-    void calculateAverageSalary_WithMultipleEmployees_ShouldReturnNonEmpty() {
-        OptionalDouble average = employeeService.calculateAverageSalary();
-
-        assertTrue(average.isPresent());
-    }
-
-    @Test
-    @DisplayName("Should calculate correct average salary")
-    void calculateAverageSalary_WithMultipleEmployees_ShouldReturnCorrectAverage() {
-        OptionalDouble average = employeeService.calculateAverageSalary();
-
-        assertEquals(9166.67, average.getAsDouble(), 0.01);
-    }
-
-    @Test
-    @DisplayName("Should return empty optional when calculating average salary for empty service")
-    void calculateAverageSalary_WithNoEmployees_ShouldReturnEmpty() {
-        EmployeeService emptyService = new EmployeeService();
-
-        OptionalDouble average = emptyService.calculateAverageSalary();
-
-        assertTrue(average.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should return non-empty optional when calculating average salary by company")
-    void calculateAverageSalaryByCompany_ShouldReturnNonEmpty() {
-        OptionalDouble result = employeeService.calculateAverageSalaryByCompany("TechCorp");
-
-        assertTrue(result.isPresent());
-    }
-
-    @Test
+    @ParameterizedTest
+    @CsvSource({
+            "TechCorp, 12000.0",
+            "OtherCorp, 3500.0"
+    })
     @DisplayName("Should calculate correct average salary by company")
-    void calculateAverageSalaryByCompany_ShouldReturnCorrectValue() {
-        OptionalDouble result = employeeService.calculateAverageSalaryByCompany("TechCorp");
+    void calculateAverageSalaryByCompany_ShouldReturnCorrectValue(String company, double expectedAverage) {
+        OptionalDouble result = employeeService.calculateAverageSalaryByCompany(company);
 
-        assertEquals(12000.0, result.getAsDouble(), 0.01);
+        assertAll(
+                () -> assertTrue(result.isPresent()),
+                () -> assertEquals(expectedAverage, result.getAsDouble(), 0.01)
+        );
     }
 
     @Test
-    @DisplayName("Should return non-empty optional when finding highest paid employee")
-    void findHighestPaidEmployee_ShouldReturnNonEmpty() {
+    @DisplayName("Should handle salary calculations correctly")
+    void salaryCalculations_ShouldReturnCorrectValues() {
+        OptionalDouble average = employeeService.calculateAverageSalary();
         Optional<Employee> highestPaid = employeeService.findHighestPaidEmployee();
-
-        assertTrue(highestPaid.isPresent());
-    }
-
-    @Test
-    @DisplayName("Should return correct highest paid employee")
-    void findHighestPaidEmployee_ShouldReturnCorrectEmployee() {
-        Optional<Employee> highestPaid = employeeService.findHighestPaidEmployee();
-
-        assertEquals(employee1.getEmail(), highestPaid.get().getEmail());
-    }
-
-    @Test
-    @DisplayName("Should return correct salary for highest paid employee")
-    void findHighestPaidEmployee_ShouldReturnCorrectSalary() {
-        Optional<Employee> highestPaid = employeeService.findHighestPaidEmployee();
-
-        assertEquals(15000, highestPaid.get().getSalary());
-    }
-
-    @Test
-    @DisplayName("Should return empty optional when finding highest paid employee in empty service")
-    void findHighestPaidEmployee_WithNoEmployees_ShouldReturnEmpty() {
-        EmployeeService emptyService = new EmployeeService();
-
-        Optional<Employee> highestPaid = emptyService.findHighestPaidEmployee();
-
-        assertTrue(highestPaid.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should return non-empty optional when finding lowest paid employee")
-    void findLowestPaidEmployee_ShouldReturnNonEmpty() {
         Optional<Employee> lowestPaid = employeeService.findLowestPaidEmployee();
-
-        assertTrue(lowestPaid.isPresent());
-    }
-
-    @Test
-    @DisplayName("Should return correct lowest paid employee")
-    void findLowestPaidEmployee_ShouldReturnCorrectEmployee() {
-        Optional<Employee> lowestPaid = employeeService.findLowestPaidEmployee();
-
-        assertEquals(employee3.getEmail(), lowestPaid.get().getEmail());
-    }
-
-    @Test
-    @DisplayName("Should return correct salary for lowest paid employee")
-    void findLowestPaidEmployee_ShouldReturnCorrectSalary() {
-        Optional<Employee> lowestPaid = employeeService.findLowestPaidEmployee();
-
-        assertEquals(3500, lowestPaid.get().getSalary());
-    }
-
-    @Test
-    @DisplayName("Should calculate correct total salary cost")
-    void calculateTotalSalaryCost_ShouldReturnCorrectSum() {
         double totalCost = employeeService.calculateTotalSalaryCost();
 
-        assertEquals(27500, totalCost);
+        assertAll(
+                () -> assertTrue(average.isPresent()),
+                () -> assertEquals(9166.67, average.getAsDouble(), 0.01),
+                () -> assertTrue(highestPaid.isPresent()),
+                () -> assertEquals(employee1.getEmail(), highestPaid.get().getEmail()),
+                () -> assertEquals(15000, highestPaid.get().getSalary()),
+                () -> assertTrue(lowestPaid.isPresent()),
+                () -> assertEquals(employee3.getEmail(), lowestPaid.get().getEmail()),
+                () -> assertEquals(3500, lowestPaid.get().getSalary()),
+                () -> assertEquals(27500, totalCost)
+        );
     }
 
-    @Test
-    @DisplayName("Should calculate correct total salary cost by company")
-    void calculateTotalSalaryCostByCompany_ShouldReturnCorrectSum() {
-        double totalCost = employeeService.calculateTotalSalaryCostByCompany("TechCorp");
+    @ParameterizedTest
+    @CsvSource({
+            "0, 0.0",
+            "1000, 1000.0",
+            "1000000, 1000000.0",
+            "0.5, 0.5",
+            "999.99, 999.99",
+            "50000, 50000.0"
+    })
+    @DisplayName("Should handle various non-negative salary values correctly")
+    void addEmployee_WithVariousNonNegativeSalaryValues_ShouldHandleCorrectly(double salary, double expectedSalary) throws InvalidDataException {
+        EmployeeService service = new EmployeeService();
+        String email = "test" + salary + "@test.com";
+        Employee employee = new Employee("Test Employee", email, "Company", Position.PROGRAMMER, salary);
 
-        assertEquals(24000.0, totalCost);
+        service.addEmployee(employee);
+        Optional<Employee> found = service.findEmployeeByEmail(email);
+
+        assertAll(
+                () -> assertTrue(found.isPresent()),
+                () -> assertEquals(expectedSalary, found.get().getSalary(), 0.001),
+                () -> assertTrue(service.employeeExists(email))
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "-1000",
+            "-999.99",
+            "-0.01",
+            "-50000",
+            "-1",
+            "-1000000"
+    })
+    @DisplayName("Should throw InvalidDataException when creating employee with negative salary")
+    void createEmployee_WithNegativeSalary_ShouldThrowInvalidDataException(double negativeSalary) {
+        String email = "test" + negativeSalary + "@test.com";
+
+        InvalidDataException exception = assertThrows(
+                InvalidDataException.class,
+                () -> new Employee("Test Employee", email, "Company", Position.PROGRAMMER, negativeSalary)
+        );
+
+        assertTrue(exception.getMessage().toLowerCase().contains("salary"));
+        assertTrue(exception.getMessage().toLowerCase().contains("negative"));
+    }
+
+
+
+    @Test
+    @DisplayName("Should return empty results for empty service")
+    void financialOperations_WithEmptyService_ShouldReturnEmpty() {
+        EmployeeService emptyService = new EmployeeService();
+
+        assertAll(
+                () -> assertTrue(emptyService.calculateAverageSalary().isEmpty()),
+                () -> assertTrue(emptyService.findHighestPaidEmployee().isEmpty()),
+                () -> assertTrue(emptyService.findLowestPaidEmployee().isEmpty()),
+                () -> assertEquals(0.0, emptyService.calculateTotalSalaryCost())
+        );
     }
 
     // ===== TESTOWANIE WALIDACJI I SPÓJNOŚCI =====
 
     @Test
-    @DisplayName("Should find inconsistent salaries when employees are underpaid")
-    void validateSalaryConsistency_ShouldFindInconsistentSalaries() throws InvalidDataException {
+    @DisplayName("Should validate salary consistency correctly")
+    void validateSalaryConsistency_ShouldIdentifyUnderpaidEmployees() throws InvalidDataException {
         Employee underpaidEmployee = new Employee(
                 "Underpaid Employee",
                 "underpaid@test.com",
@@ -463,24 +364,10 @@ class EmployeeServiceTest {
         employeeService.addEmployee(underpaidEmployee);
         List<Employee> inconsistent = employeeService.validateSalaryConsistency();
 
-        assertEquals(1, inconsistent.size());
-    }
-
-    @Test
-    @DisplayName("Should identify correct underpaid employee")
-    void validateSalaryConsistency_ShouldIdentifyCorrectEmployee() throws InvalidDataException {
-        Employee underpaidEmployee = new Employee(
-                "Underpaid Employee",
-                "underpaid@test.com",
-                "TestCorp",
-                Position.MANAGER,
-                10000
+        assertAll(
+                () -> assertEquals(1, inconsistent.size()),
+                () -> assertEquals(underpaidEmployee.getEmail(), inconsistent.get(0).getEmail())
         );
-
-        employeeService.addEmployee(underpaidEmployee);
-        List<Employee> inconsistent = employeeService.validateSalaryConsistency();
-
-        assertEquals(underpaidEmployee.getEmail(), inconsistent.get(0).getEmail());
     }
 
     @Test
@@ -491,92 +378,50 @@ class EmployeeServiceTest {
         assertTrue(inconsistent.isEmpty());
     }
 
+
+
     // ===== TESTOWANIE STATYSTYK FIRM =====
 
     @Test
-    @DisplayName("Should return correct number of company statistics")
-    void getCompanyStatistics_ShouldReturnCorrectNumberOfStats() {
+    @DisplayName("Should generate correct company statistics")
+    void getCompanyStatistics_ShouldReturnCorrectStats() {
         Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
 
-        assertEquals(2, stats.size());
-    }
-
-    @Test
-    @DisplayName("Should return statistics for TechCorp")
-    void getCompanyStatistics_ShouldReturnTechCorpStats() {
-        Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
-
-        assertNotNull(stats.get("TechCorp"));
-    }
-
-    @Test
-    @DisplayName("Should return correct employee count for TechCorp")
-    void getCompanyStatistics_ShouldReturnCorrectEmployeeCountForTechCorp() {
-        Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
-
-        assertEquals(2, stats.get("TechCorp").getEmployeeCount());
-    }
-
-    @Test
-    @DisplayName("Should return correct average salary for TechCorp")
-    void getCompanyStatistics_ShouldReturnCorrectAverageSalaryForTechCorp() {
-        Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
-
-        assertEquals(12000, stats.get("TechCorp").getAverageSalary(), 0.01);
-    }
-
-    @Test
-    @DisplayName("Should return correct highest paid employee for TechCorp")
-    void getCompanyStatistics_ShouldReturnCorrectHighestPaidForTechCorp() {
-        Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
-
-        assertEquals("Jan Kowalski", stats.get("TechCorp").getHighestPaidEmployee());
-    }
-
-    @Test
-    @DisplayName("Should return statistics for OtherCorp")
-    void getCompanyStatistics_ShouldReturnOtherCorpStats() {
-        Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
-
-        assertNotNull(stats.get("OtherCorp"));
-    }
-
-    @Test
-    @DisplayName("Should return correct employee count for OtherCorp")
-    void getCompanyStatistics_ShouldReturnCorrectEmployeeCountForOtherCorp() {
-        Map<String, CompanyStatistics> stats = employeeService.getCompanyStatistics();
-
-        assertEquals(1, stats.get("OtherCorp").getEmployeeCount());
+        assertAll(
+                () -> assertEquals(2, stats.size()),
+                () -> assertNotNull(stats.get("TechCorp")),
+                () -> assertNotNull(stats.get("OtherCorp")),
+                () -> assertEquals(2, stats.get("TechCorp").getEmployeeCount()),
+                () -> assertEquals(12000, stats.get("TechCorp").getAverageSalary(), 0.01),
+                () -> assertEquals("Jan Kowalski", stats.get("TechCorp").getHighestPaidEmployee()),
+                () -> assertEquals(1, stats.get("OtherCorp").getEmployeeCount())
+        );
     }
 
     // ===== TESTOWANIE STANU SERVICE =====
 
-    @Test
-    @DisplayName("Should return true when service is empty")
-    void isEmpty_WithNoEmployees_ShouldReturnTrue() {
-        EmployeeService emptyService = new EmployeeService();
+    @ParameterizedTest
+    @CsvSource({
+            "true, 0",
+            "false, 3"
+    })
+    @DisplayName("Should correctly report empty state and employee count")
+    void serviceState_ShouldBeCorrect(boolean expectedEmpty, int expectedCount) {
+        EmployeeService service = expectedEmpty ? new EmployeeService() : employeeService;
 
-        assertTrue(emptyService.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should return false when service has employees")
-    void isEmpty_WithEmployees_ShouldReturnFalse() {
-        assertFalse(employeeService.isEmpty());
-    }
-
-    @Test
-    @DisplayName("Should return correct employee count")
-    void getEmployeeCount_ShouldReturnCorrectNumber() {
-        assertEquals(3, employeeService.getEmployeeCount());
+        assertAll(
+                () -> assertEquals(expectedEmpty, service.isEmpty()),
+                () -> assertEquals(expectedCount, service.getEmployeeCount())
+        );
     }
 
     // ===== TESTOWANIE WALIDACJI DANYCH WEJŚCIOWYCH =====
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "  ", "\t", "\n"})
-    @DisplayName("Should throw exception when validating empty email")
-    void validateEmail_WithEmptyEmail_ShouldThrowException(String invalidEmail) {
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    @DisplayName("Should throw exception when validating empty or null email")
+    void validateEmail_WithInvalidEmail_ShouldThrowException(String invalidEmail) {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> employeeService.findEmployeeByEmail(invalidEmail)
@@ -585,21 +430,11 @@ class EmployeeServiceTest {
         assertEquals("Email cannot be null or empty", exception.getMessage());
     }
 
-    @Test
-    @DisplayName("Should throw exception when validating null email")
-    void validateEmail_WithNullEmail_ShouldThrowException() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> employeeService.findEmployeeByEmail(null)
-        );
-
-        assertEquals("Email cannot be null or empty", exception.getMessage());
-    }
-
     @ParameterizedTest
-    @ValueSource(strings = {"", "  ", "\t", "\n"})
-    @DisplayName("Should throw exception when validating empty company")
-    void validateCompany_WithEmptyCompany_ShouldThrowException(String invalidCompany) {
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    @DisplayName("Should throw exception when validating empty or null company")
+    void validateCompany_WithInvalidCompany_ShouldThrowException(String invalidCompany) {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> employeeService.findEmployeesByCompany(invalidCompany)
@@ -608,72 +443,127 @@ class EmployeeServiceTest {
         assertEquals("Company name cannot be null or empty", exception.getMessage());
     }
 
+    // ===== TESTOWANIE GRUPOWANIA I ZLICZANIA =====
+
     @Test
-    @DisplayName("Should throw exception when validating null company")
-    void validateCompany_WithNullCompany_ShouldThrowException() {
+    @DisplayName("Should count employees by position correctly")
+    void countEmployeesByPosition_ShouldReturnCorrectCounts() {
+        Map<Position, Long> positionCounts = employeeService.countEmployeesByPosition();
+
+        assertAll(
+                () -> assertEquals(3, positionCounts.size()),
+                () -> assertEquals(1, positionCounts.get(Position.MANAGER)),
+                () -> assertEquals(1, positionCounts.get(Position.PROGRAMMER)),
+                () -> assertEquals(1, positionCounts.get(Position.INTERN))
+        );
+    }
+
+    @Test
+    @DisplayName("Should group employees by company correctly")
+    void groupEmployeesByCompany_ShouldReturnCorrectGroups() {
+        Map<String, List<Employee>> groupedByCompany = employeeService.groupEmployeesByCompany();
+
+        assertAll(
+                () -> assertEquals(2, groupedByCompany.size()),
+                () -> assertEquals(2, groupedByCompany.get("TechCorp").size()),
+                () -> assertEquals(1, groupedByCompany.get("OtherCorp").size())
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "TechCorp, 24000.0",
+            "OtherCorp, 3500.0",
+            "NonExistingCorp, 0.0",
+            "techcorp, 24000.0",
+            "TECHCORP, 24000.0"
+    })
+    @DisplayName("Should calculate correct total salary cost by company")
+    void calculateTotalSalaryCostByCompany_WithVariousCompanies_ShouldReturnCorrectTotal(
+            String company, double expectedTotal) {
+
+        double totalCost = employeeService.calculateTotalSalaryCostByCompany(company);
+
+        assertEquals(expectedTotal, totalCost, 0.01);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    @DisplayName("Should throw exception when calculating total cost with invalid company name")
+    void calculateTotalSalaryCostByCompany_WithInvalidCompany_ShouldThrowException(String invalidCompany) {
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> employeeService.findEmployeesByCompany(null)
+                () -> employeeService.calculateTotalSalaryCostByCompany(invalidCompany)
         );
 
         assertEquals("Company name cannot be null or empty", exception.getMessage());
     }
 
-    // ===== TESTOWANIE PRZYPADKÓW BRZEGOWYCH =====
-
     @Test
-    @DisplayName("Should handle case sensitivity in company names - lowercase")
-    void handleCaseSensitiveCompanyNames_Lowercase() {
-        List<Employee> lowerCase = employeeService.findEmployeesByCompany("techcorp");
+    @DisplayName("Should handle case sensitivity in company names")
+    void calculateTotalSalaryCostByCompany_ShouldBeCaseInsensitive() {
+        double lowerCase = employeeService.calculateTotalSalaryCostByCompany("techcorp");
+        double upperCase = employeeService.calculateTotalSalaryCostByCompany("TECHCORP");
+        double mixedCase = employeeService.calculateTotalSalaryCostByCompany("TechCorp");
 
-        assertEquals(2, lowerCase.size());
+        assertAll(
+                () -> assertEquals(24000.0, lowerCase, 0.01),
+                () -> assertEquals(24000.0, upperCase, 0.01),
+                () -> assertEquals(24000.0, mixedCase, 0.01)
+        );
     }
 
     @Test
-    @DisplayName("Should handle case sensitivity in company names - uppercase")
-    void handleCaseSensitiveCompanyNames_Uppercase() {
-        List<Employee> upperCase = employeeService.findEmployeesByCompany("TECHCORP");
+    @DisplayName("Should calculate correct total after adding new employee")
+    void calculateTotalSalaryCostByCompany_AfterAddingEmployee_ShouldUpdateTotal() throws InvalidDataException {
+        // Given
+        double initialTotal = employeeService.calculateTotalSalaryCostByCompany("TechCorp");
 
-        assertEquals(2, upperCase.size());
+        // When
+        Employee newEmployee = new Employee(
+                "New Employee",
+                "new@techcorp.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000
+        );
+        employeeService.addEmployee(newEmployee);
+
+        // Then
+        double updatedTotal = employeeService.calculateTotalSalaryCostByCompany("TechCorp");
+        assertEquals(initialTotal + 5000, updatedTotal, 0.01);
     }
 
     @Test
-    @DisplayName("Should handle case sensitivity in company names - mixed case")
-    void handleCaseSensitiveCompanyNames_MixedCase() {
-        List<Employee> mixedCase = employeeService.findEmployeesByCompany("TechCorp");
+    @DisplayName("Should calculate correct total after removing employee")
+    void calculateTotalSalaryCostByCompany_AfterRemovingEmployee_ShouldUpdateTotal() {
+        // Given
+        double initialTotal = employeeService.calculateTotalSalaryCostByCompany("TechCorp");
 
-        assertEquals(2, mixedCase.size());
+        // When
+        employeeService.removeEmployee(employee1.getEmail());
+
+        // Then
+        double updatedTotal = employeeService.calculateTotalSalaryCostByCompany("TechCorp");
+        assertEquals(initialTotal - employee1.getSalary(), updatedTotal, 0.01);
     }
 
     @Test
-    @DisplayName("Should count employees by position - number of positions")
-    void countEmployeesByPosition_ShouldReturnCorrectNumberOfPositions() {
-        Map<Position, Long> positionCounts = employeeService.countEmployeesByPosition();
+    @DisplayName("Should return zero total for empty service")
+    void calculateTotalSalaryCostByCompany_WithEmptyService_ShouldReturnZero() {
+        EmployeeService emptyService = new EmployeeService();
 
-        assertEquals(3, positionCounts.size());
+        double totalCost = emptyService.calculateTotalSalaryCostByCompany("AnyCompany");
+
+        assertEquals(0.0, totalCost);
     }
 
     @Test
-    @DisplayName("Should count employees by position - manager count")
-    void countEmployeesByPosition_ShouldReturnCorrectManagerCount() {
-        Map<Position, Long> positionCounts = employeeService.countEmployeesByPosition();
+    @DisplayName("Should return zero for non-existing company")
+    void calculateTotalSalaryCostByCompany_WithNonExistingCompany_ShouldReturnZero() {
+        double totalCost = employeeService.calculateTotalSalaryCostByCompany("NonExistingCompany123");
 
-        assertEquals(1, positionCounts.get(Position.MANAGER));
-    }
-
-    @Test
-    @DisplayName("Should group employees by company - number of companies")
-    void groupEmployeesByCompany_ShouldReturnCorrectNumberOfCompanies() {
-        Map<String, List<Employee>> groupedByCompany = employeeService.groupEmployeesByCompany();
-
-        assertEquals(2, groupedByCompany.size());
-    }
-
-    @Test
-    @DisplayName("Should group employees by company - TechCorp employee count")
-    void groupEmployeesByCompany_ShouldReturnCorrectTechCorpCount() {
-        Map<String, List<Employee>> groupedByCompany = employeeService.groupEmployeesByCompany();
-
-        assertEquals(2, groupedByCompany.get("TechCorp").size());
+        assertEquals(0.0, totalCost);
     }
 }
