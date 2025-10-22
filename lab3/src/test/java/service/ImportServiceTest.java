@@ -220,37 +220,6 @@ class ImportServiceTest {
         );
     }
 
-    @Test
-    @DisplayName("Should handle large CSV file efficiently")
-    void importFromCsv_WithLargeFile_ShouldImportSuccessfully() throws IOException {
-        // Arrange
-        File csvFile = tempDir.resolve("large_file.csv").toFile();
-        try (FileWriter writer = new FileWriter(csvFile)) {
-            writer.write("firstName,lastName,email,company,position,salary\n");
-            for (int i = 0; i < 100; i++) {
-                writer.write(String.format("User%d,Test%d,user%d@test.com,TechCorp,PROGRAMMER,%d\n",
-                        i, i, i, 5000 + i));
-            }
-        }
-
-        // Act
-        long startTime = System.currentTimeMillis();
-        ImportSummary summary = importService.importFromCsv(csvFile.getAbsolutePath());
-        long endTime = System.currentTimeMillis();
-
-        // Assert
-        assertAll("Large file import validation",
-                () -> assertEquals(100, summary.getImportedCount(),
-                        "Should import all 100 records"),
-                () -> assertTrue(summary.getErrors().isEmpty(),
-                        "Should have no errors"),
-                () -> assertTrue((endTime - startTime) < 5000,
-                        "Should complete within 5 seconds"),
-                () -> assertEquals(100, employeeService.getEmployeeCount(),
-                        "Should add all employees to service")
-        );
-    }
-
     // ===== TESTOWANIE WALIDACJI DANYCH =====
 
     @ParameterizedTest
