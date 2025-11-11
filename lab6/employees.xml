@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<employees>
+    <employee>
+        <name>John Smith</name>
+        <email>john.smith@company.com</email>
+        <company>TechCorp</company>
+        <position>DEVELOPER</position>
+        <salary>5000.00</salary>
+    </employee>
+    <employee>
+        <name>Anna Kowalski</name>
+        <email>anna.kowalski@firm.com</email>
+        <company>BusinessInc</company>
+        <position>MANAGER</position>
+        <salary>7500.50</salary>
+    </employee>
+    <employee>
+        <name>Invalid User</name>
+        <email>invalid-email</email>
+        <company>TestCorp</company>
+        <position>DEVELOPER</position>
+        <salary>4000.00</salary>
+    </employee>
+</employees>

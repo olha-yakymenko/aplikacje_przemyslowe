@@ -1,0 +1,3 @@
+Name,Email,Company,Position,Salary,Status
+"Doe",john.doe@company.com,"TechCorp",MANAGER,15000,00,ACTIVE
+"Johnson",bob.johnson@company.com,"TechCorp",INTERN,2500,00,ACTIVE

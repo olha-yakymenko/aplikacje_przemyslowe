@@ -41,6 +41,13 @@ public class FileStorageService {
             Files.createDirectories(this.reportsStorageLocation);
             Files.createDirectories(this.documentsStorageLocation);
             Files.createDirectories(this.photosStorageLocation);
+
+            System.out.println("Created directories for file storage");
+            System.out.println("Uploads: " + this.fileStorageLocation);
+            System.out.println("Reports: " + this.reportsStorageLocation);
+            System.out.println("Documents: " + this.documentsStorageLocation);
+            System.out.println("Photos: " + this.photosStorageLocation);
+
         } catch (Exception ex) {
             throw new FileStorageException("Could not create the directories", ex);
         }
@@ -63,6 +70,8 @@ public class FileStorageService {
             }
 
             Path targetLocation = resolvePath(subdirectory).resolve(fileName);
+            System.out.println("Storing file: " + fileName + " at " + targetLocation.toAbsolutePath());
+
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
             return fileName;
@@ -71,14 +80,41 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Zapisuje plik z własną nazwą - dla zdjęć pracowników
+     */
+    public String storeFileWithCustomName(MultipartFile file, String subdirectory, String customFileName) {
+        validateFile(file);
+
+        try {
+            String fileName = normalizeFileName(customFileName);
+            Path targetLocation = resolvePath(subdirectory).resolve(fileName);
+
+            System.out.println("Storing file with custom name: " + fileName);
+            System.out.println("Target location: " + targetLocation.toAbsolutePath());
+
+            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+            System.out.println("File stored successfully: " + fileName);
+            return fileName;
+        } catch (IOException ex) {
+            throw new FileStorageException("Could not store file " + customFileName, ex);
+        }
+    }
+
     public Resource loadFileAsResource(String fileName, String subdirectory) {
         try {
             Path filePath = resolvePath(subdirectory).resolve(fileName).normalize();
+            System.out.println("Loading file: " + filePath.toAbsolutePath());
+            System.out.println("File exists: " + Files.exists(filePath));
+
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists()) {
+                System.out.println("Resource loaded successfully");
                 return resource;
             } else {
+                System.err.println("File not found: " + filePath.toAbsolutePath());
                 throw new FileNotFoundException("File not found: " + fileName);
             }
         } catch (MalformedURLException ex) {
@@ -89,7 +125,12 @@ public class FileStorageService {
     public boolean deleteFile(String fileName, String subdirectory) {
         try {
             Path filePath = resolvePath(subdirectory).resolve(fileName).normalize();
-            return Files.deleteIfExists(filePath);
+            System.out.println("Deleting file: " + filePath.toAbsolutePath());
+
+            boolean deleted = Files.deleteIfExists(filePath);
+            System.out.println("File deleted: " + deleted);
+
+            return deleted;
         } catch (IOException ex) {
             throw new FileStorageException("Could not delete file: " + fileName, ex);
         }
@@ -137,11 +178,13 @@ public class FileStorageService {
     public void validateImageFile(MultipartFile file) {
         validateFileType(file, new String[]{".jpg", ".jpeg", ".png"});
 
-        // Basic MIME type validation
+        // Rozszerzona walidacja MIME type
         String contentType = file.getContentType();
         if (contentType == null ||
-                (!contentType.equals("image/jpeg") && !contentType.equals("image/png"))) {
-            throw new InvalidFileException("File must be a JPEG or PNG image");
+                (!contentType.equals("image/jpeg") &&
+                        !contentType.equals("image/jpg") &&
+                        !contentType.equals("image/png"))) {
+            throw new InvalidFileException("File must be a JPEG or PNG image. Detected: " + contentType);
         }
     }
 

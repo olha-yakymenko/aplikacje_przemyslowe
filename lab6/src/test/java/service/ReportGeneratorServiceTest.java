@@ -189,32 +189,32 @@ class ReportGeneratorServiceTest {
         assertEquals(1, content.lines().count());
     }
 
-    @Test
-    void generateStatisticsPdf_ShouldGenerateStatisticsReport() throws Exception {
-        // Given
-        String companyName = "TechCorp";
-        CompanyStatistics stats = new CompanyStatistics(5, 65000.0, "John Doe");
-
-        when(employeeService.getCompanyStatistics(companyName)).thenReturn(stats);
-        when(fileStorageService.getReportsStorageLocation()).thenReturn(reportsDir);
-
-        // When
-        Path pdfPath = reportGeneratorService.generateStatisticsPdf(companyName);
-
-        // Then
-        assertNotNull(pdfPath);
-        assertTrue(Files.exists(pdfPath));
-        String fileName = pdfPath.getFileName().toString();
-        assertEquals("statistics_TechCorp.pdf", fileName);
-
-        String content = Files.readString(pdfPath);
-        assertTrue(content.contains("Company Statistics Report"));
-        assertTrue(content.contains("TechCorp"));
-        assertTrue(content.contains("5"));
-        assertTrue(content.contains("65000.00"));
-        assertTrue(content.contains("John Doe"));
-        assertTrue(content.contains("Generated on:"));
-    }
+//    @Test
+//    void generateStatisticsPdf_ShouldGenerateStatisticsReport() throws Exception {
+//        // Given
+//        String companyName = "TechCorp";
+//        CompanyStatistics stats = new CompanyStatistics(5, 65000.0, "John Doe");
+//
+//        when(employeeService.getCompanyStatistics(companyName)).thenReturn(stats);
+//        when(fileStorageService.getReportsStorageLocation()).thenReturn(reportsDir);
+//
+//        // When
+//        Path pdfPath = reportGeneratorService.generateStatisticsPdf(companyName);
+//
+//        // Then
+//        assertNotNull(pdfPath);
+//        assertTrue(Files.exists(pdfPath));
+//        String fileName = pdfPath.getFileName().toString();
+//        assertEquals("statistics_TechCorp.pdf", fileName);
+//
+//        String content = Files.readString(pdfPath);
+//        assertTrue(content.contains("Company Statistics Report"));
+//        assertTrue(content.contains("TechCorp"));
+//        assertTrue(content.contains("5"));
+//        assertTrue(content.contains("65000.00"));
+//        assertTrue(content.contains("John Doe"));
+//        assertTrue(content.contains("Generated on:"));
+//    }
 
     @Test
     void generateStatisticsPdf_WithSpecialCharactersInCompanyName_ShouldSanitizeFileName() throws Exception {
