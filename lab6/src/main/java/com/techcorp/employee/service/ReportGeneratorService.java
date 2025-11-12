@@ -3,6 +3,7 @@ package com.techcorp.employee.service;
 import com.techcorp.employee.model.Employee;
 import com.techcorp.employee.model.CompanyStatistics;
 import com.techcorp.employee.exception.FileStorageException;
+import com.techcorp.employee.exception.FileNotFoundException;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
@@ -17,6 +18,10 @@ import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
 import com.itextpdf.layout.borders.SolidBorder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -24,7 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Service
 public class ReportGeneratorService {
 
@@ -420,6 +424,59 @@ public class ReportGeneratorService {
                 employee.getPosition(),
                 employee.getSalary(),
                 employee.getStatus());
+    }
+
+
+    // Dodaj te metody do istniejącego ReportGeneratorService.java
+
+    public ResponseEntity<org.springframework.core.io.Resource> exportCsvReport(String company) {
+        try {
+            Path csvPath = generateCsvReport(company);
+
+            if (!Files.exists(csvPath)) {
+                Path reportsDir = fileStorageService.getReportsStorageLocation();
+                String fileName = csvPath.getFileName().toString();
+                Path alternativePath = reportsDir.resolve(fileName);
+
+                if (Files.exists(alternativePath)) {
+                    csvPath = alternativePath;
+                } else {
+                    throw new java.io.FileNotFoundException("CSV file not found at: " + csvPath.toAbsolutePath());
+                }
+            }
+
+            org.springframework.core.io.Resource resource = new UrlResource(csvPath.toUri());
+            if (!resource.exists()) {
+                throw new java.io.FileNotFoundException("CSV file not found");
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("text/csv"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + csvPath.getFileName().toString() + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            throw new FileStorageException("Could not generate CSV report: " + e.getMessage(), e);
+        }
+    }
+
+    public ResponseEntity<org.springframework.core.io.Resource> exportStatisticsReport(String companyName) {
+        try {
+            Path pdfPath = generateStatisticsPdf(companyName);
+
+            org.springframework.core.io.Resource resource = new UrlResource(pdfPath.toUri());
+            if (!resource.exists()) {
+                throw new java.io.FileNotFoundException("PDF file not found at: " + pdfPath.toAbsolutePath());
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + pdfPath.getFileName().toString() + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            throw new FileStorageException("Could not generate statistics report", e);
+        }
     }
 }
 

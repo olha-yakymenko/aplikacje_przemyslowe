@@ -23,6 +23,11 @@ public class ImportSummary {
     public String toString() {
         return "Imported: " + importedCount + ", Errors: " + errors;
     }
+
+    // W klasie ImportSummary dodaj metodę:
+    public boolean hasErrors() {
+        return !getErrors().isEmpty();
+    }
 }
 
 

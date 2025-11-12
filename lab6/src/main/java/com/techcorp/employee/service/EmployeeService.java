@@ -2,17 +2,28 @@ package com.techcorp.employee.service;
 
 import com.techcorp.employee.exception.*;
 import com.techcorp.employee.model.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.UrlResource;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class EmployeeService {
     private final Set<Employee> employees;
+    private final FileStorageService fileStorageService;
 
-    public EmployeeService() {
+    @Autowired
+    public EmployeeService(FileStorageService fileStorageService) {
         this.employees = new HashSet<>();
+        this.fileStorageService = fileStorageService;
     }
 
     // ===== ZARZĄDZANIE PRACOWNIKAMI =====
@@ -319,5 +330,106 @@ public class EmployeeService {
         if (company == null || company.trim().isEmpty()) {
             throw new IllegalArgumentException("Company name cannot be null or empty");
         }
+    }
+
+    // ===== ZARZĄDZANIE ZDJĘCIAMI PRACOWNIKÓW =====
+
+    public ResponseEntity<String> uploadEmployeePhoto(String email, MultipartFile file) {
+        try {
+            // Walidacja pracownika
+            if (!employeeExists(email)) {
+                throw new EmployeeNotFoundException("Employee not found with email: " + email);
+            }
+
+            // Walidacja pliku
+            fileStorageService.validateFile(file);
+            fileStorageService.validateImageFile(file);
+            fileStorageService.validateFileSize(file, 2 * 1024 * 1024); // 2MB
+
+            // Utwórz nazwę pliku na podstawie emaila
+            String fileExtension = getFileExtension(file.getOriginalFilename());
+            String customFileName = email.replace("@", "_").replace(".", "_") + fileExtension;
+
+            // Zapisz plik
+            String savedFileName = fileStorageService.storeFileWithCustomName(file, "photos", customFileName);
+
+            // Zaktualizuj pracownika
+            findEmployeeByEmail(email).ifPresent(employee -> {
+                employee.setPhotoFileName(savedFileName);
+            });
+
+            return ResponseEntity.ok("Photo uploaded successfully: " + savedFileName);
+
+        } catch (InvalidFileException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    public ResponseEntity<org.springframework.core.io.Resource> getEmployeePhoto(String email) {
+        try {
+            String photoFileName = findEmployeeByEmail(email)
+                    .map(Employee::getPhotoFileName)
+                    .orElseThrow(() -> new FileNotFoundException("Employee not found or has no photo"));
+
+            Path photosDir = fileStorageService.getPhotosStorageLocation();
+            Path photoPath = photosDir.resolve(photoFileName);
+
+            org.springframework.core.io.Resource resource = new UrlResource(photoPath.toUri());
+            if (!resource.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String contentType = determineImageContentType(photoFileName);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + photoFileName + "\"")
+                    .body(resource);
+
+        } catch (FileNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    public void deleteEmployeePhoto(String email) {
+        try {
+            String photoFileName = findEmployeeByEmail(email)
+                    .map(Employee::getPhotoFileName)
+                    .orElse(null);
+
+            if (photoFileName != null) {
+                fileStorageService.deleteFile(photoFileName, "photos");
+
+                // Wyczyść referencję do zdjęcia
+                findEmployeeByEmail(email).ifPresent(employee -> {
+                    employee.setPhotoFileName(null);
+                });
+            }
+
+        } catch (Exception e) {
+            throw new FileStorageException("Could not delete photo", e);
+        }
+    }
+
+    // ===== METODY POMOCNICZE =====
+
+    private String determineImageContentType(String filename) {
+        if (filename.toLowerCase().endsWith(".png")) {
+            return "image/png";
+        } else if (filename.toLowerCase().endsWith(".gif")) {
+            return "image/gif";
+        } else {
+            return "image/jpeg";
+        }
+    }
+
+    private String getFileExtension(String fileName) {
+        if (fileName == null) return ".jpg";
+        int lastDotIndex = fileName.lastIndexOf(".");
+        return lastDotIndex > 0 ? fileName.substring(lastDotIndex) : ".jpg";
     }
 }

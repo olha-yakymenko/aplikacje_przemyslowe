@@ -1,9 +1,14 @@
 package com.techcorp.employee.service;
 
+import com.techcorp.employee.exception.FileNotFoundException;
 import com.techcorp.employee.model.EmployeeDocument;
 import com.techcorp.employee.model.DocumentType;
 import com.techcorp.employee.exception.EmployeeNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -77,5 +82,35 @@ public class EmployeeDocumentService {
 
     public boolean documentExists(String documentId) {
         return documents.containsKey(documentId);
+    }
+
+
+
+    // Dodaj te metody do istniejącego EmployeeDocumentService.java
+
+    public ResponseEntity<Resource> downloadDocument(String email, String documentId) {
+        EmployeeDocument document = getDocument(documentId);
+
+        if (!document.getEmployeeEmail().equalsIgnoreCase(email)) {
+            throw new FileNotFoundException("Document not found for employee: " + email);
+        }
+
+        Resource resource = fileStorageService.loadFileAsResource(
+                document.getFileName(), "documents/" + email);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getOriginalFileName() + "\"")
+                .body(resource);
+    }
+
+    public void deleteDocument(String email, String documentId) {
+        EmployeeDocument document = getDocument(documentId);
+
+        if (!document.getEmployeeEmail().equalsIgnoreCase(email)) {
+            throw new FileNotFoundException("Document not found for employee: " + email);
+        }
+
+        deleteDocument(documentId);
     }
 }
