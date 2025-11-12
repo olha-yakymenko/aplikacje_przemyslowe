@@ -141,3 +141,56 @@ curl -X POST http://localhost:8080/api/employees \
 "status": "ACTIVE"
 }'
 
+
+--------
+curl -X POST http://localhost:8080/api/files/import/csv \
+-F "file=@employees.csv"
+
+
+curl -X POST http://localhost:8080/api/files/import/xml \
+-F "file=@employees.xml" 
+
+curl -X POST http://localhost:8080/api/files/documents/john.doe@company.com \
+-F "file=@contract.pdf" \
+-F "type=CONTRACT"
+
+curl -X POST http://localhost:8080/api/files/documents/john.doe@company.com \                 
+-F "file=@contract.pdf" \
+-F "type=CONTRACT"
+
+curl http://localhost:8080/api/files/documents/john.doe@company.com
+
+curl -X POST http://localhost:8080/api/files/photos/john.doe@company.com \
+-F "file=@photo.png"
+
+curl http://localhost:8080/api/files/photos/john.doe@company.com \
+--output photo.jpg
+
+
+curl -X GET "http://localhost:8080/api/files/reports/statistics/TechCorp" \
+--output techcorp_statistics.pdf
+
+
+
+bledy:
+# Pusty plik
+curl -X POST http://localhost:8080/api/files/import/csv \
+-F "file=@empty_file.csv"
+
+# Plik bez nazwy
+echo "test,data" | curl -X POST http://localhost:8080/api/files/import/csv \
+-F "file=@-"
+
+# Nieprawidłowy email pracownika (dla dokumentów/zdjęć)
+curl -X POST "http://localhost:8080/api/files/documents/invalid-email" \
+-F "file=@test.pdf" \
+-F "type=CONTRACT"
+
+# Nieistniejący pracownik (dokumenty)
+curl -X GET "http://localhost:8080/api/files/documents/nonexistent@example.com"
+
+# Nieistniejący dokument
+curl -X GET "http://localhost:8080/api/files/documents/john.smith@techcorp.com/99999"
+
+# Nieistniejące zdjęcie
+curl -X GET "http://localhost:8080/api/files/photos/nonexistent@example.com"

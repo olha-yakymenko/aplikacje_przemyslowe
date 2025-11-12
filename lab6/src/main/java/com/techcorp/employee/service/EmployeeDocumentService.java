@@ -86,8 +86,6 @@ public class EmployeeDocumentService {
 
 
 
-    // Dodaj te metody do istniejącego EmployeeDocumentService.java
-
     public ResponseEntity<Resource> downloadDocument(String email, String documentId) {
         EmployeeDocument document = getDocument(documentId);
 

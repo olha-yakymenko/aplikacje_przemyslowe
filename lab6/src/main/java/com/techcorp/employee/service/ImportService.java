@@ -1,3 +1,6 @@
+
+
+
 package com.techcorp.employee.service;
 
 import com.techcorp.employee.exception.InvalidDataException;
@@ -17,17 +20,17 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+
 @Service
 public class ImportService {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-    private static final int EXPECTED_CSV_FIELDS = 5; // 5 pól: name,email,company,position,salary
+    private static final int EXPECTED_CSV_FIELDS = 6; // 6 pól: firstName,lastName,email,company,position,salary
 
     private final EmployeeService employeeService;
 
@@ -38,87 +41,75 @@ public class ImportService {
         this.employeeService = employeeService;
     }
 
-    public ImportSummary importFromCsv(String filePath) {
+    // ===== METODY DO OBSŁUGI MULTIPART FILE =====
+
+    public ImportSummary importCsvFile(MultipartFile file) {
         ImportSummary summary = new ImportSummary();
-
-        if (!isValidFilePath(filePath)) {
-            summary.addError("File path cannot be null or empty");
-            return summary;
-        }
-
-        try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
-            List<String[]> allRows = reader.readAll();
-            processCsvRows(allRows, summary);
-        } catch (IOException e) {
-            summary.addError("File read error: " + e.getMessage());
-        } catch (CsvException e) {
-            summary.addError("CSV parsing error: " + e.getMessage());
-        } catch (Exception e) {
-            summary.addError("Unexpected error: " + e.getMessage());
-        }
-
-        return summary;
-    }
-
-    public ImportSummary importFromXml(String filePath) {
-        ImportSummary summary = new ImportSummary();
-
-        if (!isValidFilePath(filePath)) {
-            summary.addError("XML file path cannot be null or empty");
-            return summary;
-        }
-
-        File xmlFile = new File(filePath);
-        if (!xmlFile.exists()) {
-            summary.addError("XML file not found: " + filePath);
-            return summary;
-        }
 
         try {
-            Document document = parseXmlDocument(xmlFile);
-            processXmlEmployees(document, summary);
-        } catch (IOException e) {
-            summary.addError("File read error: " + e.getMessage());
+            // Walidacja pliku
+            fileStorageService.validateFile(file);
+            fileStorageService.validateFileType(file, new String[]{".csv"});
+            fileStorageService.validateFileSize(file, 10L * 1024 * 1024); // 10MB
+
+            // Bezpośrednie przetworzenie z MultipartFile - BEZ ZAPISU NA DYSK
+            List<String[]> allRows = readCsvFromMultipartFile(file);
+            processCsvRows(allRows, summary);
+
+        } catch (InvalidFileException e) {
+            summary.addError("Invalid file: " + e.getMessage());
         } catch (Exception e) {
-            summary.addError("Unexpected error during XML import: " + e.getMessage());
+            summary.addError("CSV import failed: " + e.getMessage());
         }
 
         return summary;
     }
 
-    public Employee parseEmployeeFromCsv(String[] fields, int lineNumber) throws InvalidDataException {
-        validateFieldCount(fields, lineNumber);
+    public ImportSummary importXmlFile(MultipartFile file) {
+        ImportSummary summary = new ImportSummary();
 
-        // Pobieranie i trimowanie pól - 5 pól bez dodatkowego nagłówka
-        String name = getSafeField(fields, 0);    // Pole 0: Name
-        String email = getSafeField(fields, 1);   // Pole 1: Email
-        String company = getSafeField(fields, 2); // Pole 2: Company
-        String positionStr = getSafeField(fields, 3); // Pole 3: Position
-        String salaryStr = getSafeField(fields, 4);   // Pole 4: Salary
+        try {
+            // Walidacja pliku
+            fileStorageService.validateFile(file);
+            fileStorageService.validateFileType(file, new String[]{".xml"});
+            fileStorageService.validateFileSize(file, 10L * 1024 * 1024); // 10MB
 
-        validateRequiredFields(name, email, company, lineNumber);
-        validateEmailFormat(email, lineNumber);
+            // Bezpośrednie przetworzenie z MultipartFile - BEZ ZAPISU NA DYSK
+            Document document = parseXmlFromMultipartFile(file);
+            processXmlEmployees(document, summary);
 
-        Position position = parsePosition(positionStr, lineNumber);
-        double salary = parseSalary(salaryStr, lineNumber);
+        } catch (InvalidFileException e) {
+            summary.addError("Invalid file: " + e.getMessage());
+        } catch (Exception e) {
+            summary.addError("XML import failed: " + e.getMessage());
+        }
 
-        return new Employee(name, email, company, position, salary);
+        return summary;
     }
 
-    // ===== PRYWATNE METODY POMOCNICZE =====
+    // ===== PRYWATNE METODY PRZETWARZANIA CSV =====
 
-    private boolean isValidFilePath(String filePath) {
-        return filePath != null && !filePath.trim().isEmpty();
+    private List<String[]> readCsvFromMultipartFile(MultipartFile file) throws IOException, CsvException {
+        try (InputStream inputStream = file.getInputStream();
+             CSVReader reader = new CSVReader(new InputStreamReader(inputStream))) {
+            return reader.readAll();
+        }
     }
 
     private void processCsvRows(List<String[]> allRows, ImportSummary summary) {
         if (allRows.isEmpty()) {
-            return; // Pusty plik
+            summary.addError("File is empty");
+            return;
         }
 
         // Sprawdź czy pierwszy wiersz to nagłówek
         boolean hasHeader = hasHeaderRow(allRows.get(0));
         int startIndex = hasHeader ? 1 : 0;
+
+        if (startIndex >= allRows.size()) {
+            summary.addError("No data rows found after header");
+            return;
+        }
 
         for (int i = startIndex; i < allRows.size(); i++) {
             String[] fields = allRows.get(i);
@@ -129,13 +120,6 @@ public class ImportService {
 
             processSingleCsvRecord(fields, i + 1, summary);
         }
-    }
-
-    private boolean hasHeaderRow(String[] firstRow) {
-        if (firstRow.length < 3) return false;
-        // Sprawdź czy pierwszy wiersz wygląda jak nagłówek
-        String firstField = firstRow[0] != null ? firstRow[0].toLowerCase() : "";
-        return firstField.contains("name") || firstField.contains("email") || firstField.contains("company");
     }
 
     private void processSingleCsvRecord(String[] fields, int lineNumber, ImportSummary summary) {
@@ -152,7 +136,32 @@ public class ImportService {
         }
     }
 
-    private Document parseXmlDocument(File xmlFile) throws Exception {
+    public Employee parseEmployeeFromCsv(String[] fields, int lineNumber) throws InvalidDataException {
+        validateFieldCount(fields, lineNumber);
+
+        // Pobieranie i trimowanie pól - 6 pól: firstName,lastName,email,company,position,salary
+        String firstName = getSafeField(fields, 0);   // Pole 0: First Name
+        String lastName = getSafeField(fields, 1);    // Pole 1: Last Name
+        String email = getSafeField(fields, 2);       // Pole 2: Email
+        String company = getSafeField(fields, 3);     // Pole 3: Company
+        String positionStr = getSafeField(fields, 4); // Pole 4: Position
+        String salaryStr = getSafeField(fields, 5);   // Pole 5: Salary
+
+        validateRequiredFields(firstName, lastName, email, company, lineNumber);
+        validateEmailFormat(email, lineNumber);
+
+        Position position = parsePosition(positionStr, lineNumber);
+        double salary = parseSalary(salaryStr, lineNumber);
+
+        // Tworzymy pełne imię i nazwisko
+        String fullName = firstName + " " + lastName;
+
+        return new Employee(fullName, email, company, position, salary);
+    }
+
+    // ===== PRYWATNE METODY PRZETWARZANIA XML =====
+
+    private Document parseXmlFromMultipartFile(MultipartFile file) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
         // Zabezpieczenie przed atakami XXE
@@ -163,10 +172,11 @@ public class ImportService {
         factory.setExpandEntityReferences(false);
 
         DocumentBuilder builder = factory.newDocumentBuilder();
-        Document document = builder.parse(xmlFile);
-        document.getDocumentElement().normalize();
-
-        return document;
+        try (InputStream inputStream = file.getInputStream()) {
+            Document document = builder.parse(inputStream);
+            document.getDocumentElement().normalize();
+            return document;
+        }
     }
 
     private void processXmlEmployees(Document document, ImportSummary summary) {
@@ -209,24 +219,31 @@ public class ImportService {
     }
 
     private Employee parseEmployeeFromXml(Element employeeElement, int elementNumber) throws InvalidDataException {
-        String name = getElementTextContent(employeeElement, "name", elementNumber);
+        String firstName = getElementTextContent(employeeElement, "firstName", elementNumber);
+        String lastName = getElementTextContent(employeeElement, "lastName", elementNumber);
         String email = getElementTextContent(employeeElement, "email", elementNumber);
         String company = getElementTextContent(employeeElement, "company", elementNumber);
         String positionStr = getElementTextContent(employeeElement, "position", elementNumber);
         String salaryStr = getElementTextContent(employeeElement, "salary", elementNumber);
 
-        validateRequiredFields(name, email, company, elementNumber);
+        validateRequiredFields(firstName, lastName, email, company, elementNumber);
         validateEmailFormat(email, elementNumber);
 
         Position position = parsePosition(positionStr, elementNumber);
         double salary = parseSalary(salaryStr, elementNumber);
 
-        return new Employee(name, email, company, position, salary);
+        // Tworzymy pełne imię i nazwisko
+        String fullName = firstName + " " + lastName;
+
+        return new Employee(fullName, email, company, position, salary);
     }
+
+    // ===== METODY WALIDACYJNE =====
 
     private void validateFieldCount(String[] fields, int lineNumber) throws InvalidDataException {
         if (fields.length != EXPECTED_CSV_FIELDS) {
-            throw new InvalidDataException("Invalid number of fields. Expected " + EXPECTED_CSV_FIELDS + ", got " + fields.length);
+            throw new InvalidDataException("Invalid number of fields. Expected " + EXPECTED_CSV_FIELDS +
+                    " (firstName,lastName,email,company,position,salary), got " + fields.length);
         }
     }
 
@@ -234,14 +251,17 @@ public class ImportService {
         return (fields.length > index && fields[index] != null) ? fields[index].trim() : "";
     }
 
-    private void validateRequiredFields(String name, String email, String company, int lineNumber) throws InvalidDataException {
-        if (name.isEmpty()) {
-            throw new InvalidDataException("Name cannot be empty");
+    private void validateRequiredFields(String firstName, String lastName, String email, String company, int lineNumber) throws InvalidDataException {
+        if (firstName == null || firstName.isEmpty()) {
+            throw new InvalidDataException("First name cannot be empty");
         }
-        if (email.isEmpty()) {
+        if (lastName == null || lastName.isEmpty()) {
+            throw new InvalidDataException("Last name cannot be empty");
+        }
+        if (email == null || email.isEmpty()) {
             throw new InvalidDataException("Email cannot be empty");
         }
-        if (company.isEmpty()) {
+        if (company == null || company.isEmpty()) {
             throw new InvalidDataException("Company cannot be empty");
         }
     }
@@ -253,22 +273,33 @@ public class ImportService {
     }
 
     private Position parsePosition(String positionStr, int lineNumber) throws InvalidDataException {
+        if (positionStr == null || positionStr.trim().isEmpty()) {
+            throw new InvalidDataException("Position cannot be empty");
+        }
+
         try {
-            return Position.valueOf(positionStr.toUpperCase());
+            return Position.valueOf(positionStr.toUpperCase().trim());
         } catch (IllegalArgumentException e) {
-            throw new InvalidDataException("Invalid position: " + positionStr + ". Valid values: " + Arrays.toString(Position.values()));
+            throw new InvalidDataException("Invalid position: '" + positionStr + "'. Valid values: " + Arrays.toString(Position.values()));
         }
     }
 
     private double parseSalary(String salaryStr, int lineNumber) throws InvalidDataException {
+        if (salaryStr == null || salaryStr.trim().isEmpty()) {
+            throw new InvalidDataException("Salary cannot be empty");
+        }
+
         try {
-            double salary = Double.parseDouble(salaryStr);
+            double salary = Double.parseDouble(salaryStr.trim());
             if (salary < 0) {
                 throw new InvalidDataException("Salary cannot be negative: " + salary);
             }
+            if (salary > 1_000_000) {
+                throw new InvalidDataException("Salary seems unrealistic: " + salary);
+            }
             return salary;
         } catch (NumberFormatException e) {
-            throw new InvalidDataException("Invalid salary format: " + salaryStr);
+            throw new InvalidDataException("Invalid salary format: '" + salaryStr + "'. Must be a number.");
         }
     }
 
@@ -285,12 +316,21 @@ public class ImportService {
         return textContent != null ? textContent.trim() : "";
     }
 
+    // ===== METODY POMOCNICZE =====
+
+    private boolean hasHeaderRow(String[] firstRow) {
+        if (firstRow.length < 3) return false;
+        // Sprawdź czy pierwszy wiersz wygląda jak nagłówek
+        String firstField = firstRow[0] != null ? firstRow[0].toLowerCase() : "";
+        return firstField.contains("first") || firstField.contains("name") || firstField.contains("email");
+    }
+
     private boolean isValidRootElement(String rootName) {
         return "employees".equalsIgnoreCase(rootName) || "employeesList".equalsIgnoreCase(rootName);
     }
 
     private boolean isValidEmail(String email) {
-        return EMAIL_PATTERN.matcher(email).matches();
+        return email != null && EMAIL_PATTERN.matcher(email).matches();
     }
 
     private boolean isEmptyLine(String[] fields) {
@@ -305,52 +345,16 @@ public class ImportService {
         return true;
     }
 
-
-    // Dodaj te metody do istniejącego ImportService.java
-
-    public ImportSummary importCsvFile(MultipartFile file) {
+    public ImportSummary importFromCsv(String filePath) {
         ImportSummary summary = new ImportSummary();
-
-        try {
-            fileStorageService.validateFile(file);
-            fileStorageService.validateFileType(file, new String[]{".csv"});
-            fileStorageService.validateFileSize(file, 10L * 1024 * 1024);
-
-            String fileName = fileStorageService.storeFile(file, "uploads");
-            Path uploadsDir = fileStorageService.getFileStorageLocation().resolve("uploads");
-            String filePath = uploadsDir.resolve(fileName).toString();
-
-            summary = importFromCsv(filePath);
-
-        } catch (InvalidFileException e) {
-            summary.addError("Invalid file: " + e.getMessage());
-        } catch (Exception e) {
-            summary.addError("Import failed: " + e.getMessage());
-        }
-
+        summary.addError("This method is deprecated. Use importCsvFile(MultipartFile) instead.");
         return summary;
     }
 
-    public ImportSummary importXmlFile(MultipartFile file) {
+
+    public ImportSummary importFromXml(String filePath) {
         ImportSummary summary = new ImportSummary();
-
-        try {
-            fileStorageService.validateFile(file);
-            fileStorageService.validateFileType(file, new String[]{".xml"});
-            fileStorageService.validateFileSize(file, 10L * 1024 * 1024);
-
-            String fileName = fileStorageService.storeFile(file, "uploads");
-            Path uploadsDir = fileStorageService.getFileStorageLocation().resolve("uploads");
-            String filePath = uploadsDir.resolve(fileName).toString();
-
-            summary = importFromXml(filePath);
-
-        } catch (InvalidFileException e) {
-            summary.addError("Invalid file: " + e.getMessage());
-        } catch (Exception e) {
-            summary.addError("XML import failed: " + e.getMessage());
-        }
-
+        summary.addError("This method is deprecated. Use importXmlFile(MultipartFile) instead.");
         return summary;
     }
 }
