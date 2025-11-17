@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'System Zarządzania Pracownikami'">System Zarządzania Pracownikami</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">EmployeeManager</h1>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<main class="main-content">
+    <!-- Flash messages -->
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <!-- Default content - will be replaced by specific pages -->
+    <section class="content-section">
+        <h2>Witaj w systemie zarządzania pracownikami</h2>
+        <p>Wybierz sekcję z menu nawigacyjnego.</p>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 TechCorp Employee Management System</p>
+    </div>
+</footer>
+</body>
+</html>

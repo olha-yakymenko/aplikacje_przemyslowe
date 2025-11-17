@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .form-control:invalid {
+            border-color: #dc3545;
+        }
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">EmployeeManager</h1>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<main class="main-content">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title" th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</h1>
+            <a th:href="@{/departments}" class="btn btn-secondary">Powrót do Listy</a>
+        </div>
+
+        <div class="form-container">
+            <form th:action="@{${department.id != null} ? '/departments/edit' : '/departments/add'}"
+                  th:object="${department}" method="post" id="departmentForm" onsubmit="return validateForm()">
+
+                <input type="hidden" th:field="*{id}">
+
+                <div class="form-group">
+                    <label class="form-label required-field" for="name">Nazwa Departamentu</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}"
+                           placeholder="Wprowadź nazwę departamentu" required
+                           oninput="validateForm()">
+                    <div class="error-message" id="nameError" style="color: #dc3545; font-size: 0.875rem; display: none;">
+                        Nazwa departamentu jest wymagana
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="description">Opis</label>
+                    <textarea class="form-control" id="description" th:field="*{description}"
+                              placeholder="Opis departamentu" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="managerEmail">Manager</label>
+                    <select class="form-select" id="managerEmail" th:field="*{managerEmail}">
+                        <option value="">Wybierz managera</option>
+                        <option th:each="manager : ${managers}"
+                                th:value="${manager.email}"
+                                th:text="${manager.name + ' (' + manager.email + ')'}">Jan Kowalski (jan@example.com)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required-field" for="budget">Budżet ($)</label>
+                    <input type="number" step="0.01" class="form-control" id="budget"
+                           th:field="*{budget}" placeholder="100000.00" min="0" required
+                           oninput="validateForm()">
+                    <div class="error-message" id="budgetError" style="color: #dc3545; font-size: 0.875rem; display: none;">
+                        Budżet jest wymagany i musi być liczbą dodatnią
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" id="submitBtn"
+                            th:text="${department.id != null} ? 'Zaktualizuj Departament' : 'Dodaj Departament'">
+                        Dodaj Departament
+                    </button>
+                    <a th:href="@{/departments}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 TechCorp Employee Management System</p>
+    </div>
+</footer>
+
+<script>
+    function validateForm() {
+        const name = document.getElementById('name').value.trim();
+        const budget = document.getElementById('budget').value;
+        const submitBtn = document.getElementById('submitBtn');
+        const nameError = document.getElementById('nameError');
+        const budgetError = document.getElementById('budgetError');
+
+        let isValid = true;
+
+        // Walidacja nazwy
+        if (name === '') {
+            nameError.style.display = 'block';
+            isValid = false;
+        } else {
+            nameError.style.display = 'none';
+        }
+
+        // Walidacja budżetu
+        if (budget === '' || parseFloat(budget) <= 0) {
+            budgetError.style.display = 'block';
+            isValid = false;
+        } else {
+            budgetError.style.display = 'none';
+        }
+
+        // Blokowanie/odblokowanie przycisku
+        submitBtn.disabled = !isValid;
+
+        return isValid;
+    }
+
+    // Inicjalna walidacja przy załadowaniu strony
+    document.addEventListener('DOMContentLoaded', function() {
+        validateForm();
+    });
+</script>
+</body>
+</html>

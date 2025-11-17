@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strona Główna - System Zarządzania Pracownikami</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">EmployeeManager</h1>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<main class="main-content">
+    <!-- Flash messages -->
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Witaj w Systemie Zarządzania Pracownikami</h1>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" th:text="${totalEmployees != null ? totalEmployees : '0'}">0</div>
+                <div class="stat-label">Łączna liczba pracowników</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:if="${avgSalary != null}"
+                     th:text="'$' + ${#numbers.formatDecimal(avgSalary, 1, 2)}">$0</div>
+                <div class="stat-value" th:unless="${avgSalary != null}">$0</div>
+                <div class="stat-label">Średnie wynagrodzenie</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:text="${totalDepartments != null ? totalDepartments : '0'}">0</div>
+                <div class="stat-label">Liczba departamentów</div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <h2>Szybkie akcje</h2>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <a th:href="@{/employees}" class="btn btn-primary">Zarządzaj Pracownikami</a>
+                <a th:href="@{/departments}" class="btn btn-secondary">Zarządzaj Departamentami</a>
+                <a th:href="@{/statistics}" class="btn btn-success">Przeglądaj Statystyki</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 TechCorp Employee Management System</p>
+    </div>
+</footer>
+</body>
+</html>

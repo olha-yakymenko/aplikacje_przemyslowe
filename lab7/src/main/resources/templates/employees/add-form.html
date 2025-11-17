@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dodaj Pracownika - System Zarządzania Pracownikami</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">EmployeeManager</h1>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<main class="main-content">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Dodaj Nowego Pracownika</h1>
+            <a th:href="@{/employees}" class="btn btn-secondary">Powrót do Listy</a>
+        </div>
+
+        <div class="form-container">
+            <form th:action="@{/employees/add}" th:object="${employee}" method="post">
+                <div class="form-group">
+                    <label class="form-label" for="firstName">Imię *</label>
+                    <input type="text" class="form-control" id="firstName" th:field="*{firstName}"
+                           placeholder="Wprowadź imię" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="lastName">Nazwisko *</label>
+                    <input type="text" class="form-control" id="lastName" th:field="*{lastName}"
+                           placeholder="Wprowadź nazwisko" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email *</label>
+                    <input type="email" class="form-control" id="email" th:field="*{email}"
+                           placeholder="przyklad@firma.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="company">Firma *</label>
+                    <input type="text" class="form-control" id="company" th:field="*{company}"
+                           placeholder="Nazwa firmy" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="position">Stanowisko *</label>
+                    <select class="form-select" id="position" th:field="*{position}" required>
+                        <option value="">Wybierz stanowisko</option>
+                        <option th:each="pos : ${positions}"
+                                th:value="${pos}"
+                                th:text="${pos}">DEVELOPER</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="salary">Wynagrodzenie ($) *</label>
+                    <input type="number" step="0.01" class="form-control" id="salary"
+                           th:field="*{salary}" placeholder="5000.00" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="status">Status *</label>
+                    <select class="form-select" id="status" th:field="*{status}" required>
+                        <option value="">Wybierz status</option>
+                        <option th:each="status : ${statuses}"
+                                th:value="${status}"
+                                th:text="${status}">ACTIVE</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="departmentId">ID Departamentu (opcjonalnie)</label>
+                    <input type="number" class="form-control" id="departmentId"
+                           name="departmentId" placeholder="123" min="1">
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Dodaj Pracownika</button>
+                    <a th:href="@{/employees}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 TechCorp Employee Management System</p>
+    </div>
+</footer>
+</body>
+</html>

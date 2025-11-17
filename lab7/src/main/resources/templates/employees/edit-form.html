@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edytuj Pracownika - System Zarządzania Pracownikami</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">EmployeeManager</h1>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<main class="main-content">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Edytuj Pracownika</h1>
+            <a th:href="@{/employees}" class="btn btn-secondary">Powrót do Listy</a>
+        </div>
+
+        <div class="form-container">
+            <form th:action="@{/employees/edit}" method="post">
+                <!-- Ukryte pole z emailem (klucz) -->
+                <input type="hidden" name="email" th:value="${employee.email}">
+
+                <div class="form-group">
+                    <label class="form-label" for="name">Imię i Nazwisko *</label>
+                    <input type="text" class="form-control" id="name" name="name"
+                           th:value="${employee.name}" placeholder="Wprowadź imię i nazwisko" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="emailDisplay">Email</label>
+                    <input type="text" class="form-control" id="emailDisplay"
+                           th:value="${employee.email}" disabled>
+                    <small class="form-text">Email nie może być zmieniony</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="company">Firma *</label>
+                    <input type="text" class="form-control" id="company" name="company"
+                           th:value="${employee.company}" placeholder="Nazwa firmy" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="position">Stanowisko *</label>
+                    <select class="form-select" id="position" name="position" required>
+                        <option value="">Wybierz stanowisko</option>
+                        <option th:each="pos : ${positions}"
+                                th:value="${pos}"
+                                th:selected="${employee.position == pos}"
+                                th:text="${pos}">DEVELOPER</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="salary">Wynagrodzenie ($) *</label>
+                    <input type="number" step="0.01" class="form-control" id="salary"
+                           name="salary" th:value="${employee.salary}" placeholder="5000.00" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="status">Status *</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="">Wybierz status</option>
+                        <option th:each="status : ${statuses}"
+                                th:value="${status}"
+                                th:selected="${employee.status == status}"
+                                th:text="${status}">ACTIVE</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="departmentId">ID Departamentu (opcjonalnie)</label>
+                    <input type="number" class="form-control" id="departmentId"
+                           name="departmentId" th:value="${employee.departmentId}" placeholder="123" min="1">
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Zaktualizuj Pracownika</button>
+                    <a th:href="@{/employees}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 TechCorp Employee Management System</p>
+    </div>
+</footer>
+
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+
+    .form-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+        background-color: #3498db;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #2980b9;
+    }
+
+    .btn-secondary {
+        background-color: #95a5a6;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #7f8c8d;
+    }
+</style>
+</body>
+</html>

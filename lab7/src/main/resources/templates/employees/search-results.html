@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Wyniki Wyszukiwania - System Zarządzania Pracownikami</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">EmployeeManager</h1>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+<main class="main-content">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Wyniki Wyszukiwania</h1>
+            <a th:href="@{/employees/search}" class="btn btn-secondary">Nowe wyszukiwanie</a>
+            <a th:href="@{/employees}" class="btn btn-primary" style="margin-left: 1rem;">Wszyscy pracownicy</a>
+        </div>
+
+        <div th:if="${searchCompany}" class="search-info">
+            <p>Wyniki dla firmy: <strong th:text="${searchCompany}"></strong></p>
+        </div>
+
+        <div class="table-container">
+            <table class="data-table" th:if="${not #lists.isEmpty(employees)}">
+                <thead>
+                <tr>
+                    <th>Imię i Nazwisko</th>
+                    <th>Email</th>
+                    <th>Firma</th>
+                    <th>Stanowisko</th>
+                    <th>Wynagrodzenie</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="employee : ${employees}">
+                    <td th:text="${employee.name}">Jan Kowalski</td>
+                    <td th:text="${employee.email}">jan@example.com</td>
+                    <td th:text="${employee.company}">TechCorp</td>
+                    <td th:text="${employee.position}">DEVELOPER</td>
+                    <td th:text="'$' + ${#numbers.formatDecimal(employee.salary, 1, 2)}">$5000.00</td>
+                    <td th:text="${employee.status}">ACTIVE</td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${#lists.isEmpty(employees)}" class="no-results">
+                <p>Nie znaleziono pracowników dla podanej firmy.</p>
+                <a th:href="@{/employees/search}" class="btn btn-primary">Spróbuj ponownie</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 TechCorp Employee Management System</p>
+    </div>
+</footer>
+</body>
+</html>
