@@ -24,10 +24,10 @@ public class ImportSummary {
         return "Imported: " + importedCount + ", Errors: " + errors;
     }
 
-    // W klasie ImportSummary dodaj metodę:
     public boolean hasErrors() {
         return !getErrors().isEmpty();
     }
+
 
 }
 

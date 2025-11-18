@@ -10,6 +10,21 @@ public class Department {
     // Pusty konstruktor
     public Department() {}
 
+    public Department(Long id, String name, String description, String managerEmail, Double budget) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.managerEmail = managerEmail;
+        this.budget = budget;
+    }
+
+    public Department(String name, String description, String managerEmail, Double budget) {
+        this.name = name;
+        this.description = description;
+        this.managerEmail = managerEmail;
+        this.budget = budget;
+    }
+
     // Gettery i settery dla WSZYSTKICH pól
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

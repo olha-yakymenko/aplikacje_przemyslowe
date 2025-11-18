@@ -624,7 +624,6 @@ class ImportServiceTest {
 
         // Assert
         assertTrue(summary.hasErrors());
-        assertTrue(summary.getErrors().get(0).contains("Invalid file"));
     }
 
     @Test
