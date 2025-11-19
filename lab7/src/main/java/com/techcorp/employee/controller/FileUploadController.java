@@ -34,8 +34,6 @@ public class FileUploadController {
     @Autowired
     private EmployeeService employeeService;
 
-    // === IMPORT PLIKÓW ===
-
     @PostMapping("/import/csv")
     public ResponseEntity<ImportSummary> importCsv(@RequestParam("file") MultipartFile file) {
         ImportSummary summary = importService.importCsvFile(file);
@@ -47,19 +45,6 @@ public class FileUploadController {
         ImportSummary summary = importService.importXmlFile(file);
         return createImportResponse(summary);
     }
-
-    // === EKSPORT RAPORTÓW ===
-
-//    @GetMapping("/export/csv")
-//    public ResponseEntity<org.springframework.core.io.Resource> exportCsv(@RequestParam(required = false) String company) {
-//        return reportGeneratorService.exportCsvReport(company);
-//    }
-//
-//    @GetMapping("/reports/statistics/{companyName}")
-//    public ResponseEntity<org.springframework.core.io.Resource> generateStatisticsReport(@PathVariable String companyName) {
-//        return reportGeneratorService.exportStatisticsReport(companyName);
-//    }
-
 
     @GetMapping("/export/csv")
     public ResponseEntity<org.springframework.core.io.Resource> exportCsv(@RequestParam(required = false) String company) {
@@ -82,8 +67,6 @@ public class FileUploadController {
                         reportData.get("contentDisposition") + "; filename=\"" + reportData.get("fileName") + "\"")
                 .body((org.springframework.core.io.Resource) reportData.get("resource"));
     }
-
-    // === DOKUMENTY PRACOWNIKÓW ===
 
     @PostMapping("/documents/{email}")
     public ResponseEntity<EmployeeDocument> uploadDocument(
@@ -118,7 +101,6 @@ public class FileUploadController {
         return ResponseEntity.noContent().build();
     }
 
-    // === ZDJĘCIA PRACOWNIKÓW ===
 
     @PostMapping("/photos/{email}")
     public ResponseEntity<String> uploadPhoto(
@@ -139,12 +121,77 @@ public class FileUploadController {
         return ResponseEntity.noContent().build();
     }
 
-    // === PRYWATNE METODY POMOCNICZE ===
 
     private ResponseEntity<ImportSummary> createImportResponse(ImportSummary summary) {
         if (summary.hasErrors()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(summary);
         }
         return ResponseEntity.ok(summary);
+    }
+
+
+
+
+
+    // W FileUploadController.java dodaj te metody:
+
+    @PostMapping("/department-documents/{departmentId}")
+    public ResponseEntity<String> uploadDepartmentDocument(
+            @PathVariable Long departmentId,
+            @RequestParam("file") MultipartFile file) {
+
+        try {
+            String fileName = fileStorageService.storeDepartmentDocument(file, departmentId);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Document uploaded successfully: " + fileName);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error uploading document: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/department-documents/{departmentId}")
+    public ResponseEntity<List<String>> getDepartmentDocuments(@PathVariable Long departmentId) {
+        try {
+            List<String> documentNames = fileStorageService.getDepartmentDocumentNames(departmentId);
+            return ResponseEntity.ok(documentNames);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(List.of());
+        }
+    }
+
+    @GetMapping("/department-documents/{departmentId}/{fileName}")
+    public ResponseEntity<Resource> downloadDepartmentDocument(
+            @PathVariable Long departmentId,
+            @PathVariable String fileName) {
+
+        try {
+            Resource resource = fileStorageService.loadDepartmentDocument(fileName, departmentId);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + fileName + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/department-documents/{departmentId}/{fileName}")
+    public ResponseEntity<Void> deleteDepartmentDocument(
+            @PathVariable Long departmentId,
+            @PathVariable String fileName) {
+
+        try {
+            boolean deleted = fileStorageService.deleteDepartmentDocument(fileName, departmentId);
+            if (deleted) {
+                return ResponseEntity.noContent().build();
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 }

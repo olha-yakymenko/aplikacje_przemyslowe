@@ -14,6 +14,63 @@ Pełny cykl życia z weryfikacją:
 mvn clean verify           
 
 
+![img.png](img.png)
+
+![img_1.png](img_1.png)
+
+![img_2.png](img_2.png)
+
+![img_3.png](img_3.png)
+
+![img_4.png](img_4.png)
+
+![img_5.png](img_5.png)
+
+Strona Główna (/) - Przegląd systemu z podstawowymi statystykami
+Pracownicy (/employees) - Zarządzanie pracownikami
+Departamenty (/departments) - Zarządzanie departamentami
+Statystyki (/statistics) - Szczegółowe statystyki i raporty
+Import Plików (/employees/import) - Import danych z plików
+
+Przepływy Nawigacyjne
+
+1. Strona Główna → Statystyki
+   Kliknij "Przeglądaj Statystyki" w sekcji "Szybkie akcje"
+   Lub wybierz "Statystyki" z menu głównego
+2. Statystyki Ogólne → Szczegóły Firmy
+   W sekcji "Statystyki per Firma" kliknij nazwę firmy lub przycisk "Szczegóły"
+   Powrót przez przycisk "Powrót do Statystyk"
+3. Departamenty → Operacje
+   Lista departamentów → Przyciski akcji w każdej pozycji:
+   Szczegóły - Podgląd szczegółów departamentu
+   Dokumenty - Zarządzanie dokumentami departamentu
+   Edytuj - Modyfikacja danych departamentu
+   Usuń - Usuwanie z potwierdzeniem
+4. Formularze → Listy
+   Po dodaniu/edycji departamentu automatyczne przekierowanie do listy
+   Przycisk "Powrót do Listy" w formularzach
+   Przycisk "Anuluj" do rezygnacji ze zmian
+
+
+Kroki Uruchomienia
+
+Pobierz i przygotuj projekt:
+```bash
+git clone https://github.com/olha-yakymenko/aplikacje_przemyslowe/tree/main/lab7
+cd lab7
+```
+Zbuduj aplikację:
+```bash
+mvn clean install
+```
+Uruchom aplikację:
+
+```bash
+mvn spring-boot:run
+```
+Otwórz przeglądarkę:
+
+http://localhost:8080
 
 Endpointy:
 

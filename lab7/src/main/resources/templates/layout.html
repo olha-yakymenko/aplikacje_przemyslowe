@@ -1,10 +1,184 @@
+<!--&lt;!&ndash;<!DOCTYPE html>&ndash;&gt;-->
+<!--&lt;!&ndash;<html xmlns:th="http://www.thymeleaf.org">&ndash;&gt;-->
+<!--&lt;!&ndash;<head>&ndash;&gt;-->
+<!--&lt;!&ndash;    <meta charset="UTF-8">&ndash;&gt;-->
+<!--&lt;!&ndash;    <meta name="viewport" content="width=device-width, initial-scale=1.0">&ndash;&gt;-->
+<!--&lt;!&ndash;    <title th:text="${pageTitle} ?: 'System Zarządzania Pracownikami'">System Zarządzania Pracownikami</title>&ndash;&gt;-->
+<!--&lt;!&ndash;    <link rel="stylesheet" th:href="@{/css/style.css}">&ndash;&gt;-->
+<!--&lt;!&ndash;</head>&ndash;&gt;-->
+<!--&lt;!&ndash;<body>&ndash;&gt;-->
+<!--&lt;!&ndash;<header>&ndash;&gt;-->
+<!--&lt;!&ndash;    <nav class="navbar">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="nav-container">&ndash;&gt;-->
+<!--&lt;!&ndash;            <h1 class="nav-logo">EmployeeManager</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;            <ul class="nav-menu">&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/}" class="nav-link">Strona Główna</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;            </ul>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </nav>&ndash;&gt;-->
+<!--&lt;!&ndash;</header>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<main class="main-content">&ndash;&gt;-->
+<!--&lt;!&ndash;    &lt;!&ndash; Flash messages &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;    &lt;!&ndash; Default content - will be replaced by specific pages &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;    <section class="content-section">&ndash;&gt;-->
+<!--&lt;!&ndash;        <h2>Witaj w systemie zarządzania pracownikami</h2>&ndash;&gt;-->
+<!--&lt;!&ndash;        <p>Wybierz sekcję z menu nawigacyjnego.</p>&ndash;&gt;-->
+<!--&lt;!&ndash;    </section>&ndash;&gt;-->
+<!--&lt;!&ndash;</main>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<footer class="footer">&ndash;&gt;-->
+<!--&lt;!&ndash;    <div class="footer-content">&ndash;&gt;-->
+<!--&lt;!&ndash;        <p>&copy; 2024 TechCorp Employee Management System</p>&ndash;&gt;-->
+<!--&lt;!&ndash;    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;</footer>&ndash;&gt;-->
+<!--&lt;!&ndash;</body>&ndash;&gt;-->
+<!--&lt;!&ndash;</html>&ndash;&gt;-->
+
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org"-->
+<!--      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title layout:title-pattern="$CONTENT_TITLE">System Zarządzania Pracownikami</title>-->
+<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+<!--    <style>-->
+<!--        .is-invalid { border-color: #dc3545; }-->
+<!--        .invalid-feedback { display: block; color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }-->
+<!--        .required-field::after { content: " *"; color: #dc3545; }-->
+<!--        .alert-error {-->
+<!--            color: #721c24;-->
+<!--            background-color: #f8d7da;-->
+<!--            border-color: #f5c6cb;-->
+<!--            padding: 0.75rem;-->
+<!--            border-radius: 0.25rem;-->
+<!--            margin-bottom: 1rem;-->
+<!--        }-->
+<!--        .alert-success {-->
+<!--            color: #155724;-->
+<!--            background-color: #d4edda;-->
+<!--            border-color: #c3e6cb;-->
+<!--            padding: 0.75rem;-->
+<!--            border-radius: 0.25rem;-->
+<!--            margin-bottom: 1rem;-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<header>-->
+<!--    <nav class="navbar">-->
+<!--        <div class="nav-container">-->
+<!--            <h1 class="nav-logo">EmployeeManager</h1>-->
+<!--            <ul class="nav-menu">-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/}" class="nav-link">Strona Główna</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>-->
+<!--                </li>-->
+<!--            </ul>-->
+<!--        </div>-->
+<!--    </nav>-->
+<!--</header>-->
+
+<!--<main class="main-content">-->
+<!--    &lt;!&ndash; Flash messages &ndash;&gt;-->
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+
+<!--    &lt;!&ndash; Content will be inserted here &ndash;&gt;-->
+<!--    <div layout:fragment="content">-->
+<!--        &lt;!&ndash; Default content &ndash;&gt;-->
+<!--        <section class="content-section">-->
+<!--            <h1>Witaj w systemie zarządzania pracownikami</h1>-->
+<!--            <p>Wybierz sekcję z menu nawigacyjnego.</p>-->
+<!--        </section>-->
+<!--    </div>-->
+<!--</main>-->
+
+<!--<footer class="footer">-->
+<!--    <div class="footer-content">-->
+<!--        <p>&copy; 2024 TechCorp Employee Management System</p>-->
+<!--    </div>-->
+<!--</footer>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle} ?: 'System Zarządzania Pracownikami'">System Zarządzania Pracownikami</title>
+    <title layout:title-pattern="$CONTENT_TITLE - EmployeeManager">System Zarządzania Pracownikami</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* Style dla walidacji formularzy */
+        .is-invalid { border-color: #dc3545; }
+        .invalid-feedback {
+            display: block;
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        /* Style dla alertów */
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .alert-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
 </head>
 <body>
 <header>
@@ -33,15 +207,18 @@
 </header>
 
 <main class="main-content">
-    <!-- Flash messages -->
+    <!-- Flash messages - dostępne we wszystkich podstronach -->
     <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
     <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
-    <!-- Default content - will be replaced by specific pages -->
-    <section class="content-section">
-        <h2>Witaj w systemie zarządzania pracownikami</h2>
-        <p>Wybierz sekcję z menu nawigacyjnego.</p>
-    </section>
+    <!-- Content will be inserted here -->
+    <div layout:fragment="content">
+        <!-- Default content -->
+        <section class="content-section">
+            <h1>Witaj w systemie zarządzania pracownikami</h1>
+            <p>Wybierz sekcję z menu nawigacyjnego.</p>
+        </section>
+    </div>
 </main>
 
 <footer class="footer">

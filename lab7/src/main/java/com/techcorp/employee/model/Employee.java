@@ -1,18 +1,43 @@
 package com.techcorp.employee.model;
 
 import com.techcorp.employee.exception.InvalidDataException;
+import jakarta.validation.constraints.*;
+
 import java.util.Objects;
 
+//public class Employee {
+//    private String name;
+//    private final String email;
+//    private String company;
+//    private Position position;
+//    private double salary;
+//    private EmploymentStatus status;
+//    private String photoFileName;
+
 public class Employee {
+    @NotBlank(message = "Imię i nazwisko są wymagane")
+    @Size(min = 2, max = 100, message = "Imię i nazwisko musi mieć od 2 do 100 znaków")
     private String name;
+
+    @NotBlank(message = "Email jest wymagany")
+    @Email(message = "Nieprawidłowy format email")
     private final String email;
+
+    @NotBlank(message = "Firma jest wymagana")
     private String company;
+
+    @NotNull(message = "Stanowisko jest wymagane")
     private Position position;
+
+    @Min(value = 0, message = "Wynagrodzenie musi być liczbą dodatnią")
     private double salary;
+
+    @NotNull(message = "Status jest wymagany")
     private EmploymentStatus status;
-    private String photoFileName;
 
     private Long departmentId;
+    private String photoFileName;
+
 
     // Konstruktory
     public Employee(String name, String email, String company, Position position, double salary) throws InvalidDataException {
@@ -31,6 +56,11 @@ public class Employee {
         this.position = position;
         this.salary = salary;
         this.status = status;
+    }
+
+
+    public Employee(String email) {
+        this.email = email;
     }
 
     // Gettery i settery

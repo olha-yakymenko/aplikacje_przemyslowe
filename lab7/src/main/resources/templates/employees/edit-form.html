@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,32 +10,8 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h1 class="nav-logo">EmployeeManager</h1>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</header>
 
-<main class="main-content">
+<div layout:fragment="content">
     <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
     <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
@@ -43,61 +22,107 @@
         </div>
 
         <div class="form-container">
-            <form th:action="@{/employees/edit}" method="post">
-                <!-- Ukryte pole z emailem (klucz) -->
-                <input type="hidden" name="email" th:value="${employee.email}">
+            <!-- UŻYJ th:object I th:field ZAMIAST name -->
+            <form th:action="@{/employees/edit}" th:object="${employee}" method="post">
 
-                <div class="form-group">
-                    <label class="form-label" for="name">Imię i Nazwisko *</label>
-                    <input type="text" class="form-control" id="name" name="name"
-                           th:value="${employee.name}" placeholder="Wprowadź imię i nazwisko" required>
+                <!-- Globalne błędy walidacji -->
+                <div th:if="${#fields.hasAnyErrors()}" class="alert alert-error">
+                    <strong>Popraw następujące błędy:</strong>
+                    <ul>
+                        <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
+                    </ul>
                 </div>
 
+
+                <!-- Pole Imię -->
                 <div class="form-group">
-                    <label class="form-label" for="emailDisplay">Email</label>
-                    <input type="text" class="form-control" id="emailDisplay"
-                           th:value="${employee.email}" disabled>
+                    <label class="form-label" for="firstName">Imię *</label>
+                    <input type="text" class="form-control" id="firstName" th:field="*{firstName}"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'form-control-error' : ''"
+                           placeholder="Wprowadź imię" required>
+                    <div th:if="${#fields.hasErrors('firstName')}" class="error-message">
+                        <span th:errors="*{firstName}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole Nazwisko -->
+                <div class="form-group">
+                    <label class="form-label" for="lastName">Nazwisko *</label>
+                    <input type="text" class="form-control" id="lastName" th:field="*{lastName}"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'form-control-error' : ''"
+                           placeholder="Wprowadź nazwisko" required>
+                    <div th:if="${#fields.hasErrors('lastName')}" class="error-message">
+                        <span th:errors="*{lastName}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole Email (tylko do odczytu) -->
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" class="form-control" id="email" th:value="*{email}" disabled>
+                    <!-- Ukryte pole do przesłania emaila -->
+                    <input type="hidden" th:field="*{email}">
                     <small class="form-text">Email nie może być zmieniony</small>
                 </div>
 
+                <!-- Pole Firma -->
                 <div class="form-group">
                     <label class="form-label" for="company">Firma *</label>
-                    <input type="text" class="form-control" id="company" name="company"
-                           th:value="${employee.company}" placeholder="Nazwa firmy" required>
+                    <input type="text" class="form-control" id="company" th:field="*{company}"
+                           th:classappend="${#fields.hasErrors('company')} ? 'form-control-error' : ''"
+                           placeholder="Nazwa firmy" required>
+                    <div th:if="${#fields.hasErrors('company')}" class="error-message">
+                        <span th:errors="*{company}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Stanowisko -->
                 <div class="form-group">
                     <label class="form-label" for="position">Stanowisko *</label>
-                    <select class="form-select" id="position" name="position" required>
+                    <select class="form-select" id="position" th:field="*{position}"
+                            th:classappend="${#fields.hasErrors('position')} ? 'form-select-error' : ''" required>
                         <option value="">Wybierz stanowisko</option>
                         <option th:each="pos : ${positions}"
                                 th:value="${pos}"
-                                th:selected="${employee.position == pos}"
-                                th:text="${pos}">DEVELOPER</option>
+                                th:text="${pos}"></option>
                     </select>
+                    <div th:if="${#fields.hasErrors('position')}" class="error-message">
+                        <span th:errors="*{position}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Wynagrodzenie -->
                 <div class="form-group">
                     <label class="form-label" for="salary">Wynagrodzenie ($) *</label>
                     <input type="number" step="0.01" class="form-control" id="salary"
-                           name="salary" th:value="${employee.salary}" placeholder="5000.00" min="0" required>
+                           th:field="*{salary}"
+                           th:classappend="${#fields.hasErrors('salary')} ? 'form-control-error' : ''"
+                           placeholder="5000.00" min="0" required>
+                    <div th:if="${#fields.hasErrors('salary')}" class="error-message">
+                        <span th:errors="*{salary}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Status -->
                 <div class="form-group">
                     <label class="form-label" for="status">Status *</label>
-                    <select class="form-select" id="status" name="status" required>
+                    <select class="form-select" id="status" th:field="*{status}"
+                            th:classappend="${#fields.hasErrors('status')} ? 'form-select-error' : ''" required>
                         <option value="">Wybierz status</option>
                         <option th:each="status : ${statuses}"
                                 th:value="${status}"
-                                th:selected="${employee.status == status}"
-                                th:text="${status}">ACTIVE</option>
+                                th:text="${status}"></option>
                     </select>
+                    <div th:if="${#fields.hasErrors('status')}" class="error-message">
+                        <span th:errors="*{status}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole ID Departamentu -->
                 <div class="form-group">
                     <label class="form-label" for="departmentId">ID Departamentu (opcjonalnie)</label>
                     <input type="number" class="form-control" id="departmentId"
-                           name="departmentId" th:value="${employee.departmentId}" placeholder="123" min="1">
+                           th:field="*{departmentId}" placeholder="123" min="1">
                 </div>
 
                 <div class="form-group">
@@ -107,7 +132,7 @@
             </form>
         </div>
     </section>
-</main>
+</div>
 
 <footer class="footer">
     <div class="footer-content">
@@ -150,6 +175,17 @@
         box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
     }
 
+    .form-control-error, .form-select-error {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 4px;
+    }
+
     .form-text {
         display: block;
         margin-top: 0.25rem;
@@ -184,6 +220,25 @@
 
     .btn-secondary:hover {
         background-color: #7f8c8d;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        margin: 16px 0;
+        border-radius: 4px;
+        border: 1px solid transparent;
+    }
+
+    .alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+
+    .alert-error {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
     }
 </style>
 </body>

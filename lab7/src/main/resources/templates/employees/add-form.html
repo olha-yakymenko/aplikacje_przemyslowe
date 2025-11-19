@@ -1,5 +1,296 @@
+<!--&lt;!&ndash;<!DOCTYPE html>&ndash;&gt;-->
+<!--&lt;!&ndash;<html xmlns:th="http://www.thymeleaf.org">&ndash;&gt;-->
+<!--&lt;!&ndash;<head>&ndash;&gt;-->
+<!--&lt;!&ndash;    <meta charset="UTF-8">&ndash;&gt;-->
+<!--&lt;!&ndash;    <meta name="viewport" content="width=device-width, initial-scale=1.0">&ndash;&gt;-->
+<!--&lt;!&ndash;    <title>Dodaj Pracownika - System Zarządzania Pracownikami</title>&ndash;&gt;-->
+<!--&lt;!&ndash;    <link rel="stylesheet" th:href="@{/css/style.css}">&ndash;&gt;-->
+<!--&lt;!&ndash;</head>&ndash;&gt;-->
+<!--&lt;!&ndash;<body>&ndash;&gt;-->
+<!--&lt;!&ndash;<header>&ndash;&gt;-->
+<!--&lt;!&ndash;    <nav class="navbar">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="nav-container">&ndash;&gt;-->
+<!--&lt;!&ndash;            <h1 class="nav-logo">EmployeeManager</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;            <ul class="nav-menu">&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/}" class="nav-link">Strona Główna</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;            </ul>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </nav>&ndash;&gt;-->
+<!--&lt;!&ndash;</header>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<main class="main-content">&ndash;&gt;-->
+<!--&lt;!&ndash;    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;    <section class="content-section">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="section-header">&ndash;&gt;-->
+<!--&lt;!&ndash;            <h1 class="section-title">Dodaj Nowego Pracownika</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;            <a th:href="@{/employees}" class="btn btn-secondary">Powrót do Listy</a>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <div class="form-container">&ndash;&gt;-->
+<!--&lt;!&ndash;            <form th:action="@{/employees/add}" th:object="${employee}" method="post">&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="firstName">Imię *</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="text" class="form-control" id="firstName" th:field="*{firstName}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           placeholder="Wprowadź imię" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="lastName">Nazwisko *</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="text" class="form-control" id="lastName" th:field="*{lastName}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           placeholder="Wprowadź nazwisko" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="email">Email *</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="email" class="form-control" id="email" th:field="*{email}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           placeholder="przyklad@firma.com" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="company">Firma *</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="text" class="form-control" id="company" th:field="*{company}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           placeholder="Nazwa firmy" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="position">Stanowisko *</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <select class="form-select" id="position" th:field="*{position}" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        <option value="">Wybierz stanowisko</option>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        <option th:each="pos : ${positions}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                                th:value="${pos}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                                th:text="${pos}">DEVELOPER</option>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    </select>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="salary">Wynagrodzenie ($) *</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="number" step="0.01" class="form-control" id="salary"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           th:field="*{salary}" placeholder="5000.00" min="0" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="status">Status *</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <select class="form-select" id="status" th:field="*{status}" required>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        <option value="">Wybierz status</option>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        <option th:each="status : ${statuses}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                                th:value="${status}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                                th:text="${status}">ACTIVE</option>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    </select>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="departmentId">ID Departamentu (opcjonalnie)</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="number" class="form-control" id="departmentId"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           name="departmentId" placeholder="123" min="1">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <button type="submit" class="btn btn-primary">Dodaj Pracownika</button>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <a th:href="@{/employees}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+
+<!--&lt;!&ndash;                &lt;!&ndash; Dodaj wyświetlanie błędów dla każdego pola &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;                <div class="form-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="form-label" for="firstName">Imię *</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <input type="text" class="form-control" id="firstName" th:field="*{firstName}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'"&ndash;&gt;-->
+<!--&lt;!&ndash;                           placeholder="Wprowadź imię" required>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div th:if="${#fields.hasErrors('firstName')}" class="invalid-feedback">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:errors="*{firstName}"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <div class="form-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="form-label" for="lastName">Nazwisko *</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <input type="text" class="form-control" id="lastName" th:field="*{lastName}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'"&ndash;&gt;-->
+<!--&lt;!&ndash;                           placeholder="Wprowadź nazwisko" required>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div th:if="${#fields.hasErrors('lastName')}" class="invalid-feedback">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:errors="*{lastName}"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <div class="form-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="form-label" for="email">Email *</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <input type="email" class="form-control" id="email" th:field="*{email}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"&ndash;&gt;-->
+<!--&lt;!&ndash;                           placeholder="przyklad@firma.com" required>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div th:if="${#fields.hasErrors('email')}" class="invalid-feedback">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:errors="*{email}"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            </form>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </section>&ndash;&gt;-->
+<!--&lt;!&ndash;</main>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<footer class="footer">&ndash;&gt;-->
+<!--&lt;!&ndash;    <div class="footer-content">&ndash;&gt;-->
+<!--&lt;!&ndash;        <p>&copy; 2024 TechCorp Employee Management System</p>&ndash;&gt;-->
+<!--&lt;!&ndash;    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;</footer>&ndash;&gt;-->
+<!--&lt;!&ndash;</body>&ndash;&gt;-->
+<!--&lt;!&ndash;</html>&ndash;&gt;-->
+
+
+
+
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Dodaj Pracownika - System Zarządzania Pracownikami</title>-->
+<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+<!--</head>-->
+<!--<body>-->
+<!--<header>-->
+<!--    <nav class="navbar">-->
+<!--        <div class="nav-container">-->
+<!--            <h1 class="nav-logo">EmployeeManager</h1>-->
+<!--            <ul class="nav-menu">-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/}" class="nav-link">Strona Główna</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>-->
+<!--                </li>-->
+<!--            </ul>-->
+<!--        </div>-->
+<!--    </nav>-->
+<!--</header>-->
+
+<!--<main class="main-content">-->
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+
+<!--    <section class="content-section">-->
+<!--        <div class="section-header">-->
+<!--            <h1 class="section-title">Dodaj Nowego Pracownika</h1>-->
+<!--            <a th:href="@{/employees}" class="btn btn-secondary">Powrót do Listy</a>-->
+<!--        </div>-->
+
+<!--        <div class="form-container">-->
+<!--            <form th:action="@{/employees/add}" th:object="${employee}" method="post">-->
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="firstName">Imię *</label>-->
+<!--                    <input type="text" class="form-control" id="firstName" th:field="*{firstName}"-->
+<!--                           placeholder="Wprowadź imię" required>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="lastName">Nazwisko *</label>-->
+<!--                    <input type="text" class="form-control" id="lastName" th:field="*{lastName}"-->
+<!--                           placeholder="Wprowadź nazwisko" required>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="email">Email *</label>-->
+<!--                    <input type="email" class="form-control" id="email" th:field="*{email}"-->
+<!--                           placeholder="przyklad@firma.com" required>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="company">Firma *</label>-->
+<!--                    <input type="text" class="form-control" id="company" th:field="*{company}"-->
+<!--                           placeholder="Nazwa firmy" required>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="position">Stanowisko *</label>-->
+<!--                    <select class="form-select" id="position" th:field="*{position}" required>-->
+<!--                        <option value="">Wybierz stanowisko</option>-->
+<!--                        <option th:each="pos : ${positions}"-->
+<!--                                th:value="${pos}"-->
+<!--                                th:text="${pos}">DEVELOPER</option>-->
+<!--                    </select>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="salary">Wynagrodzenie ($) *</label>-->
+<!--                    <input type="number" step="0.01" class="form-control" id="salary"-->
+<!--                           th:field="*{salary}" placeholder="5000.00" min="0" required>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="status">Status *</label>-->
+<!--                    <select class="form-select" id="status" th:field="*{status}" required>-->
+<!--                        <option value="">Wybierz status</option>-->
+<!--                        <option th:each="status : ${statuses}"-->
+<!--                                th:value="${status}"-->
+<!--                                th:text="${status}">ACTIVE</option>-->
+<!--                    </select>-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="departmentId">ID Departamentu (opcjonalnie)</label>-->
+<!--                    <input type="number" class="form-control" id="departmentId"-->
+<!--                           name="departmentId" placeholder="123" min="1">-->
+<!--                </div>-->
+
+<!--                <div class="form-group">-->
+<!--                    <button type="submit" class="btn btn-primary">Dodaj Pracownika</button>-->
+<!--                    <a th:href="@{/employees}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </section>-->
+<!--</main>-->
+
+<!--<footer class="footer">-->
+<!--    <div class="footer-content">-->
+<!--        <p>&copy; 2024 TechCorp Employee Management System</p>-->
+<!--    </div>-->
+<!--</footer>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,32 +298,9 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h1 class="nav-logo">EmployeeManager</h1>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</header>
 
-<main class="main-content">
+<div layout:fragment="content">
+    <!-- Flash Messages -->
     <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
     <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
@@ -44,60 +312,107 @@
 
         <div class="form-container">
             <form th:action="@{/employees/add}" th:object="${employee}" method="post">
+
+                <!-- POPRAWIONE: Globalne błędy walidacji -->
+                <div th:if="${#fields.hasAnyErrors()}" class="alert alert-error">
+                    <strong>Popraw następujące błędy:</strong>
+                    <ul>
+                        <!-- POPRAWIONE: Użyj #fields.errors('*') zamiast #fields.allErrors() -->
+                        <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
+                    </ul>
+                </div>
+
+                <!-- Pole Imię z walidacją -->
                 <div class="form-group">
                     <label class="form-label" for="firstName">Imię *</label>
                     <input type="text" class="form-control" id="firstName" th:field="*{firstName}"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'form-control-error' : ''"
                            placeholder="Wprowadź imię" required>
+                    <div th:if="${#fields.hasErrors('firstName')}" class="error-message">
+                        <span th:errors="*{firstName}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Nazwisko z walidacją -->
                 <div class="form-group">
                     <label class="form-label" for="lastName">Nazwisko *</label>
                     <input type="text" class="form-control" id="lastName" th:field="*{lastName}"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'form-control-error' : ''"
                            placeholder="Wprowadź nazwisko" required>
+                    <div th:if="${#fields.hasErrors('lastName')}" class="error-message">
+                        <span th:errors="*{lastName}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Email z walidacją -->
                 <div class="form-group">
                     <label class="form-label" for="email">Email *</label>
                     <input type="email" class="form-control" id="email" th:field="*{email}"
+                           th:classappend="${#fields.hasErrors('email')} ? 'form-control-error' : ''"
                            placeholder="przyklad@firma.com" required>
+                    <div th:if="${#fields.hasErrors('email')}" class="error-message">
+                        <span th:errors="*{email}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Firma z walidacją -->
                 <div class="form-group">
                     <label class="form-label" for="company">Firma *</label>
                     <input type="text" class="form-control" id="company" th:field="*{company}"
+                           th:classappend="${#fields.hasErrors('company')} ? 'form-control-error' : ''"
                            placeholder="Nazwa firmy" required>
+                    <div th:if="${#fields.hasErrors('company')}" class="error-message">
+                        <span th:errors="*{company}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Stanowisko z walidacją -->
                 <div class="form-group">
                     <label class="form-label" for="position">Stanowisko *</label>
-                    <select class="form-select" id="position" th:field="*{position}" required>
+                    <select class="form-select" id="position" th:field="*{position}"
+                            th:classappend="${#fields.hasErrors('position')} ? 'form-select-error' : ''" required>
                         <option value="">Wybierz stanowisko</option>
                         <option th:each="pos : ${positions}"
                                 th:value="${pos}"
-                                th:text="${pos}">DEVELOPER</option>
+                                th:text="${pos}"></option>
                     </select>
+                    <div th:if="${#fields.hasErrors('position')}" class="error-message">
+                        <span th:errors="*{position}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Wynagrodzenie z walidacją -->
                 <div class="form-group">
                     <label class="form-label" for="salary">Wynagrodzenie ($) *</label>
                     <input type="number" step="0.01" class="form-control" id="salary"
-                           th:field="*{salary}" placeholder="5000.00" min="0" required>
+                           th:field="*{salary}"
+                           th:classappend="${#fields.hasErrors('salary')} ? 'form-control-error' : ''"
+                           placeholder="5000.00" min="0" required>
+                    <div th:if="${#fields.hasErrors('salary')}" class="error-message">
+                        <span th:errors="*{salary}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole Status z walidacją -->
                 <div class="form-group">
                     <label class="form-label" for="status">Status *</label>
-                    <select class="form-select" id="status" th:field="*{status}" required>
+                    <select class="form-select" id="status" th:field="*{status}"
+                            th:classappend="${#fields.hasErrors('status')} ? 'form-select-error' : ''" required>
                         <option value="">Wybierz status</option>
                         <option th:each="status : ${statuses}"
                                 th:value="${status}"
-                                th:text="${status}">ACTIVE</option>
+                                th:text="${status}"></option>
                     </select>
+                    <div th:if="${#fields.hasErrors('status')}" class="error-message">
+                        <span th:errors="*{status}"></span>
+                    </div>
                 </div>
 
+                <!-- Pole ID Departamentu -->
                 <div class="form-group">
                     <label class="form-label" for="departmentId">ID Departamentu (opcjonalnie)</label>
                     <input type="number" class="form-control" id="departmentId"
-                           name="departmentId" placeholder="123" min="1">
+                           th:field="*{departmentId}" placeholder="123" min="1">
                 </div>
 
                 <div class="form-group">
@@ -107,12 +422,114 @@
             </form>
         </div>
     </section>
-</main>
+</div>
 
 <footer class="footer">
     <div class="footer-content">
         <p>&copy; 2024 TechCorp Employee Management System</p>
     </div>
 </footer>
+
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+
+    .form-control-error, .form-select-error {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 4px;
+    }
+
+    .form-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+        background-color: #3498db;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #2980b9;
+    }
+
+    .btn-secondary {
+        background-color: #95a5a6;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #7f8c8d;
+    }
+
+    .alert {
+        padding: 12px 16px;
+        margin: 16px 0;
+        border-radius: 4px;
+        border: 1px solid transparent;
+    }
+
+    .alert-success {
+        color: #155724;
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+    }
+
+    .alert-error {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+</style>
 </body>
 </html>

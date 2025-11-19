@@ -165,6 +165,7 @@ public class EmployeeService {
         );
     }
 
+
     public OptionalDouble calculateAverageSalaryByCompany(String company) {
         validateCompany(company);
 
@@ -324,6 +325,13 @@ public class EmployeeService {
         return updatedEmployee;
     }
 
+    // W EmployeeService.java
+    public List<Employee> getEmployeesByDepartmentId(Long departmentId) {
+        return getAllEmployees().stream()
+                .filter(emp -> departmentId.equals(emp.getDepartmentId()))
+                .toList();
+    }
+
     // ===== WALIDACJA =====
 
     private void validateEmployee(Employee employee) throws InvalidDataException {
@@ -438,5 +446,14 @@ public class EmployeeService {
         if (fileName == null) return ".jpg";
         int lastDotIndex = fileName.lastIndexOf(".");
         return lastDotIndex > 0 ? fileName.substring(lastDotIndex) : ".jpg";
+    }
+
+    public List<Employee> getAvailableManagers() {
+        return employees.stream()
+                .filter(emp -> emp.getPosition() != null &&
+                        (emp.getPosition() == Position.MANAGER ||
+                                emp.getPosition() == Position.VICE_PRESIDENT ||
+                                emp.getPosition() == Position.PRESIDENT))
+                .collect(Collectors.toList());
     }
 }

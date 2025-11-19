@@ -1,40 +1,120 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"-->
+<!--      layout:decorate="~{layout}">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Lista Departamentów - System Zarządzania Pracownikami</title>-->
+<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+<!--</head>-->
+<!--<body>-->
+<!--&lt;!&ndash;<header>&ndash;&gt;-->
+<!--&lt;!&ndash;    <nav class="navbar">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="nav-container">&ndash;&gt;-->
+<!--&lt;!&ndash;            <h1 class="nav-logo">EmployeeManager</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;            <ul class="nav-menu">&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/}" class="nav-link">Strona Główna</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;            </ul>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </nav>&ndash;&gt;-->
+<!--&lt;!&ndash;</header>&ndash;&gt;-->
+
+<!--<main class="main-content">-->
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+
+<!--    <section class="content-section">-->
+<!--        <div class="section-header">-->
+<!--            <h1 class="section-title">Lista Departamentów</h1>-->
+<!--            <a th:href="@{/departments/add}" class="btn btn-primary">Dodaj Nowy Departament</a>-->
+<!--        </div>-->
+
+<!--        <div class="table-container">-->
+<!--            <table class="data-table">-->
+<!--                <thead>-->
+<!--                <tr>-->
+<!--                    <th>ID</th>-->
+<!--                    <th>Nazwa</th>-->
+<!--                    <th>Opis</th>-->
+<!--                    <th>Email Managera</th>-->
+<!--                    <th>Budżet</th>-->
+<!--                    <th>Akcje</th>-->
+<!--                </tr>-->
+<!--                </thead>-->
+<!--                <tbody>-->
+<!--                <tr th:each="department : ${departments}">-->
+<!--                    <td th:text="${department.id}">1</td>-->
+<!--                    <td th:text="${department.name}">IT</td>-->
+<!--                    <td th:text="${department.description}">Dział technologii informatycznych</td>-->
+<!--                    <td th:text="${department.managerEmail} ?: 'Brak'">manager@company.com</td>-->
+<!--                    <td th:text="'$' + ${#numbers.formatDecimal(department.budget, 1, 2)} ?: '0.00'">$100000.00</td>-->
+<!--                    <td>-->
+<!--                        <div class="action-buttons">-->
+<!--                            <a th:href="@{'/departments/details/' + ${department.id}}"-->
+<!--                               class="btn btn-info btn-sm">Szczegóły</a>-->
+<!--                            <a th:href="@{'/departments/edit/' + ${department.id}}"-->
+<!--                               class="btn btn-secondary btn-sm">Edytuj</a>-->
+<!--                            <a th:href="@{'/departments/delete/' + ${department.id}}"-->
+<!--                               class="btn btn-danger btn-sm"-->
+<!--                               onclick="return confirm('Czy na pewno chcesz usunąć ten departament?')">Usuń</a>-->
+<!--                        </div>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--                <tr th:if="${#lists.isEmpty(departments)}">-->
+<!--                    <td colspan="5" style="text-align: center; padding: 2rem;">-->
+<!--                        Brak departamentów w systemie.-->
+<!--                        <a th:href="@{/departments/add}">Dodaj pierwszy departament</a>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--                </tbody>-->
+<!--            </table>-->
+<!--        </div>-->
+<!--    </section>-->
+<!--</main>-->
+
+<!--<footer class="footer">-->
+<!--    <div class="footer-content">-->
+<!--        <p>&copy; 2024 TechCorp Employee Management System</p>-->
+<!--    </div>-->
+<!--</footer>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista Departamentów - System Zarządzania Pracownikami</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h1 class="nav-logo">EmployeeManager</h1>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</header>
-
-<main class="main-content">
-    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+<div layout:fragment="content">
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
 
     <section class="content-section">
         <div class="section-header">
@@ -46,6 +126,7 @@
             <table class="data-table">
                 <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Nazwa</th>
                     <th>Opis</th>
                     <th>Email Managera</th>
@@ -55,6 +136,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="department : ${departments}">
+                    <td th:text="${department.id}">1</td>
                     <td th:text="${department.name}">IT</td>
                     <td th:text="${department.description}">Dział technologii informatycznych</td>
                     <td th:text="${department.managerEmail} ?: 'Brak'">manager@company.com</td>
@@ -63,6 +145,8 @@
                         <div class="action-buttons">
                             <a th:href="@{'/departments/details/' + ${department.id}}"
                                class="btn btn-info btn-sm">Szczegóły</a>
+                            <a th:href="@{'/departments/documents/' + ${department.id}}"
+                               class="btn btn-warning btn-sm">Dokumenty</a>
                             <a th:href="@{'/departments/edit/' + ${department.id}}"
                                class="btn btn-secondary btn-sm">Edytuj</a>
                             <a th:href="@{'/departments/delete/' + ${department.id}}"
@@ -72,7 +156,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(departments)}">
-                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                    <td colspan="6" style="text-align: center; padding: 2rem;">
                         Brak departamentów w systemie.
                         <a th:href="@{/departments/add}">Dodaj pierwszy departament</a>
                     </td>
@@ -81,12 +165,6 @@
             </table>
         </div>
     </section>
-</main>
-
-<footer class="footer">
-    <div class="footer-content">
-        <p>&copy; 2024 TechCorp Employee Management System</p>
-    </div>
-</footer>
+</div>
 </body>
 </html>

@@ -1,156 +1,671 @@
+<!--&lt;!&ndash;<!DOCTYPE html>&ndash;&gt;-->
+<!--&lt;!&ndash;<html xmlns:th="http://www.thymeleaf.org">&ndash;&gt;-->
+<!--&lt;!&ndash;<head>&ndash;&gt;-->
+<!--&lt;!&ndash;    <meta charset="UTF-8">&ndash;&gt;-->
+<!--&lt;!&ndash;    <meta name="viewport" content="width=device-width, initial-scale=1.0">&ndash;&gt;-->
+<!--&lt;!&ndash;    <title th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</title>&ndash;&gt;-->
+<!--&lt;!&ndash;    <link rel="stylesheet" th:href="@{/css/style.css}">&ndash;&gt;-->
+<!--&lt;!&ndash;    <style>&ndash;&gt;-->
+<!--&lt;!&ndash;        .form-control:invalid {&ndash;&gt;-->
+<!--&lt;!&ndash;            border-color: #dc3545;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;        .required-field::after {&ndash;&gt;-->
+<!--&lt;!&ndash;            content: " *";&ndash;&gt;-->
+<!--&lt;!&ndash;            color: #dc3545;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;        .btn:disabled {&ndash;&gt;-->
+<!--&lt;!&ndash;            opacity: 0.6;&ndash;&gt;-->
+<!--&lt;!&ndash;            cursor: not-allowed;&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+<!--&lt;!&ndash;    </style>&ndash;&gt;-->
+<!--&lt;!&ndash;</head>&ndash;&gt;-->
+<!--&lt;!&ndash;<body>&ndash;&gt;-->
+<!--&lt;!&ndash;<header>&ndash;&gt;-->
+<!--&lt;!&ndash;    <nav class="navbar">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="nav-container">&ndash;&gt;-->
+<!--&lt;!&ndash;            <h1 class="nav-logo">EmployeeManager</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;            <ul class="nav-menu">&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/}" class="nav-link">Strona Główna</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                <li class="nav-item">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>&ndash;&gt;-->
+<!--&lt;!&ndash;                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;            </ul>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </nav>&ndash;&gt;-->
+<!--&lt;!&ndash;</header>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<main class="main-content">&ndash;&gt;-->
+<!--&lt;!&ndash;    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;    <section class="content-section">&ndash;&gt;-->
+<!--&lt;!&ndash;        <div class="section-header">&ndash;&gt;-->
+<!--&lt;!&ndash;            <h1 class="section-title" th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;            <a th:href="@{/departments}" class="btn btn-secondary">Powrót do Listy</a>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <div class="form-container">&ndash;&gt;-->
+<!--&lt;!&ndash;            <form th:action="@{${department.id != null} ? '/departments/edit' : '/departments/add'}"&ndash;&gt;-->
+<!--&lt;!&ndash;                  th:object="${department}" method="post" id="departmentForm" onsubmit="return validateForm()">&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <input type="hidden" th:field="*{id}">&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label required-field" for="name">Nazwa Departamentu</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="text" class="form-control" id="name" th:field="*{name}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           placeholder="Wprowadź nazwę departamentu" required&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           oninput="validateForm()">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <div class="error-message" id="nameError" style="color: #dc3545; font-size: 0.875rem; display: none;">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        Nazwa departamentu jest wymagana&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    </div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="description">Opis</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <textarea class="form-control" id="description" th:field="*{description}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                              placeholder="Opis departamentu" rows="3"></textarea>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label" for="managerEmail">Manager</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <select class="form-select" id="managerEmail" th:field="*{managerEmail}">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        <option value="">Wybierz managera</option>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        <option th:each="manager : ${managers}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                                th:value="${manager.email}"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                                th:text="${manager.name + ' (' + manager.email + ')'}">Jan Kowalski (jan@example.com)</option>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    </select>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <label class="form-label required-field" for="budget">Budżet ($)</label>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <input type="number" step="0.01" class="form-control" id="budget"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           th:field="*{budget}" placeholder="100000.00" min="0" required&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                           oninput="validateForm()">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <div class="error-message" id="budgetError" style="color: #dc3545; font-size: 0.875rem; display: none;">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        Budżet jest wymagany i musi być liczbą dodatnią&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    </div>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;&lt;!&ndash;                <div class="form-group">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <button type="submit" class="btn btn-primary" id="submitBtn"&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                            th:text="${department.id != null} ? 'Zaktualizuj Departament' : 'Dodaj Departament'">&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                        Dodaj Departament&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    </button>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                    <a th:href="@{/departments}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>&ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;&lt;!&ndash;                </div>&ndash;&gt;&ndash;&gt;-->
+
+<!--&lt;!&ndash;                &lt;!&ndash; Dodaj te style &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;                <style>&ndash;&gt;-->
+<!--&lt;!&ndash;                    .is-invalid {&ndash;&gt;-->
+<!--&lt;!&ndash;                        border-color: #dc3545;&ndash;&gt;-->
+<!--&lt;!&ndash;                    }&ndash;&gt;-->
+<!--&lt;!&ndash;                    .invalid-feedback {&ndash;&gt;-->
+<!--&lt;!&ndash;                        display: block;&ndash;&gt;-->
+<!--&lt;!&ndash;                        color: #dc3545;&ndash;&gt;-->
+<!--&lt;!&ndash;                        font-size: 0.875rem;&ndash;&gt;-->
+<!--&lt;!&ndash;                        margin-top: 0.25rem;&ndash;&gt;-->
+<!--&lt;!&ndash;                    }&ndash;&gt;-->
+<!--&lt;!&ndash;                </style>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                &lt;!&ndash; Zaktualizuj pola formularza &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;                <div class="form-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="form-label required-field" for="name">Nazwa Departamentu</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <input type="text" class="form-control" id="name" th:field="*{name}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"&ndash;&gt;-->
+<!--&lt;!&ndash;                           placeholder="Wprowadź nazwę departamentu" required>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div th:if="${#fields.hasErrors('name')}" class="invalid-feedback">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:errors="*{name}"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <div class="form-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="form-label" for="description">Opis</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <textarea class="form-control" id="description" th:field="*{description}"&ndash;&gt;-->
+<!--&lt;!&ndash;                              th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"&ndash;&gt;-->
+<!--&lt;!&ndash;                              placeholder="Opis departamentu" rows="3"></textarea>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div th:if="${#fields.hasErrors('description')}" class="invalid-feedback">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:errors="*{description}"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <div class="form-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="form-label" for="managerEmail">Manager</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <select class="form-select" id="managerEmail" th:field="*{managerEmail}"&ndash;&gt;-->
+<!--&lt;!&ndash;                            th:classappend="${#fields.hasErrors('managerEmail')} ? 'is-invalid'">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <option value="">Wybierz managera</option>&ndash;&gt;-->
+<!--&lt;!&ndash;                        <option th:each="manager : ${managers}"&ndash;&gt;-->
+<!--&lt;!&ndash;                                th:value="${manager.email}"&ndash;&gt;-->
+<!--&lt;!&ndash;                                th:text="${manager.name + ' (' + manager.email + ')'}"></option>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </select>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div th:if="${#fields.hasErrors('managerEmail')}" class="invalid-feedback">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:errors="*{managerEmail}"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+
+<!--&lt;!&ndash;                <div class="form-group">&ndash;&gt;-->
+<!--&lt;!&ndash;                    <label class="form-label required-field" for="budget">Budżet ($)</label>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <input type="number" step="0.01" class="form-control" id="budget"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:field="*{budget}"&ndash;&gt;-->
+<!--&lt;!&ndash;                           th:classappend="${#fields.hasErrors('budget')} ? 'is-invalid'"&ndash;&gt;-->
+<!--&lt;!&ndash;                           placeholder="100000.00" min="0" required>&ndash;&gt;-->
+<!--&lt;!&ndash;                    <div th:if="${#fields.hasErrors('budget')}" class="invalid-feedback">&ndash;&gt;-->
+<!--&lt;!&ndash;                        <span th:errors="*{budget}"></span>&ndash;&gt;-->
+<!--&lt;!&ndash;                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                </div>&ndash;&gt;-->
+<!--&lt;!&ndash;            </form>&ndash;&gt;-->
+<!--&lt;!&ndash;        </div>&ndash;&gt;-->
+<!--&lt;!&ndash;    </section>&ndash;&gt;-->
+<!--&lt;!&ndash;</main>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<footer class="footer">&ndash;&gt;-->
+<!--&lt;!&ndash;    <div class="footer-content">&ndash;&gt;-->
+<!--&lt;!&ndash;        <p>&copy; 2024 TechCorp Employee Management System</p>&ndash;&gt;-->
+<!--&lt;!&ndash;    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;</footer>&ndash;&gt;-->
+
+<!--&lt;!&ndash;<script>&ndash;&gt;-->
+<!--&lt;!&ndash;    function validateForm() {&ndash;&gt;-->
+<!--&lt;!&ndash;        const name = document.getElementById('name').value.trim();&ndash;&gt;-->
+<!--&lt;!&ndash;        const budget = document.getElementById('budget').value;&ndash;&gt;-->
+<!--&lt;!&ndash;        const submitBtn = document.getElementById('submitBtn');&ndash;&gt;-->
+<!--&lt;!&ndash;        const nameError = document.getElementById('nameError');&ndash;&gt;-->
+<!--&lt;!&ndash;        const budgetError = document.getElementById('budgetError');&ndash;&gt;-->
+
+<!--&lt;!&ndash;        let isValid = true;&ndash;&gt;-->
+
+<!--&lt;!&ndash;        // Walidacja nazwy&ndash;&gt;-->
+<!--&lt;!&ndash;        if (name === '') {&ndash;&gt;-->
+<!--&lt;!&ndash;            nameError.style.display = 'block';&ndash;&gt;-->
+<!--&lt;!&ndash;            isValid = false;&ndash;&gt;-->
+<!--&lt;!&ndash;        } else {&ndash;&gt;-->
+<!--&lt;!&ndash;            nameError.style.display = 'none';&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        // Walidacja budżetu&ndash;&gt;-->
+<!--&lt;!&ndash;        if (budget === '' || parseFloat(budget) <= 0) {&ndash;&gt;-->
+<!--&lt;!&ndash;            budgetError.style.display = 'block';&ndash;&gt;-->
+<!--&lt;!&ndash;            isValid = false;&ndash;&gt;-->
+<!--&lt;!&ndash;        } else {&ndash;&gt;-->
+<!--&lt;!&ndash;            budgetError.style.display = 'none';&ndash;&gt;-->
+<!--&lt;!&ndash;        }&ndash;&gt;-->
+
+<!--&lt;!&ndash;        // Blokowanie/odblokowanie przycisku&ndash;&gt;-->
+<!--&lt;!&ndash;        submitBtn.disabled = !isValid;&ndash;&gt;-->
+
+<!--&lt;!&ndash;        return isValid;&ndash;&gt;-->
+<!--&lt;!&ndash;    }&ndash;&gt;-->
+
+<!--&lt;!&ndash;    // Inicjalna walidacja przy załadowaniu strony&ndash;&gt;-->
+<!--&lt;!&ndash;    document.addEventListener('DOMContentLoaded', function() {&ndash;&gt;-->
+<!--&lt;!&ndash;        validateForm();&ndash;&gt;-->
+<!--&lt;!&ndash;    });&ndash;&gt;-->
+<!--&lt;!&ndash;</script>&ndash;&gt;-->
+<!--&lt;!&ndash;</body>&ndash;&gt;-->
+<!--&lt;!&ndash;</html>&ndash;&gt;-->
+
+
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</title>-->
+<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+<!--    <style>-->
+<!--        .form-control:invalid {-->
+<!--            border-color: #dc3545;-->
+<!--        }-->
+<!--        .required-field::after {-->
+<!--            content: " *";-->
+<!--            color: #dc3545;-->
+<!--        }-->
+<!--        .btn:disabled {-->
+<!--            opacity: 0.6;-->
+<!--            cursor: not-allowed;-->
+<!--        }-->
+<!--        .is-invalid {-->
+<!--            border-color: #dc3545;-->
+<!--        }-->
+<!--        .invalid-feedback {-->
+<!--            display: block;-->
+<!--            color: #dc3545;-->
+<!--            font-size: 0.875rem;-->
+<!--            margin-top: 0.25rem;-->
+<!--        }-->
+<!--        /* Style dla komunikatów */-->
+<!--        .alert {-->
+<!--            padding: 0.75rem 1.25rem;-->
+<!--            margin-bottom: 1rem;-->
+<!--            border: 1px solid transparent;-->
+<!--            border-radius: 0.25rem;-->
+<!--        }-->
+<!--        .alert-success {-->
+<!--            color: #155724;-->
+<!--            background-color: #d4edda;-->
+<!--            border-color: #c3e6cb;-->
+<!--        }-->
+<!--        .alert-error {-->
+<!--            color: #721c24;-->
+<!--            background-color: #f8d7da;-->
+<!--            border-color: #f5c6cb;-->
+<!--        }-->
+<!--        .form-container {-->
+<!--            max-width: 600px;-->
+<!--            margin: 0 auto;-->
+<!--        }-->
+<!--        .form-group {-->
+<!--            margin-bottom: 1.5rem;-->
+<!--        }-->
+<!--        .form-label {-->
+<!--            display: block;-->
+<!--            margin-bottom: 0.5rem;-->
+<!--            font-weight: bold;-->
+<!--        }-->
+<!--        .form-control, .form-select {-->
+<!--            width: 100%;-->
+<!--            padding: 0.5rem;-->
+<!--            border: 1px solid #ccc;-->
+<!--            border-radius: 0.25rem;-->
+<!--            font-size: 1rem;-->
+<!--        }-->
+<!--        .btn {-->
+<!--            padding: 0.5rem 1rem;-->
+<!--            border: none;-->
+<!--            border-radius: 0.25rem;-->
+<!--            cursor: pointer;-->
+<!--            text-decoration: none;-->
+<!--            display: inline-block;-->
+<!--            font-size: 1rem;-->
+<!--        }-->
+<!--        .btn-primary {-->
+<!--            background-color: #007bff;-->
+<!--            color: white;-->
+<!--        }-->
+<!--        .btn-secondary {-->
+<!--            background-color: #6c757d;-->
+<!--            color: white;-->
+<!--        }-->
+<!--        .section-header {-->
+<!--            display: flex;-->
+<!--            justify-content: space-between;-->
+<!--            align-items: center;-->
+<!--            margin-bottom: 2rem;-->
+<!--        }-->
+<!--        .section-title {-->
+<!--            margin: 0;-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<header>-->
+<!--    <nav class="navbar">-->
+<!--        <div class="nav-container">-->
+<!--            <h1 class="nav-logo">EmployeeManager</h1>-->
+<!--            <ul class="nav-menu">-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/}" class="nav-link">Strona Główna</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>-->
+<!--                </li>-->
+<!--                <li class="nav-item">-->
+<!--                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>-->
+<!--                </li>-->
+<!--            </ul>-->
+<!--        </div>-->
+<!--    </nav>-->
+<!--</header>-->
+
+<!--<main class="main-content">-->
+<!--    &lt;!&ndash; Flash messages przekazywane przez RedirectAttributes &ndash;&gt;-->
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+
+<!--    &lt;!&ndash; Ogólne komunikaty błędów walidacji - POPRAWIONE &ndash;&gt;-->
+<!--    <div th:if="${#fields != null and #fields.hasAnyErrors()}" class="alert alert-error">-->
+<!--        <strong>Popraw następujące błędy:</strong>-->
+<!--        <ul>-->
+<!--            <li th:each="err : ${#fields.allErrors()}" th:text="${err.getDefaultMessage()}"></li>-->
+<!--        </ul>-->
+<!--    </div>-->
+
+<!--    <section class="content-section">-->
+<!--        <div class="section-header">-->
+<!--            <h1 class="section-title" th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</h1>-->
+<!--            <a th:href="@{/departments}" class="btn btn-secondary">Powrót do Listy</a>-->
+<!--        </div>-->
+
+<!--        <div class="form-container">-->
+<!--            <form th:action="@{${department.id != null} ? '/departments/edit' : '/departments/add'}"-->
+<!--                  th:object="${department}" method="post" id="departmentForm">-->
+
+<!--                <input type="hidden" th:field="*{id}">-->
+
+<!--                &lt;!&ndash; Pole nazwy departamentu z walidacją &ndash;&gt;-->
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label required-field" for="name">Nazwa Departamentu</label>-->
+<!--                    <input type="text" class="form-control" id="name" th:field="*{name}"-->
+<!--                           th:classappend="${#fields != null and #fields.hasErrors('name')} ? 'is-invalid' : ''"-->
+<!--                           placeholder="Wprowadź nazwę departamentu" required>-->
+<!--                    <div th:if="${#fields != null and #fields.hasErrors('name')}" class="invalid-feedback">-->
+<!--                        <span th:errors="*{name}"></span>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; Pole opisu z walidacją &ndash;&gt;-->
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="description">Opis</label>-->
+<!--                    <textarea class="form-control" id="description" th:field="*{description}"-->
+<!--                              th:classappend="${#fields != null and #fields.hasErrors('description')} ? 'is-invalid' : ''"-->
+<!--                              placeholder="Opis departamentu" rows="3"></textarea>-->
+<!--                    <div th:if="${#fields != null and #fields.hasErrors('description')}" class="invalid-feedback">-->
+<!--                        <span th:errors="*{description}"></span>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; Pole managera z walidacją &ndash;&gt;-->
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label" for="managerEmail">Manager</label>-->
+<!--                    <select class="form-select" id="managerEmail" th:field="*{managerEmail}"-->
+<!--                            th:classappend="${#fields != null and #fields.hasErrors('managerEmail')} ? 'is-invalid' : ''">-->
+<!--                        <option value="">Wybierz managera</option>-->
+<!--                        <option th:each="manager : ${managers}"-->
+<!--                                th:value="${manager.email}"-->
+<!--                                th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.email + ')'}">-->
+<!--                        </option>-->
+<!--                    </select>-->
+<!--                    <div th:if="${#fields != null and #fields.hasErrors('managerEmail')}" class="invalid-feedback">-->
+<!--                        <span th:errors="*{managerEmail}"></span>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; Pole budżetu z walidacją &ndash;&gt;-->
+<!--                <div class="form-group">-->
+<!--                    <label class="form-label required-field" for="budget">Budżet ($)</label>-->
+<!--                    <input type="number" step="0.01" class="form-control" id="budget"-->
+<!--                           th:field="*{budget}"-->
+<!--                           th:classappend="${#fields != null and #fields.hasErrors('budget')} ? 'is-invalid' : ''"-->
+<!--                           placeholder="100000.00" min="0" required>-->
+<!--                    <div th:if="${#fields != null and #fields.hasErrors('budget')}" class="invalid-feedback">-->
+<!--                        <span th:errors="*{budget}"></span>-->
+<!--                    </div>-->
+<!--                </div>-->
+
+<!--                &lt;!&ndash; Przyciski formularza &ndash;&gt;-->
+<!--                <div class="form-group">-->
+<!--                    <button type="submit" class="btn btn-primary" id="submitBtn"-->
+<!--                            th:text="${department.id != null} ? 'Zaktualizuj Departament' : 'Dodaj Departament'">-->
+<!--                        Dodaj Departament-->
+<!--                    </button>-->
+<!--                    <a th:href="@{/departments}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </section>-->
+<!--</main>-->
+
+<!--<footer class="footer">-->
+<!--    <div class="footer-content">-->
+<!--        <p>&copy; 2024 TechCorp Employee Management System</p>-->
+<!--    </div>-->
+<!--</footer>-->
+
+<!--<script>-->
+<!--    // Prosta walidacja po stronie klienta-->
+<!--    document.addEventListener('DOMContentLoaded', function() {-->
+<!--        const form = document.getElementById('departmentForm');-->
+
+<!--        // Ukryj komunikaty błędów Thymeleaf przy ładowaniu (będą pokazywane tylko po stronie serwera)-->
+<!--        const thymeleafErrors = form.querySelectorAll('.invalid-feedback');-->
+<!--        thymeleafErrors.forEach(error => {-->
+<!--            error.style.display = 'none';-->
+<!--        });-->
+
+<!--        // Walidacja przy wysłaniu formularza-->
+<!--        form.addEventListener('submit', function(e) {-->
+<!--            let isValid = true;-->
+
+<!--            // Sprawdź wymagane pola-->
+<!--            const nameField = document.getElementById('name');-->
+<!--            const budgetField = document.getElementById('budget');-->
+
+<!--            // Resetuj wszystkie błędy-->
+<!--            const allFields = form.querySelectorAll('input, select, textarea');-->
+<!--            allFields.forEach(field => {-->
+<!--                field.classList.remove('is-invalid');-->
+<!--                const errorMsg = field.nextElementSibling;-->
+<!--                if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {-->
+<!--                    errorMsg.style.display = 'none';-->
+<!--                }-->
+<!--            });-->
+
+<!--            // Walidacja nazwy-->
+<!--            if (!nameField.value.trim()) {-->
+<!--                nameField.classList.add('is-invalid');-->
+<!--                const nameError = nameField.nextElementSibling;-->
+<!--                if (nameError && nameError.classList.contains('invalid-feedback')) {-->
+<!--                    nameError.style.display = 'block';-->
+<!--                    nameError.textContent = 'Nazwa departamentu jest wymagana';-->
+<!--                }-->
+<!--                isValid = false;-->
+<!--            } else if (nameField.value.trim().length < 2 || nameField.value.trim().length > 50) {-->
+<!--                nameField.classList.add('is-invalid');-->
+<!--                const nameError = nameField.nextElementSibling;-->
+<!--                if (nameError && nameError.classList.contains('invalid-feedback')) {-->
+<!--                    nameError.style.display = 'block';-->
+<!--                    nameError.textContent = 'Nazwa musi mieć od 2 do 50 znaków';-->
+<!--                }-->
+<!--                isValid = false;-->
+<!--            }-->
+
+<!--            // Walidacja budżetu-->
+<!--            if (!budgetField.value || parseFloat(budgetField.value) <= 0) {-->
+<!--                budgetField.classList.add('is-invalid');-->
+<!--                const budgetError = budgetField.nextElementSibling;-->
+<!--                if (budgetError && budgetError.classList.contains('invalid-feedback')) {-->
+<!--                    budgetError.style.display = 'block';-->
+<!--                    budgetError.textContent = 'Budżet jest wymagany i musi być liczbą dodatnią';-->
+<!--                }-->
+<!--                isValid = false;-->
+<!--            }-->
+
+<!--            // Walidacja opisu (jeśli jest wypełniony)-->
+<!--            const descriptionField = document.getElementById('description');-->
+<!--            if (descriptionField.value.length > 255) {-->
+<!--                descriptionField.classList.add('is-invalid');-->
+<!--                const descriptionError = descriptionField.nextElementSibling;-->
+<!--                if (descriptionError && descriptionError.classList.contains('invalid-feedback')) {-->
+<!--                    descriptionError.style.display = 'block';-->
+<!--                    descriptionError.textContent = 'Opis nie może przekraczać 255 znaków';-->
+<!--                }-->
+<!--                isValid = false;-->
+<!--            }-->
+
+<!--            // Walidacja emaila managera (jeśli jest wybrany)-->
+<!--            const managerField = document.getElementById('managerEmail');-->
+<!--            if (managerField.value && !isValidEmail(managerField.value)) {-->
+<!--                managerField.classList.add('is-invalid');-->
+<!--                const managerError = managerField.nextElementSibling;-->
+<!--                if (managerError && managerError.classList.contains('invalid-feedback')) {-->
+<!--                    managerError.style.display = 'block';-->
+<!--                    managerError.textContent = 'Nieprawidłowy format email';-->
+<!--                }-->
+<!--                isValid = false;-->
+<!--            }-->
+
+<!--            if (!isValid) {-->
+<!--                e.preventDefault();-->
+<!--                // Przewiń do pierwszego błędu-->
+<!--                const firstError = form.querySelector('.is-invalid');-->
+<!--                if (firstError) {-->
+<!--                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });-->
+<!--                    firstError.focus();-->
+<!--                }-->
+<!--            }-->
+<!--        });-->
+
+<!--        // Funkcja walidacji emaila-->
+<!--        function isValidEmail(email) {-->
+<!--            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;-->
+<!--            return emailRegex.test(email);-->
+<!--        }-->
+
+<!--        // Usuwanie błędów podczas pisania-->
+<!--        const inputs = form.querySelectorAll('input, select, textarea');-->
+<!--        inputs.forEach(input => {-->
+<!--            input.addEventListener('input', function() {-->
+<!--                this.classList.remove('is-invalid');-->
+<!--                const errorMsg = this.nextElementSibling;-->
+<!--                if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {-->
+<!--                    errorMsg.style.display = 'none';-->
+<!--                }-->
+<!--            });-->
+<!--        });-->
+
+<!--        // Walidacja na bieżąco dla pól wymaganych-->
+<!--        inputs.forEach(input => {-->
+<!--            input.addEventListener('blur', function() {-->
+<!--                if (this.hasAttribute('required') && !this.value.trim()) {-->
+<!--                    this.classList.add('is-invalid');-->
+<!--                    const errorMsg = this.nextElementSibling;-->
+<!--                    if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {-->
+<!--                        errorMsg.style.display = 'block';-->
+<!--                        errorMsg.textContent = 'To pole jest wymagane';-->
+<!--                    }-->
+<!--                }-->
+<!--            });-->
+<!--        });-->
+<!--    });-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</title>
+    <title>Formularz Departamentu</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
-        .form-control:invalid {
-            border-color: #dc3545;
-        }
-        .required-field::after {
-            content: " *";
-            color: #dc3545;
-        }
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-    </style>
 </head>
 <body>
-<header>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h1 class="nav-logo">EmployeeManager</h1>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</header>
-
-<main class="main-content">
-    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
-
+<div layout:fragment="content">
     <section class="content-section">
         <div class="section-header">
-            <h1 class="section-title" th:text="${pageTitle} ?: 'Formularz Departamentu'">Formularz Departamentu</h1>
+            <h1 class="section-title" th:text="${pageTitle}">Formularz Departamentu</h1>
             <a th:href="@{/departments}" class="btn btn-secondary">Powrót do Listy</a>
         </div>
 
         <div class="form-container">
             <form th:action="@{${department.id != null} ? '/departments/edit' : '/departments/add'}"
-                  th:object="${department}" method="post" id="departmentForm" onsubmit="return validateForm()">
+                  th:object="${department}" method="post">
 
                 <input type="hidden" th:field="*{id}">
 
+                <!-- Pole nazwy -->
                 <div class="form-group">
                     <label class="form-label required-field" for="name">Nazwa Departamentu</label>
                     <input type="text" class="form-control" id="name" th:field="*{name}"
-                           placeholder="Wprowadź nazwę departamentu" required
-                           oninput="validateForm()">
-                    <div class="error-message" id="nameError" style="color: #dc3545; font-size: 0.875rem; display: none;">
-                        Nazwa departamentu jest wymagana
+                           th:class="${#fields != null && #fields.hasErrors('name')} ? 'form-control is-invalid' : 'form-control'"
+                           placeholder="Wprowadź nazwę departamentu" required>
+                    <div th:if="${#fields != null && #fields.hasErrors('name')}" class="invalid-feedback">
+                        <span th:errors="*{name}"></span>
                     </div>
                 </div>
 
+                <!-- Pole lokalizacji -->
+                <div class="form-group">
+                    <label class="form-label required-field" for="location">Lokalizacja</label>
+                    <input type="text" class="form-control" id="location" th:field="*{location}"
+                           th:class="${#fields != null && #fields.hasErrors('location')} ? 'form-control is-invalid' : 'form-control'"
+                           placeholder="Wprowadź lokalizację" required>
+                    <div th:if="${#fields != null && #fields.hasErrors('location')}" class="invalid-feedback">
+                        <span th:errors="*{location}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole opisu -->
                 <div class="form-group">
                     <label class="form-label" for="description">Opis</label>
                     <textarea class="form-control" id="description" th:field="*{description}"
+                              th:class="${#fields != null && #fields.hasErrors('description')} ? 'form-control is-invalid' : 'form-control'"
                               placeholder="Opis departamentu" rows="3"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="managerEmail">Manager</label>
-                    <select class="form-select" id="managerEmail" th:field="*{managerEmail}">
-                        <option value="">Wybierz managera</option>
-                        <option th:each="manager : ${managers}"
-                                th:value="${manager.email}"
-                                th:text="${manager.name + ' (' + manager.email + ')'}">Jan Kowalski (jan@example.com)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label required-field" for="budget">Budżet ($)</label>
-                    <input type="number" step="0.01" class="form-control" id="budget"
-                           th:field="*{budget}" placeholder="100000.00" min="0" required
-                           oninput="validateForm()">
-                    <div class="error-message" id="budgetError" style="color: #dc3545; font-size: 0.875rem; display: none;">
-                        Budżet jest wymagany i musi być liczbą dodatnią
+                    <div th:if="${#fields != null && #fields.hasErrors('description')}" class="invalid-feedback">
+                        <span th:errors="*{description}"></span>
                     </div>
                 </div>
 
+                <!-- Pole managera -->
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary" id="submitBtn"
-                            th:text="${department.id != null} ? 'Zaktualizuj Departament' : 'Dodaj Departament'">
-                        Dodaj Departament
+                    <label class="form-label" for="managerEmail">Manager</label>
+                    <select class="form-select" id="managerEmail" th:field="*{managerEmail}"
+                            th:class="${#fields != null && #fields.hasErrors('managerEmail')} ? 'form-select is-invalid' : 'form-select'">
+                        <option value="">Wybierz managera</option>
+                        <option th:each="manager : ${managers}"
+                                th:value="${manager.email}"
+                                th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.position + ')'}">
+                        </option>
+                    </select>
+                    <div th:if="${#fields != null && #fields.hasErrors('managerEmail')}" class="invalid-feedback">
+                        <span th:errors="*{managerEmail}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole budżetu -->
+                <div class="form-group">
+                    <label class="form-label required-field" for="budget">Budżet ($)</label>
+                    <input type="number" step="0.01" class="form-control" id="budget"
+                           th:field="*{budget}"
+                           th:class="${#fields != null && #fields.hasErrors('budget')} ? 'form-control is-invalid' : 'form-control'"
+                           placeholder="100000.00" min="0" required>
+                    <div th:if="${#fields != null && #fields.hasErrors('budget')}" class="invalid-feedback">
+                        <span th:errors="*{budget}"></span>
+                    </div>
+                </div>
+
+                <!-- Przyciski -->
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                            <span th:text="${department.id != null} ? 'Zaktualizuj Departament' : 'Dodaj Departament'">
+                                Dodaj Departament
+                            </span>
                     </button>
                     <a th:href="@{/departments}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>
                 </div>
             </form>
         </div>
     </section>
-</main>
-
-<footer class="footer">
-    <div class="footer-content">
-        <p>&copy; 2024 TechCorp Employee Management System</p>
-    </div>
-</footer>
-
-<script>
-    function validateForm() {
-        const name = document.getElementById('name').value.trim();
-        const budget = document.getElementById('budget').value;
-        const submitBtn = document.getElementById('submitBtn');
-        const nameError = document.getElementById('nameError');
-        const budgetError = document.getElementById('budgetError');
-
-        let isValid = true;
-
-        // Walidacja nazwy
-        if (name === '') {
-            nameError.style.display = 'block';
-            isValid = false;
-        } else {
-            nameError.style.display = 'none';
-        }
-
-        // Walidacja budżetu
-        if (budget === '' || parseFloat(budget) <= 0) {
-            budgetError.style.display = 'block';
-            isValid = false;
-        } else {
-            budgetError.style.display = 'none';
-        }
-
-        // Blokowanie/odblokowanie przycisku
-        submitBtn.disabled = !isValid;
-
-        return isValid;
-    }
-
-    // Inicjalna walidacja przy załadowaniu strony
-    document.addEventListener('DOMContentLoaded', function() {
-        validateForm();
-    });
-</script>
+</div>
 </body>
 </html>

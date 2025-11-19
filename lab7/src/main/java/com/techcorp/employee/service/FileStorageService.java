@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -398,6 +399,62 @@ public class FileStorageService {
             return Files.size(filePath);
         } catch (IOException ex) {
             throw new FileNotFoundException("Could not get file size for: " + fileName, ex);
+        }
+    }
+
+
+//    public String storeDepartmentDocument(MultipartFile file, Long departmentId) {
+//        validateFileTypeAndSize(file, ALLOWED_DOCUMENT_TYPES, DEFAULT_MAX_FILE_SIZE);
+//        String subdirectory = "department-documents/" + departmentId;
+//        return storeFile(file, subdirectory, true); // Używamy oryginalnej nazwy dla czytelności
+//    }
+
+    public String storeDepartmentDocument(MultipartFile file, Long departmentId) {
+        validateFileTypeAndSize(file, ALLOWED_DOCUMENT_TYPES, DEFAULT_MAX_FILE_SIZE);
+        String subdirectory = "department-documents/" + departmentId;
+
+        String uniqueFileName = generateUniqueDepartmentFileName(file.getOriginalFilename());
+        return storeFileWithCustomName(file, subdirectory, uniqueFileName);
+    }
+
+    private String generateUniqueDepartmentFileName(String originalFileName) {
+        if (originalFileName == null || originalFileName.isEmpty()) {
+            return UUID.randomUUID().toString();
+        }
+
+        String fileExtension = getFileExtension(originalFileName);
+        String baseName = originalFileName.substring(0, originalFileName.lastIndexOf('.'));
+
+        String shortUuid = UUID.randomUUID().toString().substring(0, 6);
+
+        return normalizeFileName(baseName)  + "_" + shortUuid + fileExtension;
+    }
+
+    public Resource loadDepartmentDocument(String fileName, Long departmentId) {
+        String subdirectory = "department-documents/" + departmentId;
+        return loadFileAsResource(fileName, subdirectory);
+    }
+
+    public boolean deleteDepartmentDocument(String fileName, Long departmentId) {
+        String subdirectory = "department-documents/" + departmentId;
+        return deleteFile(fileName, subdirectory);
+    }
+
+    public List<String> getDepartmentDocumentNames(Long departmentId) {
+        String subdirectory = "department-documents/" + departmentId;
+        Path departmentDir = resolvePath(subdirectory);
+
+        try {
+            if (!Files.exists(departmentDir)) {
+                return List.of();
+            }
+
+            return Files.list(departmentDir)
+                    .filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString())
+                    .toList();
+        } catch (IOException ex) {
+            throw new FileStorageException("Could not list department documents", ex);
         }
     }
 

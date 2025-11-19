@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,32 +9,8 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h1 class="nav-logo">EmployeeManager</h1>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a th:href="@{/}" class="nav-link">Strona Główna</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/departments}" class="nav-link">Departamenty</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
-                </li>
-                <li class="nav-item">
-                    <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</header>
 
-<main class="main-content">
+<div layout:fragment="content">
     <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
     <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
@@ -53,7 +31,7 @@
             </form>
         </div>
     </section>
-</main>
+</div>
 
 <footer class="footer">
     <div class="footer-content">

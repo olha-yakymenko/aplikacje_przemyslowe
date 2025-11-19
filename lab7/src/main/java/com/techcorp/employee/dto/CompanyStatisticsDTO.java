@@ -34,4 +34,5 @@ public class CompanyStatisticsDTO {
 
     public String getTopEarnerName() { return topEarnerName; }
     public void setTopEarnerName(String topEarnerName) { this.topEarnerName = topEarnerName; }
+
 }

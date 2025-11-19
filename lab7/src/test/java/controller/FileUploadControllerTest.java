@@ -556,4 +556,258 @@ class FileUploadControllerTest {
         document.setFileSize(2048L);
         return document;
     }
+
+
+
+    // === TESTY DOKUMENTÓW DZIAŁÓW ===
+
+    @Test
+    void uploadDepartmentDocument_WithValidFile_ShouldReturnCreated() throws Exception {
+        // Given
+        when(fileStorageService.storeDepartmentDocument(any(MultipartFile.class), eq(1L)))
+                .thenReturn("department_document.pdf");
+
+        // When & Then
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/files/department-documents/{departmentId}", 1L)
+                        .file(documentFile)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isCreated())
+                .andExpect(content().string("Document uploaded successfully: department_document.pdf"));
+
+        verify(fileStorageService, times(1)).storeDepartmentDocument(any(MultipartFile.class), eq(1L));
+    }
+
+    @Test
+    void uploadDepartmentDocument_WithStorageException_ShouldReturnBadRequest() throws Exception {
+        // Given
+        when(fileStorageService.storeDepartmentDocument(any(MultipartFile.class), eq(1L)))
+                .thenThrow(new RuntimeException("Storage error"));
+
+        // When & Then
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/files/department-documents/{departmentId}", 1L)
+                        .file(documentFile)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Error uploading document: Storage error"));
+
+        verify(fileStorageService, times(1)).storeDepartmentDocument(any(MultipartFile.class), eq(1L));
+    }
+
+    @Test
+    void getDepartmentDocuments_WithValidDepartmentId_ShouldReturnDocumentList() throws Exception {
+        // Given
+        List<String> documentNames = Arrays.asList("doc1.pdf", "doc2.docx", "doc3.pdf");
+        when(fileStorageService.getDepartmentDocumentNames(1L)).thenReturn(documentNames);
+
+        // When & Then
+        mockMvc.perform(get("/api/files/department-documents/{departmentId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0]").value("doc1.pdf"))
+                .andExpect(jsonPath("$[1]").value("doc2.docx"))
+                .andExpect(jsonPath("$[2]").value("doc3.pdf"));
+
+        verify(fileStorageService, times(1)).getDepartmentDocumentNames(1L);
+    }
+
+    @Test
+    void getDepartmentDocuments_WithNoDocuments_ShouldReturnEmptyList() throws Exception {
+        // Given
+        when(fileStorageService.getDepartmentDocumentNames(2L)).thenReturn(Arrays.asList());
+
+        // When & Then
+        mockMvc.perform(get("/api/files/department-documents/{departmentId}", 2L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(fileStorageService, times(1)).getDepartmentDocumentNames(2L);
+    }
+
+    @Test
+    void getDepartmentDocuments_WithServiceException_ShouldReturnBadRequest() throws Exception {
+        // Given
+        when(fileStorageService.getDepartmentDocumentNames(3L))
+                .thenThrow(new RuntimeException("Department not found"));
+
+        // When & Then
+        mockMvc.perform(get("/api/files/department-documents/{departmentId}", 3L))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+
+        verify(fileStorageService, times(1)).getDepartmentDocumentNames(3L);
+    }
+
+    @Test
+    void downloadDepartmentDocument_WithValidData_ShouldReturnDocument() throws Exception {
+        // Given
+        byte[] documentContent = "Department document content".getBytes();
+        Resource documentResource = new ByteArrayResource(documentContent);
+
+        when(fileStorageService.loadDepartmentDocument("department_doc.pdf", 1L))
+                .thenReturn(documentResource);
+
+        // When & Then
+        mockMvc.perform(get("/api/files/department-documents/{departmentId}/{fileName}", 1L, "department_doc.pdf"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"department_doc.pdf\""))
+                .andExpect(content().bytes(documentContent));
+
+        verify(fileStorageService, times(1)).loadDepartmentDocument("department_doc.pdf", 1L);
+    }
+
+    @Test
+    void downloadDepartmentDocument_WithNonExistingDocument_ShouldReturnNotFound() throws Exception {
+        // Given
+        when(fileStorageService.loadDepartmentDocument("nonexistent.pdf", 1L))
+                .thenThrow(new RuntimeException("Document not found"));
+
+        // When & Then
+        mockMvc.perform(get("/api/files/department-documents/{departmentId}/{fileName}", 1L, "nonexistent.pdf"))
+                .andExpect(status().isNotFound());
+
+        verify(fileStorageService, times(1)).loadDepartmentDocument("nonexistent.pdf", 1L);
+    }
+
+    @Test
+    void deleteDepartmentDocument_WithValidData_ShouldReturnNoContent() throws Exception {
+        // Given
+        when(fileStorageService.deleteDepartmentDocument("document_to_delete.pdf", 1L))
+                .thenReturn(true);
+
+        // When & Then
+        mockMvc.perform(delete("/api/files/department-documents/{departmentId}/{fileName}", 1L, "document_to_delete.pdf"))
+                .andExpect(status().isNoContent());
+
+        verify(fileStorageService, times(1)).deleteDepartmentDocument("document_to_delete.pdf", 1L);
+    }
+
+    @Test
+    void deleteDepartmentDocument_WithNonExistingDocument_ShouldReturnNotFound() throws Exception {
+        // Given
+        when(fileStorageService.deleteDepartmentDocument("nonexistent.pdf", 1L))
+                .thenReturn(false);
+
+        // When & Then
+        mockMvc.perform(delete("/api/files/department-documents/{departmentId}/{fileName}", 1L, "nonexistent.pdf"))
+                .andExpect(status().isNotFound());
+
+        verify(fileStorageService, times(1)).deleteDepartmentDocument("nonexistent.pdf", 1L);
+    }
+
+    @Test
+    void deleteDepartmentDocument_WithServiceException_ShouldReturnBadRequest() throws Exception {
+        // Given
+        when(fileStorageService.deleteDepartmentDocument("problematic.pdf", 1L))
+                .thenThrow(new RuntimeException("Delete operation failed"));
+
+        // When & Then
+        mockMvc.perform(delete("/api/files/department-documents/{departmentId}/{fileName}", 1L, "problematic.pdf"))
+                .andExpect(status().isBadRequest());
+
+        verify(fileStorageService, times(1)).deleteDepartmentDocument("problematic.pdf", 1L);
+    }
+
+
+    @Test
+    void exportCsv_WithEmptyCompany_ShouldHandleCorrectly() throws Exception {
+        // Given
+        String csvContent = "firstName,lastName,email,company,position,salary";
+        Resource csvResource = new ByteArrayResource(csvContent.getBytes());
+
+        Map<String, Object> reportData = new HashMap<>();
+        reportData.put("contentType", "text/csv");
+        reportData.put("contentDisposition", "attachment");
+        reportData.put("fileName", "employees.csv");
+        reportData.put("resource", csvResource);
+
+        when(reportGeneratorService.getCsvReportData("")).thenReturn(reportData);
+
+        // When & Then
+        mockMvc.perform(get("/api/files/export/csv")
+                        .param("company", ""))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/csv"));
+
+        verify(reportGeneratorService, times(1)).getCsvReportData("");
+    }
+
+    @Test
+    void generateStatisticsReport_WithSpecialCharactersInCompanyName_ShouldHandleCorrectly() throws Exception {
+        // Given
+        String companyName = "Tech-Corp & Partners";
+        byte[] pdfContent = "%PDF-1.4".getBytes();
+        Resource pdfResource = new ByteArrayResource(pdfContent);
+
+        Map<String, Object> reportData = new HashMap<>();
+        reportData.put("contentType", MediaType.APPLICATION_PDF_VALUE);
+        reportData.put("contentDisposition", "attachment");
+        reportData.put("fileName", "statistics_Tech-Corp_&_Partners.pdf");
+        reportData.put("resource", pdfResource);
+
+        when(reportGeneratorService.getStatisticsReportData(companyName)).thenReturn(reportData);
+
+        // When & Then
+        mockMvc.perform(get("/api/files/reports/statistics/{companyName}", companyName))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF));
+
+        verify(reportGeneratorService, times(1)).getStatisticsReportData(companyName);
+    }
+
+    @Test
+    void uploadDocument_WithDifferentDocumentTypes_ShouldHandleAllTypes() throws Exception {
+        // Given
+        EmployeeDocument contractDoc = createSampleDocument();
+        contractDoc.setFileType(DocumentType.CONTRACT);
+
+        when(documentService.storeDocument(eq("john@example.com"), any(MultipartFile.class), eq(DocumentType.CONTRACT)))
+                .thenReturn(contractDoc);
+
+        // Test all document types
+        for (DocumentType type : DocumentType.values()) {
+            EmployeeDocument doc = createSampleDocument();
+            doc.setFileType(type);
+
+            when(documentService.storeDocument(eq("john@example.com"), any(MultipartFile.class), eq(type)))
+                    .thenReturn(doc);
+
+            // When & Then
+            mockMvc.perform(MockMvcRequestBuilders.multipart("/api/files/documents/{email}", "john@example.com")
+                            .file(documentFile)
+                            .param("type", type.name())
+                            .contentType(MediaType.MULTIPART_FORM_DATA))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.fileType").value(type.name()));
+
+            verify(documentService, times(1)).storeDocument(eq("john@example.com"), any(MultipartFile.class), eq(type));
+        }
+    }
+
+    @Test
+    void downloadDocument_WithInvalidDocumentId_ShouldReturnNotFound() throws Exception {
+        // Given
+        when(documentService.downloadDocument("john@example.com", "invalid-id"))
+                .thenReturn(ResponseEntity.notFound().build());
+
+        // When & Then
+        mockMvc.perform(get("/api/files/documents/{email}/{documentId}", "john@example.com", "invalid-id"))
+                .andExpect(status().isNotFound());
+
+        verify(documentService, times(1)).downloadDocument("john@example.com", "invalid-id");
+    }
+
+    @Test
+    void deleteDocument_WithNonExistingDocument_ShouldHandleGracefully() throws Exception {
+        // Given
+        doThrow(new RuntimeException("Document not found"))
+                .when(documentService).deleteDocument("john@example.com", "nonexistent");
+
+        // When & Then
+        mockMvc.perform(delete("/api/files/documents/{email}/{documentId}", "john@example.com", "nonexistent"))
+                .andExpect(status().is5xxServerError());
+
+        verify(documentService, times(1)).deleteDocument("john@example.com", "nonexistent");
+    }
 }

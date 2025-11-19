@@ -1,40 +1,14 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${pageTitle}">Statystyki Firmy - System Zarządzania Pracownikami</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <header>
-        <nav class="navbar">
-            <div class="nav-container">
-                <h1 class="nav-logo">EmployeeManager</h1>
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a th:href="@{/}" class="nav-link">Strona Główna</a>
-                    </li>
-                    <li class="nav-item">
-                        <a th:href="@{/employees}" class="nav-link">Pracownicy</a>
-                    </li>
-                    <li class="nav-item">
-                        <a th:href="@{/departments}" class="nav-link">Departamenty</a>
-                    </li>
-                    <li class="nav-item">
-                        <a th:href="@{/statistics}" class="nav-link">Statystyki</a>
-                    </li>
-                    <li class="nav-item">
-                        <a th:href="@{/employees/import}" class="nav-link">Import Plików</a>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
-
-    <main class="main-content">
-        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+<div layout:fragment="content">
 
         <section class="content-section">
             <div class="section-header">
@@ -55,7 +29,7 @@
                         <div class="stat-label">Średnie Wynagrodzenie</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value" th:text="${stats.highestPaidEmployee}">-</div>
+                        <div class="stat-value" th:text="${stats.getTopEarnerName}">-</div>
                         <div class="stat-label">Najlepiej Zarabiający</div>
                     </div>
                 </div>
@@ -112,7 +86,7 @@
                 </div>
             </div>
         </section>
-    </main>
+    </div>
 
     <footer class="footer">
         <div class="footer-content">

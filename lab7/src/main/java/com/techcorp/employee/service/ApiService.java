@@ -32,9 +32,7 @@ public class ApiService {
         this.gson = gson;
     }
 
-    /**
-     * Pobiera pracowników z REST API
-     */
+
     public List<Employee> fetchEmployeesFromApi() throws ApiException {
         List<Employee> employees = new ArrayList<>();
 
