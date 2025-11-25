@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Pracowników - System Zarządzania Pracownikami</title>
+<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+</head>
+<body>
+
+<div layout:fragment="content">
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Lista Pracowników</h1>
+            <a th:href="@{/employees/add}" class="btn btn-primary">Dodaj Nowego Pracownika</a>
+        </div>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Imię i Nazwisko</th>
+                    <th>Email</th>
+                    <th>Firma</th>
+                    <th>Stanowisko</th>
+                    <th>Wynagrodzenie</th>
+                    <th>Status</th>
+                    <th>Akcje</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="employee : ${employees}">
+                    <td th:text="${employee.name}">Jan Kowalski</td>
+                    <td th:text="${employee.email}">jan@example.com</td>
+                    <td th:text="${employee.company}">TechCorp</td>
+                    <td th:text="${employee.position}">DEVELOPER</td>
+                    <td th:text="'$' + ${#numbers.formatDecimal(employee.salary, 1, 2)}">$5000.00</td>
+                    <td th:text="${employee.status}">ACTIVE</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a th:href="@{'/employees/edit/' + ${employee.email}}"
+                               class="btn btn-secondary btn-sm">Edytuj</a>
+                            <a th:href="@{'/employees/delete/' + ${employee.email}}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Czy na pewno chcesz usunąć tego pracownika?')">Usuń</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(employees)}">
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        Brak pracowników w systemie.
+                        <a th:href="@{/employees/add}">Dodaj pierwszego pracownika</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <a th:href="@{/employees/search}" class="btn btn-success">Wyszukaj Pracowników</a>
+            <a th:href="@{/employees/import}" class="btn btn-info" style="margin-left: 1rem;">Import z Pliku</a>
+        </div>
+    </section>
+</div>
+
+
+</body>
+</html>

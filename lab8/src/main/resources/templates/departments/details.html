@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szczegóły Departamentu - System Zarządzania Pracownikami</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Szczegóły Departamentu</h1>
+            <div>
+                <a th:href="@{'/departments/details/' + ${department.id} + '/assign-employee'}"
+                   class="btn btn-primary">Przypisz Pracownika</a>
+                <a th:href="@{'/departments/documents/' + ${department.id}}"
+                   class="btn btn-warning">Dokumenty</a>
+                <a th:href="@{/departments}" class="btn btn-secondary">Powrót do Listy</a>
+            </div>
+        </div>
+
+        <div class="details-container">
+            <div class="details-card">
+                <h2>Informacje o Departamencie</h2>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <strong>ID Departamentu:</strong>
+                        <span th:text="${department.id}">1</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Nazwa:</strong>
+                        <span th:text="${department.name}">IT</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Opis:</strong>
+                        <span th:text="${department.description} ?: 'Brak opisu'">Dział technologii informatycznych</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Manager:</strong>
+                        <span th:if="${manager != null && manager.present}"
+                              th:text="${manager.get().name} + ' (' + ${manager.get().email} + ')'">Jan Kowalski (jan@example.com)</span>
+                        <span th:unless="${manager != null && manager.present}">Brak managera</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Budżet:</strong>
+                        <span th:text="'$' + ${#numbers.formatDecimal(department.budget, 1, 2)} ?: '0.00'">$100000.00</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Liczba pracowników:</strong>
+                        <span th:text="${#lists.size(employees)}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-card">
+
+                <div th:if="${not #lists.isEmpty(employees)}" class="table-container">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Imię i Nazwisko</th>
+                            <th>Email</th>
+                            <th>Stanowisko</th>
+                            <th>Wynagrodzenie</th>
+                            <th>Akcje</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="employee : ${employees}">
+                            <td th:text="${employee.name}">Jan Kowalski</td>
+                            <td th:text="${employee.email}">jan@example.com</td>
+                            <td th:text="${employee.position}">DEVELOPER</td>
+                            <td th:text="'$' + ${#numbers.formatDecimal(employee.salary, 1, 2)}">$5000.00</td>
+                            <td>
+                                <a th:href="@{'/departments/details/' + ${department.id} + '/remove-employee/' + ${employee.email}}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Czy na pewno chcesz usunąć pracownika ' + ${employee.name} + ' z departamentu?')">
+                                    Usuń
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${#lists.isEmpty(employees)}" class="empty-state">
+                    <p style="text-align: center; padding: 2rem; color: #666;">
+                        Brak pracowników w tym departamencie.
+                    </p>
+                    <div style="text-align: center;">
+                        <a th:href="@{'/departments/details/' + ${department.id} + '/assign-employee'}"
+                           class="btn btn-primary">Przypisz pierwszego pracownika</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .details-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .details-card {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .details-card h2 {
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+    }
+
+    .card-header-with-button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-header-with-button h2 {
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 4px;
+        border-left: 4px solid #3498db;
+    }
+
+    .detail-item strong {
+        color: #2c3e50;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+    }
+</style>
+</body>
+</html>

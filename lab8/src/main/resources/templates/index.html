@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Strona Główna</title>
+</head>
+<body>
+<div layout:fragment="content">
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Witaj w Systemie Zarządzania Pracownikami</h1>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" th:text="${totalEmployees != null ? totalEmployees : '0'}">0</div>
+                <div class="stat-label">Łączna liczba pracowników</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:if="${avgSalary != null}"
+                     th:text="'$' + ${#numbers.formatDecimal(avgSalary, 1, 2)}">$0</div>
+                <div class="stat-value" th:unless="${avgSalary != null}">$0</div>
+                <div class="stat-label">Średnie wynagrodzenie</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" th:text="${totalDepartments != null ? totalDepartments : '0'}">0</div>
+                <div class="stat-label">Liczba departamentów</div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <h2>Szybkie akcje</h2>
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <a th:href="@{/employees}" class="btn btn-primary">Zarządzaj Pracownikami</a>
+                <a th:href="@{/departments}" class="btn btn-secondary">Zarządzaj Departamentami</a>
+                <a th:href="@{/statistics}" class="btn btn-success">Przeglądaj Statystyki</a>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

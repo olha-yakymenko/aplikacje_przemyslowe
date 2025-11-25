@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title>Przypisz Pracownika - System Zarządzania Pracownikami</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title" th:text="${pageTitle}">Przypisz Pracownika do Departamentu</h1>
+            <a th:href="@{'/departments/details/' + ${department.id}}" class="btn btn-secondary">Powrót do Szczegółów</a>
+        </div>
+
+        <!-- Komunikaty -->
+        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Wybierz pracownika do przypisania</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${not #lists.isEmpty(availableEmployees)}">
+                    <form th:action="@{'/departments/details/' + ${department.id} + '/assign-employee'}"
+                          method="post" class="form-container">
+                        <div class="form-group">
+                            <label for="employeeEmail" class="form-label required-field">Wybierz pracownika:</label>
+                            <select class="form-select" id="employeeEmail" name="employeeEmail" required>
+                                <option value="">Wybierz pracownika...</option>
+                                <option th:each="employee : ${availableEmployees}"
+                                        th:value="${employee.email}"
+                                        th:text="${employee.name + ' (' + employee.email + ') - ' + employee.position}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Przypisz do Departamentu</button>
+                            <a th:href="@{'/departments/details/' + ${department.id}}"
+                               class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div th:if="${#lists.isEmpty(availableEmployees)}" class="empty-state">
+                    <p style="text-align: center; padding: 2rem; color: #666;">
+                        Brak dostępnych pracowników do przypisania. Wszyscy pracownicy są już przypisani do departamentów.
+                    </p>
+                    <div style="text-align: center;">
+                        <a th:href="@{'/employees/add'}" class="btn btn-primary">Dodaj nowego pracownika</a>
+                        <a th:href="@{'/departments/details/' + ${department.id}}"
+                           class="btn btn-secondary" style="margin-left: 1rem;">Powrót</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informacje o departamencie -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informacje o departamencie</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nazwa:</strong> <span th:text="${department.name}">Nazwa</span></p>
+                        <p><strong>ID:</strong> <span th:text="${department.id}">1</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Opis:</strong> <span th:text="${department.description} ?: 'Brak opisu'">Opis</span></p>
+                        <p><strong>Lokalizacja:</strong> <span th:text="${department.location} ?: 'Brak'">Lokalizacja</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+    }
+</style>
+</body>
+</html>
