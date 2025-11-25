@@ -328,7 +328,7 @@ class StatisticsServiceTest {
 
         @SuppressWarnings("unchecked")
         Map<String, CompanyStatistics> companyStatsResult = (Map<String, CompanyStatistics>) statistics.get("companyStats");
-        assertEquals("None", companyStatsResult.get("TechCorp").getHighestPaidEmployee());
+        assertEquals("", companyStatsResult.get("TechCorp").getHighestPaidEmployee());
     }
 
     @Test
@@ -359,8 +359,7 @@ class StatisticsServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals("None", result.getHighestPaidEmployee());
-        assertFalse(result.getHighestPaidEmployeeOpt().isPresent());
+        assertEquals("", result.getHighestPaidEmployee());
         verify(employeeService, times(1)).getCompanyStatistics("TechCorp");
     }
 

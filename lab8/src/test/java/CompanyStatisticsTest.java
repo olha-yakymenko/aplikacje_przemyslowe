@@ -210,6 +210,9 @@
 package com.techcorp.employee.model;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CompanyStatisticsTest {
@@ -238,8 +241,8 @@ class CompanyStatisticsTest {
         assertThat(stats.getEmployeeCount()).isEqualTo(5);
         assertThat(stats.getAverageSalary()).isEqualTo(4000.0);
         assertThat(stats.getHighestPaidEmployee()).isEqualTo("Anna Nowak");
-        assertThat(stats.getCompanyName()).isEqualTo("TechCorp"); // 👈 TERAZ "TechCorp" nie "Unknown"
-        assertThat(stats.getMaxSalary()).isEqualTo(5000.0); // 👈 TERAZ 5000.0 nie 0.0
+        assertThat(stats.getCompanyName()).isEqualTo("TechCorp");
+        assertThat(stats.getMaxSalary()).isEqualTo(5000.0);
     }
 
     @Test

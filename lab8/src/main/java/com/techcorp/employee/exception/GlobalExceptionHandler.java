@@ -103,4 +103,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.PAYLOAD_TOO_LARGE);
     }
+
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException ex, WebRequest request) {
+        logger.error("Database access error occurred", ex);
+
+        String userMessage = "Database operation failed. Please try again later.";
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                userMessage,
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                request.getDescription(false)
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

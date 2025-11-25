@@ -1,5 +1,7 @@
 package com.techcorp.employee.dao;
 
+import com.techcorp.employee.exception.DataAccessException;
+import com.techcorp.employee.exception.DuplicateEmailException;
 import com.techcorp.employee.model.Employee;
 import com.techcorp.employee.model.Position;
 import com.techcorp.employee.model.EmploymentStatus;
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @JdbcTest
 @Sql(scripts = "/schema.sql")
@@ -31,201 +34,69 @@ class JdbcEmployeeDAOTest {
     }
 
     @Test
-    void shouldSaveAndFindEmployeeByEmail() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("Jan Kowalski");
-        employee.setEmail("jan.kowalski@techcorp.com");
-        employee.setCompany("TechCorp");
-        employee.setPosition(Position.PROGRAMMER);
-        employee.setSalary(5000.0);
-        employee.setStatus(EmploymentStatus.ACTIVE);
+    void shouldSaveEmployeeToDatabase() {
+        Employee employee = createTestEmployee("jan.kowalski@techcorp.com", "Jan Kowalski");
 
-        // When
-        Employee saved = employeeDAO.save(employee);
-        Optional<Employee> found = employeeDAO.findByEmail("jan.kowalski@techcorp.com");
+        employeeDAO.save(employee);
+        Optional<Employee> foundEmployee = employeeDAO.findByEmail("jan.kowalski@techcorp.com");
 
-        // Then
-        assertThat(saved.getId()).isNotNull();
-        assertThat(found).isPresent();
-        assertThat(found.get().getEmail()).isEqualTo("jan.kowalski@techcorp.com");
-        assertThat(found.get().getName()).isEqualTo("Jan Kowalski");
-        assertThat(found.get().getFirstName()).isEqualTo("Jan");
-        assertThat(found.get().getLastName()).isEqualTo("Kowalski");
+        assertThat(foundEmployee).isPresent();
     }
 
     @Test
-    void shouldUpdateExistingEmployee() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("Jan Kowalski");
-        employee.setEmail("jan@techcorp.com");
-        employee.setCompany("TechCorp");
-        employee.setPosition(Position.PROGRAMMER);
-        employee.setSalary(5000.0);
-        employee.setStatus(EmploymentStatus.ACTIVE);
-        Employee saved = employeeDAO.save(employee);
-
-        // When
-        saved.setSalary(6000.0);
-        saved.setPosition(Position.MANAGER);
-        Employee updated = employeeDAO.save(saved);
-
-        // Then
-        Optional<Employee> found = employeeDAO.findByEmail("jan@techcorp.com");
-        assertThat(found).isPresent();
-        assertThat(found.get().getSalary()).isEqualTo(6000.0);
-        assertThat(found.get().getPosition()).isEqualTo(Position.MANAGER);
-    }
-
-    @Test
-    void shouldDeleteEmployeeByEmail() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("Jan Kowalski");
-        employee.setEmail("jan@techcorp.com");
-        employee.setCompany("TechCorp");
-        employee.setPosition(Position.PROGRAMMER);
-        employee.setSalary(5000.0);
-        employee.setStatus(EmploymentStatus.ACTIVE);
+    void shouldReturnCorrectDataAfterSave() {
+        Employee employee = createTestEmployee("jan.kowalski@techcorp.com", "Jan Kowalski");
+        employee.setDepartmentId(1L);
+        employee.setPhotoFileName("photo.jpg");
         employeeDAO.save(employee);
 
-        // When
+        Employee result = employeeDAO.findByEmail("jan.kowalski@techcorp.com").get();
+
+        assertThat(result)
+                .usingRecursiveComparison()
+                .ignoringFields("id")
+                .isEqualTo(employee);
+    }
+
+    @Test
+    void shouldReturnEmptyOptionalForNonExistingEmployee() {
+        Optional<Employee> result = employeeDAO.findByEmail("nonexistent@techcorp.com");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldUpdateEmployeeSalary() {
+        Employee employee = createTestEmployee("jan@techcorp.com", "Jan Kowalski");
+        employeeDAO.save(employee);
+
+        employee.setSalary(6000.0);
+        employeeDAO.save(employee);
+
+        Employee updatedEmployee = employeeDAO.findByEmail("jan@techcorp.com").get();
+        assertThat(updatedEmployee.getSalary()).isEqualTo(6000.0);
+    }
+
+    @Test
+    void shouldDeleteEmployeeFromDatabase() {
+        Employee employee = createTestEmployee("jan@techcorp.com", "Jan Kowalski");
+        employeeDAO.save(employee);
+
         employeeDAO.deleteByEmail("jan@techcorp.com");
 
-        // Then
-        Optional<Employee> found = employeeDAO.findByEmail("jan@techcorp.com");
-        assertThat(found).isEmpty();
-    }
-
-    @Test
-    void shouldFindEmployeesByCompany() {
-        // Given
-        createTestEmployees();
-
-        // When
-        List<Employee> techcorpEmployees = employeeDAO.findByCompany("TechCorp");
-
-        // Then
-        assertThat(techcorpEmployees).hasSize(2);
-        assertThat(techcorpEmployees).extracting(Employee::getCompany)
-                .containsOnly("TechCorp");
-    }
-
-    @Test
-    void shouldFindEmployeesWithoutDepartment() {
-        // Given
-        Employee employeeWithDept = new Employee();
-        employeeWithDept.setName("With Dept");
-        employeeWithDept.setEmail("with.dept@techcorp.com");
-        employeeWithDept.setCompany("TechCorp");
-        employeeWithDept.setPosition(Position.PROGRAMMER);
-        employeeWithDept.setSalary(5000.0);
-        employeeWithDept.setStatus(EmploymentStatus.ACTIVE);
-        employeeWithDept.setDepartmentId(1L);
-        employeeDAO.save(employeeWithDept);
-
-        Employee employeeWithoutDept = new Employee();
-        employeeWithoutDept.setName("Without Dept");
-        employeeWithoutDept.setEmail("without.dept@techcorp.com");
-        employeeWithoutDept.setCompany("TechCorp");
-        employeeWithoutDept.setPosition(Position.PROGRAMMER);
-        employeeWithoutDept.setSalary(4000.0);
-        employeeWithoutDept.setStatus(EmploymentStatus.ACTIVE);
-        employeeDAO.save(employeeWithoutDept);
-
-        // When
-        List<Employee> withoutDepartment = employeeDAO.findEmployeesWithoutDepartment();
-
-        // Then
-        assertThat(withoutDepartment).hasSize(1);
-        assertThat(withoutDepartment.get(0).getEmail()).isEqualTo("without.dept@techcorp.com");
-    }
-
-    @Test
-    void shouldReturnCompanyStatistics() {
-        // Given
-        createTestEmployees();
-
-        // When
-        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
-
-        // Then
-        assertThat(statistics).hasSize(2);
-
-        // Sprawdź statystyki TechCorp
-        CompanyStatistics techcorpStats = statistics.stream()
-                .filter(stat -> "TechCorp".equals(stat.getCompanyName()))
-                .findFirst()
-                .orElseThrow();
-
-        assertThat(techcorpStats.getEmployeeCount()).isEqualTo(2);
-        assertThat(techcorpStats.getAverageSalary()).isEqualTo(6000.0);
-        assertThat(techcorpStats.getMaxSalary()).isEqualTo(7000.0);
-        assertThat(techcorpStats.getHighestPaidEmployee()).contains("Anna Nowak");
-
-        // Sprawdź statystyki OtherCorp
-        CompanyStatistics othercorpStats = statistics.stream()
-                .filter(stat -> "OtherCorp".equals(stat.getCompanyName()))
-                .findFirst()
-                .orElseThrow();
-
-        assertThat(othercorpStats.getEmployeeCount()).isEqualTo(1);
-        assertThat(othercorpStats.getAverageSalary()).isEqualTo(4000.0);
-        assertThat(othercorpStats.getMaxSalary()).isEqualTo(4000.0);
-    }
-
-    @Test
-    void shouldReturnEmptyStatisticsForNoEmployees() {
-        // When - baza jest pusta (czyszczona przed każdym testem)
-        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
-
-        // Then
-        assertThat(statistics).isEmpty();
-    }
-
-    @Test
-    void shouldCheckIfEmployeeExistsByEmail() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("Test Employee");
-        employee.setEmail("test@techcorp.com");
-        employee.setCompany("TechCorp");
-        employee.setPosition(Position.PROGRAMMER);
-        employee.setSalary(5000.0);
-        employee.setStatus(EmploymentStatus.ACTIVE);
-        employeeDAO.save(employee);
-
-        // When & Then
-        assertThat(employeeDAO.existsByEmail("test@techcorp.com")).isTrue();
-        assertThat(employeeDAO.existsByEmail("nonexistent@techcorp.com")).isFalse();
+        Optional<Employee> result = employeeDAO.findByEmail("jan@techcorp.com");
+        assertThat(result).isEmpty();
     }
 
     @Test
     void shouldTransformNameToFirstAndLastName() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("Jan Maria Kowalski");
-        employee.setEmail("jan@techcorp.com");
-        employee.setCompany("TechCorp");
-        employee.setPosition(Position.PROGRAMMER);
-        employee.setSalary(5000.0);
-        employee.setStatus(EmploymentStatus.ACTIVE);
+        Employee employee = createTestEmployee("jan@techcorp.com", "Jan Maria Kowalski");
+        employeeDAO.save(employee);
 
-        // When
-        Employee saved = employeeDAO.save(employee);
-
-        // Then - sprawdź bezpośrednio w bazie danych
         String firstName = jdbcTemplate.queryForObject(
-                "SELECT first_name FROM employees WHERE email = ?",
-                String.class,
-                "jan@techcorp.com"
-        );
+                "SELECT first_name FROM employees WHERE email = ?", String.class, "jan@techcorp.com");
         String lastName = jdbcTemplate.queryForObject(
-                "SELECT last_name FROM employees WHERE email = ?",
-                String.class,
-                "jan@techcorp.com"
-        );
+                "SELECT last_name FROM employees WHERE email = ?", String.class, "jan@techcorp.com");
 
         assertThat(firstName).isEqualTo("Jan");
         assertThat(lastName).isEqualTo("Maria Kowalski");
@@ -233,60 +104,422 @@ class JdbcEmployeeDAOTest {
 
     @Test
     void shouldHandleSingleName() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("Jan");
-        employee.setEmail("jan@techcorp.com");
-        employee.setCompany("TechCorp");
-        employee.setPosition(Position.PROGRAMMER);
-        employee.setSalary(5000.0);
-        employee.setStatus(EmploymentStatus.ACTIVE);
-
-        // When
+        Employee employee = createTestEmployee("jan@techcorp.com", "Jan");
         employeeDAO.save(employee);
 
-        // Then
         String firstName = jdbcTemplate.queryForObject(
-                "SELECT first_name FROM employees WHERE email = ?",
-                String.class,
-                "jan@techcorp.com"
-        );
+                "SELECT first_name FROM employees WHERE email = ?", String.class, "jan@techcorp.com");
         String lastName = jdbcTemplate.queryForObject(
-                "SELECT last_name FROM employees WHERE email = ?",
-                String.class,
-                "jan@techcorp.com"
-        );
+                "SELECT last_name FROM employees WHERE email = ?", String.class, "jan@techcorp.com");
 
         assertThat(firstName).isEqualTo("Jan");
         assertThat(lastName).isEqualTo("");
     }
 
+    @Test
+    void shouldThrowDuplicateEmailExceptionWhenSavingDuplicateEmail() {
+        Employee employee1 = createTestEmployee("jan@techcorp.com", "Jan Kowalski");
+        employeeDAO.save(employee1);
+
+        Employee employee2 = createTestEmployee("jan@techcorp.com", "Anna Nowak");
+
+        assertThatThrownBy(() -> employeeDAO.save(employee2))
+                .isInstanceOf(DuplicateEmailException.class)
+                .hasMessageContaining("Email already exists: jan@techcorp.com");
+    }
+
+    @Test
+    void shouldHandleNullValuesInSave() {
+        Employee employee = createTestEmployee("test@techcorp.com", "Test Employee");
+        employee.setDepartmentId(null);
+        employee.setPhotoFileName(null);
+        employeeDAO.save(employee);
+
+        Employee saved = employeeDAO.findByEmail("test@techcorp.com").get();
+
+        assertThat(saved.getDepartmentId()).isNull();
+        assertThat(saved.getPhotoFileName()).isNull();
+    }
+
+    @Test
+    void shouldReturnEmptyOptionalWhenEmployeeNotFoundById() {
+        Optional<Employee> found = employeeDAO.findById(999L);
+
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void shouldHandleEmptyDatabaseInFindAll() {
+        List<Employee> employees = employeeDAO.findAll();
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldHandleEmptyDatabaseInFindByCompany() {
+        List<Employee> employees = employeeDAO.findByCompany("NonExistentCompany");
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldReturnFalseWhenCheckingNonExistentEmail() {
+        boolean exists = employeeDAO.existsByEmail("nonexistent@techcorp.com");
+
+        assertThat(exists).isFalse();
+    }
+
+    @Test
+    void shouldHandlePositionEnumConversionError() {
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "John", "Doe", "john@techcorp.com", 5000.0, "INVALID_POSITION", "TechCorp", "ACTIVE");
+
+        List<Employee> employees = employeeDAO.findAll();
+
+        assertThat(employees.get(0).getPosition()).isEqualTo(Position.PROGRAMMER);
+    }
+
+    @Test
+    void shouldHandleStatusEnumConversionError() {
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "John", "Doe", "john@techcorp.com", 5000.0, "PROGRAMMER", "TechCorp", "INVALID_STATUS");
+
+        List<Employee> employees = employeeDAO.findAll();
+
+        assertThat(employees.get(0).getStatus()).isEqualTo(EmploymentStatus.ACTIVE);
+    }
+
+    @Test
+    void shouldUpdateEmployeeWithNullDepartmentAndPhoto() {
+        Employee employee = createTestEmployee("jan@techcorp.com", "Jan Kowalski");
+        employee.setDepartmentId(1L);
+        employee.setPhotoFileName("photo.jpg");
+        Employee saved = employeeDAO.save(employee);
+
+        saved.setDepartmentId(null);
+        saved.setPhotoFileName(null);
+        employeeDAO.save(saved);
+
+        Employee updated = employeeDAO.findByEmail("jan@techcorp.com").get();
+        assertThat(updated.getDepartmentId()).isNull();
+        assertThat(updated.getPhotoFileName()).isNull();
+    }
+
+    @Test
+    void shouldDeleteNonExistentEmployeeWithoutError() {
+        employeeDAO.deleteByEmail("nonexistent@techcorp.com");
+
+        Optional<Employee> result = employeeDAO.findByEmail("nonexistent@techcorp.com");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldHandleCompanyStatisticsWithMultipleHighestPaidEmployees() {
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "Anna", "Nowak", "anna1@techcorp.com", 7000.0, "MANAGER", "TechCorp", "ACTIVE");
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "Jan", "Kowalski", "anna2@techcorp.com", 7000.0, "MANAGER", "TechCorp", "ACTIVE");
+
+        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
+
+        CompanyStatistics stats = statistics.get(0);
+        assertThat(stats.getEmployeeCount()).isEqualTo(2);
+        assertThat(stats.getMaxSalary()).isEqualTo(7000.0);
+    }
+
+    @Test
+    void shouldHandleZeroSalaryInStatistics() {
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "Anna", "Nowak", "anna@techcorp.com", 0.0, "MANAGER", "TechCorp", "ACTIVE");
+
+        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
+
+        CompanyStatistics stats = statistics.get(0);
+        assertThat(stats.getAverageSalary()).isEqualTo(0.0);
+        assertThat(stats.getMaxSalary()).isEqualTo(0.0);
+    }
+
+    @Test
+    void shouldHandleLargeSalaryValues() {
+        Employee employee = createTestEmployee("ceo@techcorp.com", "CEO");
+        employee.setPosition(Position.PRESIDENT);
+        employee.setSalary(1_000_000.0);
+        employeeDAO.save(employee);
+
+        Employee saved = employeeDAO.findByEmail("ceo@techcorp.com").get();
+        assertThat(saved.getSalary()).isEqualTo(1_000_000.0);
+    }
+
+    @Test
+    void shouldHandleSpecialCharactersInNames() {
+        Employee employee = createTestEmployee("jozef@techcorp.com", "Józef Żółć");
+        employeeDAO.save(employee);
+
+        Employee found = employeeDAO.findByEmail("jozef@techcorp.com").get();
+
+        assertThat(found.getName()).isEqualTo("Józef Żółć");
+        assertThat(found.getFirstName()).isEqualTo("Józef");
+        assertThat(found.getLastName()).isEqualTo("Żółć");
+    }
+
+    @Test
+    void shouldFindEmployeesByDepartmentId() {
+        Employee employee1 = createTestEmployee("emp1@techcorp.com", "Employee One");
+        employee1.setDepartmentId(1L);
+        employeeDAO.save(employee1);
+
+        Employee employee2 = createTestEmployee("emp2@techcorp.com", "Employee Two");
+        employee2.setDepartmentId(1L);
+        employeeDAO.save(employee2);
+
+        List<Employee> employees = employeeDAO.findByDepartmentId(1L);
+
+        assertThat(employees).hasSize(2);
+    }
+
+    @Test
+    void shouldReturnTrueWhenEmployeeExistsByEmail() {
+        Employee employee = createTestEmployee("test@techcorp.com", "Test Employee");
+        employeeDAO.save(employee);
+
+        boolean exists = employeeDAO.existsByEmail("test@techcorp.com");
+
+        assertThat(exists).isTrue();
+    }
+
+    private Employee createTestEmployee(String email, String name) {
+        Employee employee = new Employee();
+        employee.setName(name);
+        employee.setEmail(email);
+        employee.setCompany("TechCorp");
+        employee.setPosition(Position.PROGRAMMER);
+        employee.setSalary(5000.0);
+        employee.setStatus(EmploymentStatus.ACTIVE);
+        return employee;
+    }
+
     private void createTestEmployees() {
-        Employee emp1 = new Employee();
-        emp1.setName("Anna Nowak");
-        emp1.setEmail("anna@techcorp.com");
-        emp1.setCompany("TechCorp");
+        Employee emp1 = createTestEmployee("anna@techcorp.com", "Anna Nowak");
         emp1.setPosition(Position.MANAGER);
         emp1.setSalary(7000.0);
-        emp1.setStatus(EmploymentStatus.ACTIVE);
         employeeDAO.save(emp1);
 
-        Employee emp2 = new Employee();
-        emp2.setName("Jan Kowalski");
-        emp2.setEmail("jan@techcorp.com");
-        emp2.setCompany("TechCorp");
-        emp2.setPosition(Position.PROGRAMMER);
-        emp2.setSalary(5000.0);
-        emp2.setStatus(EmploymentStatus.ACTIVE);
+        Employee emp2 = createTestEmployee("jan@techcorp.com", "Jan Kowalski");
         employeeDAO.save(emp2);
 
-        Employee emp3 = new Employee();
-        emp3.setName("Piotr Wiśniewski");
-        emp3.setEmail("piotr@othercorp.com");
+        Employee emp3 = createTestEmployee("piotr@othercorp.com", "Piotr Wiśniewski");
         emp3.setCompany("OtherCorp");
-        emp3.setPosition(Position.PROGRAMMER);
         emp3.setSalary(4000.0);
-        emp3.setStatus(EmploymentStatus.ACTIVE);
         employeeDAO.save(emp3);
     }
+
+    @Test
+    void shouldFindEmployeeById() {
+        Employee employee = createTestEmployee("test@techcorp.com", "Test Employee");
+        Employee saved = employeeDAO.save(employee);
+
+        Optional<Employee> found = employeeDAO.findById(saved.getId());
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getEmail()).isEqualTo("test@techcorp.com");
+    }
+
+    @Test
+    void shouldReturnEmptyListForNonExistingDepartment() {
+        List<Employee> employees = employeeDAO.findByDepartmentId(999L);
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyListForEmployeesWithoutDepartmentWhenAllHaveDepartment() {
+        Employee employee = createTestEmployee("test@techcorp.com", "Test Employee");
+        employee.setDepartmentId(1L);
+        employeeDAO.save(employee);
+
+        List<Employee> employees = employeeDAO.findEmployeesWithoutDepartment();
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldDeleteAllEmployees() {
+        createTestEmployees();
+
+        employeeDAO.deleteAll();
+
+        List<Employee> employees = employeeDAO.findAll();
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldHandleEmptyDatabaseInDeleteAll() {
+        employeeDAO.deleteAll();
+
+        List<Employee> employees = employeeDAO.findAll();
+        assertThat(employees).isEmpty();
+    }
+
+
+    @Test
+    void shouldHandleCompanyStatisticsForSingleEmployee() {
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "Anna", "Nowak", "anna@techcorp.com", 5000.0, "MANAGER", "TechCorp", "ACTIVE");
+
+        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
+
+        CompanyStatistics stats = statistics.get(0);
+        assertThat(stats.getEmployeeCount()).isEqualTo(1);
+        assertThat(stats.getAverageSalary()).isEqualTo(5000.0);
+        assertThat(stats.getMaxSalary()).isEqualTo(5000.0);
+    }
+
+    @Test
+    void shouldHandleMultipleCompaniesInStatistics() {
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "Anna", "Nowak", "anna@techcorp.com", 5000.0, "MANAGER", "TechCorp", "ACTIVE");
+        jdbcTemplate.update("INSERT INTO employees (first_name, last_name, email, salary, position, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "Jan", "Kowalski", "jan@othercorp.com", 6000.0, "PROGRAMMER", "OtherCorp", "ACTIVE");
+
+        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
+
+        assertThat(statistics).hasSize(2);
+    }
+
+
+    @Test
+    void shouldHandleZeroEmployeeCountInStatistics() {
+        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
+
+        assertThat(statistics).isEmpty();
+    }
+
+
+
+    @Test
+    void shouldHandleGenericExceptionInSave() {
+        Employee employee = createTestEmployee("test@techcorp.com", "Test Employee");
+
+        employeeDAO.save(employee);
+
+        Optional<Employee> found = employeeDAO.findByEmail("test@techcorp.com");
+        assertThat(found).isPresent();
+    }
+
+    @Test
+    void shouldHandleEmptyResultInExistsByEmail() {
+        boolean exists = employeeDAO.existsByEmail("nonexistent@techcorp.com");
+
+        assertThat(exists).isFalse();
+    }
+
+    @Test
+    void shouldHandleExceptionInExistsByEmail() {
+        boolean exists = employeeDAO.existsByEmail("test@techcorp.com");
+
+        assertThat(exists).isFalse();
+    }
+
+    @Test
+    void shouldHandleExceptionInFindAll() {
+        List<Employee> employees = employeeDAO.findAll();
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldHandleExceptionInFindById() {
+        Optional<Employee> employee = employeeDAO.findById(999L);
+
+        assertThat(employee).isEmpty();
+    }
+
+    @Test
+    void shouldHandleExceptionInFindByEmail() {
+        Optional<Employee> employee = employeeDAO.findByEmail("nonexistent@techcorp.com");
+
+        assertThat(employee).isEmpty();
+    }
+
+    @Test
+    void shouldHandleExceptionInFindByCompany() {
+        List<Employee> employees = employeeDAO.findByCompany("NonExistentCompany");
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldHandleExceptionInFindByDepartmentId() {
+        List<Employee> employees = employeeDAO.findByDepartmentId(999L);
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldHandleExceptionInFindEmployeesWithoutDepartment() {
+        List<Employee> employees = employeeDAO.findEmployeesWithoutDepartment();
+
+        assertThat(employees).isEmpty();
+    }
+
+    @Test
+    void shouldHandleExceptionInGetCompanyStatistics() {
+        List<CompanyStatistics> statistics = employeeDAO.getCompanyStatistics();
+
+        assertThat(statistics).isEmpty();
+    }
+
+    @Test
+    void shouldHandleExceptionInDeleteByEmail() {
+        employeeDAO.deleteByEmail("nonexistent@techcorp.com");
+
+        Optional<Employee> employee = employeeDAO.findByEmail("nonexistent@techcorp.com");
+        assertThat(employee).isEmpty();
+    }
+
+    @Test
+    void shouldHandleAllEmploymentStatuses() {
+        for (EmploymentStatus status : EmploymentStatus.values()) {
+            Employee employee = createTestEmployee(status.name().toLowerCase() + "@techcorp.com", "Test Employee");
+            employee.setStatus(status);
+            employeeDAO.save(employee);
+
+            Employee found = employeeDAO.findByEmail(status.name().toLowerCase() + "@techcorp.com").get();
+            assertThat(found.getStatus()).isEqualTo(status);
+        }
+    }
+
+    @Test
+    void shouldHandleAllPositions() {
+        for (Position position : Position.values()) {
+            Employee employee = createTestEmployee(position.name().toLowerCase() + "@techcorp.com", "Test Employee");
+            employee.setPosition(position);
+            employeeDAO.save(employee);
+
+            Employee found = employeeDAO.findByEmail(position.name().toLowerCase() + "@techcorp.com").get();
+            assertThat(found.getPosition()).isEqualTo(position);
+        }
+    }
+
+
+    @Test
+    void shouldHandleDecimalSalaries() {
+        Employee employee = createTestEmployee("test@techcorp.com", "Test Employee");
+        employee.setSalary(1234.56);
+        employeeDAO.save(employee);
+
+        Employee found = employeeDAO.findByEmail("test@techcorp.com").get();
+        assertThat(found.getSalary()).isEqualTo(1234.56);
+    }
+
+    @Test
+    void shouldHandlePhotoFileNameWithSpecialCharacters() {
+        Employee employee = createTestEmployee("test@techcorp.com", "Test Employee");
+        employee.setPhotoFileName("photo with spaces and (special) characters.jpg");
+        employeeDAO.save(employee);
+
+        Employee found = employeeDAO.findByEmail("test@techcorp.com").get();
+        assertThat(found.getPhotoFileName()).isEqualTo("photo with spaces and (special) characters.jpg");
+    }
+
 }

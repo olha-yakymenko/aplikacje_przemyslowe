@@ -13,8 +13,9 @@ mvn jacoco:report
 Pełny cykl życia z weryfikacją: 
 mvn clean verify           
 
-h2:
-login: sa
+Konsola h2:
+link: http://localhost:8080/h2-console
+login: oy
 password: password
 
 

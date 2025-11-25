@@ -1,63 +1,3 @@
-//
-//
-//package com.techcorp.employee.model;
-//
-//import java.util.Objects;
-//
-//public class CompanyStatistics {
-//    private int employeeCount;
-//    private double averageSalary;
-//    private String highestPaidEmployee;
-//
-//    public CompanyStatistics(int employeeCount, double averageSalary, String highestPaidEmployee) {
-//        this.employeeCount = employeeCount;
-//        this.averageSalary = averageSalary;
-//        this.highestPaidEmployee = highestPaidEmployee;
-//    }
-//
-//    // ===== GETTERY =====
-//    public int getEmployeeCount() {
-//        return employeeCount;
-//    }
-//
-//    public double getAverageSalary() {
-//        return averageSalary;
-//    }
-//
-//    public String getHighestPaidEmployee() {
-//        return highestPaidEmployee;
-//    }
-//
-//    // ===== EQUALS & HASHCODE =====
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        CompanyStatistics that = (CompanyStatistics) o;
-//        return employeeCount == that.employeeCount &&
-//                Double.compare(that.averageSalary, averageSalary) == 0 &&
-//                Objects.equals(highestPaidEmployee, that.highestPaidEmployee);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(employeeCount, averageSalary, highestPaidEmployee);
-//    }
-//
-//    @Override
-//    public String toString() {
-//        return String.format("Employees: %d, Avg Salary: %.2f, Highest Paid: %s",
-//                employeeCount, averageSalary, highestPaidEmployee);
-//    }
-//}
-
-
-
-
-
-
-
-
 package com.techcorp.employee.model;
 
 import java.util.Objects;
@@ -70,13 +10,12 @@ public class CompanyStatistics {
     private final double maxSalary;
     private Optional<String> highestPaidEmployee;
 
-    // JEDYNY KONSTRUKTOR - dla danych z bazy
     public CompanyStatistics(String companyName, int employeeCount, double averageSalary, double maxSalary) {
         this.companyName = Objects.requireNonNull(companyName, "Company name cannot be null");
         this.employeeCount = employeeCount;
         this.averageSalary = averageSalary;
         this.maxSalary = maxSalary;
-        this.highestPaidEmployee = Optional.empty(); // 👈 POCZĄTKOWO PUSTE
+        this.highestPaidEmployee = Optional.empty();
     }
 
     // ===== GETTERY =====
@@ -96,14 +35,10 @@ public class CompanyStatistics {
         return maxSalary;
     }
 
-    // 👇 DWA GETTERY - dla wygody i zaawansowanych przypadków
     public String getHighestPaidEmployee() {
-        return highestPaidEmployee.orElse("None"); // 👈 DLA PROSTYCH PRZYPADKÓW
+        return highestPaidEmployee.orElse("");
     }
 
-    public Optional<String> getHighestPaidEmployeeOpt() {
-        return highestPaidEmployee; // 👈 DLA ZAAWANSOWANEJ LOGIKI
-    }
 
     // ===== SETTER =====
     public void setHighestPaidEmployee(String highestPaidEmployee) {

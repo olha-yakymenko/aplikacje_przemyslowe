@@ -1,4 +1,5 @@
 package com.techcorp.employee.dto;
+import java.util.Optional;
 
 public class CompanyStatisticsDTO {
     private String companyName;

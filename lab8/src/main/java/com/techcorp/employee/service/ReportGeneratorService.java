@@ -124,7 +124,9 @@ public class ReportGeneratorService {
             // Wiersze z danymi
             addTableRow(statisticsTable, "Employee Count", String.valueOf(stats.getEmployeeCount()));
             addTableRow(statisticsTable, "Average Salary", String.format("$%.2f", stats.getAverageSalary()));
-            addTableRow(statisticsTable, "Highest Paid Employee", stats.getHighestPaidEmployee());
+//            addTableRow(statisticsTable, "Highest Paid Employee", stats.getHighestPaidEmployee());
+            addTableRow(statisticsTable, "Highest Paid Employee",
+                    stats.getHighestPaidEmployee());
             addTableRow(statisticsTable, "Total Salary Budget",
                     String.format("$%.2f", stats.getAverageSalary() * stats.getEmployeeCount()));
 
@@ -403,7 +405,7 @@ public class ReportGeneratorService {
         String[][] data = {
                 {"Employee Count", String.valueOf(stats.getEmployeeCount())},
                 {"Average Salary", String.format("$%.2f", stats.getAverageSalary())},
-                {"Highest Paid", stats.getHighestPaidEmployee()},
+                {"Highest Paid", String.valueOf(stats.getHighestPaidEmployee())},
                 {"Total Budget", String.format("$%.2f", stats.getAverageSalary() * stats.getEmployeeCount())}
         };
 
