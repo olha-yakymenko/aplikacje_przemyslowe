@@ -1,0 +1,71 @@
+package com.techcorp.employee.model;
+
+import java.util.Objects;
+import java.util.Optional;
+
+public class CompanyStatistics {
+    private final String companyName;
+    private final int employeeCount;
+    private final double averageSalary;
+    private final double maxSalary;
+    private Optional<String> highestPaidEmployee;
+
+    public CompanyStatistics(String companyName, int employeeCount, double averageSalary, double maxSalary) {
+        this.companyName = Objects.requireNonNull(companyName, "Company name cannot be null");
+        this.employeeCount = employeeCount;
+        this.averageSalary = averageSalary;
+        this.maxSalary = maxSalary;
+        this.highestPaidEmployee = Optional.empty();
+    }
+
+    // ===== GETTERY =====
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public int getEmployeeCount() {
+        return employeeCount;
+    }
+
+    public double getAverageSalary() {
+        return averageSalary;
+    }
+
+    public double getMaxSalary() {
+        return maxSalary;
+    }
+
+    public String getHighestPaidEmployee() {
+        return highestPaidEmployee.orElse("");
+    }
+
+
+    // ===== SETTER =====
+    public void setHighestPaidEmployee(String highestPaidEmployee) {
+        this.highestPaidEmployee = Optional.ofNullable(highestPaidEmployee); // 👈 NULL → Optional.empty()
+    }
+
+    // ===== EQUALS & HASHCODE =====
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CompanyStatistics that = (CompanyStatistics) o;
+        return employeeCount == that.employeeCount &&
+                Double.compare(that.averageSalary, averageSalary) == 0 &&
+                Double.compare(that.maxSalary, maxSalary) == 0 &&
+                Objects.equals(companyName, that.companyName) &&
+                Objects.equals(highestPaidEmployee, that.highestPaidEmployee);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(companyName, employeeCount, averageSalary, maxSalary, highestPaidEmployee);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Company: %s, Employees: %d, Avg Salary: %.2f, Max Salary: %.2f, Highest Paid: %s",
+                companyName, employeeCount, averageSalary, maxSalary, getHighestPaidEmployee());
+    }
+}
