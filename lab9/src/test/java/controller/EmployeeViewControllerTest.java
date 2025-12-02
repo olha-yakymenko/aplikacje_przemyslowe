@@ -13,6 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -20,8 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,27 +44,34 @@ public class EmployeeViewControllerTest {
     @MockBean
     private ImportService importService;
 
-    @Test
-    public void testListEmployees() throws Exception {
-        // Given
-        Employee employee1 = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        Employee employee2 = new Employee("Anna Nowak", "anna@example.com", "TechCorp",
-                Position.MANAGER, 7000.0, EmploymentStatus.ACTIVE);
-        List<Employee> employees = Arrays.asList(employee1, employee2);
+    // Klasa pomocnicza dla EmployeeListView
+    private static class SimpleEmployeeView {
+        private String name;
+        private String email;
+        private String company;
+        private Position position;
+        private Double salary;
+        private EmploymentStatus status;
 
-        when(employeeService.getAllEmployees()).thenReturn(employees);
+        public SimpleEmployeeView(String name, String email, String company,
+                                  Position position, Double salary, EmploymentStatus status) {
+            this.name = name;
+            this.email = email;
+            this.company = company;
+            this.position = position;
+            this.salary = salary;
+            this.status = status;
+        }
 
-        // When & Then
-        mockMvc.perform(get("/employees"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("employees/list"))
-                .andExpect(model().attributeExists("employees"))
-                .andExpect(model().attributeExists("pageTitle"))
-                .andExpect(model().attribute("pageTitle", "Lista Pracowników"));
-
-        verify(employeeService, times(1)).getAllEmployees();
+        // Gettery
+        public String getName() { return name; }
+        public String getEmail() { return email; }
+        public String getCompany() { return company; }
+        public Position getPosition() { return position; }
+        public Double getSalary() { return salary; }
+        public EmploymentStatus getStatus() { return status; }
     }
+
 
     @Test
     public void testShowAddForm() throws Exception {
@@ -240,8 +250,13 @@ public class EmployeeViewControllerTest {
         employeeDTO.setSalary(6000.0);
         employeeDTO.setStatus(EmploymentStatus.ACTIVE);
 
+        Employee existingEmployee = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
+                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+        existingEmployee.setId(1L);
+
         Employee updatedEmployee = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
                 Position.MANAGER, 6000.0, EmploymentStatus.ACTIVE);
+        updatedEmployee.setId(1L);
 
         // Stwórz mock FormValidationResult
         EmployeeFormService.FormValidationResult validationResult = mock(EmployeeFormService.FormValidationResult.class);
@@ -249,10 +264,8 @@ public class EmployeeViewControllerTest {
         when(validationResult.getMessage()).thenReturn("");
 
         when(employeeFormService.validateEmployee(any(EmployeeDTO.class))).thenReturn(validationResult);
+        when(employeeService.findEmployeeByEmail("jan@example.com")).thenReturn(Optional.of(existingEmployee));
         when(employeeFormService.convertToEntity(any(EmployeeDTO.class))).thenReturn(updatedEmployee);
-
-        // updateEmployee zwraca Employee, a nie jest void
-        when(employeeService.updateEmployee(any(Employee.class))).thenReturn(updatedEmployee);
 
         // When & Then
         mockMvc.perform(post("/employees/edit")
@@ -269,15 +282,10 @@ public class EmployeeViewControllerTest {
                 .andExpect(flash().attribute("message", "Pracownik zaktualizowany pomyślnie!"));
 
         verify(employeeFormService, times(1)).validateEmployee(any(EmployeeDTO.class));
+        verify(employeeService, times(1)).findEmployeeByEmail("jan@example.com");
         verify(employeeFormService, times(1)).convertToEntity(any(EmployeeDTO.class));
         verify(employeeService, times(1)).updateEmployee(any(Employee.class));
     }
-
-
-
-
-
-
 
     @Test
     public void testUpdateEmployee_BusinessValidationFails() throws Exception {
@@ -315,8 +323,6 @@ public class EmployeeViewControllerTest {
         verify(employeeFormService, times(1)).validateEmployee(any(EmployeeDTO.class));
         verify(employeeService, never()).updateEmployee(any(Employee.class));
     }
-
-
 
     @Test
     public void testDeleteEmployee_Success() throws Exception {
@@ -360,42 +366,57 @@ public class EmployeeViewControllerTest {
 
     @Test
     public void testSearchEmployees() throws Exception {
-        // Given
-        Employee employee1 = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
+        // Given - z paginacją
+        Pageable pageable = PageRequest.of(0, 20);
+        SimpleEmployeeView employee1 = new SimpleEmployeeView(
+                "Jan Kowalski", "jan@example.com", "TechCorp",
                 Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        List<Employee> employees = Arrays.asList(employee1);
+        Page<SimpleEmployeeView> employeesPage = new PageImpl<>(Arrays.asList(employee1), pageable, 1);
 
-        when(employeeService.getEmployeesByCompany("TechCorp")).thenReturn(employees);
+        when(employeeService.getEmployeesByCompanyProjection(eq("TechCorp"), any(Pageable.class)))
+                .thenReturn((Page) employeesPage);
 
         // When & Then
         mockMvc.perform(post("/employees/search")
-                        .param("company", "TechCorp"))
+                        .param("company", "TechCorp")
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("employees/search-results"))
                 .andExpect(model().attributeExists("employees"))
                 .andExpect(model().attributeExists("searchCompany"))
+                .andExpect(model().attribute("searchCompany", "TechCorp"))
+                .andExpect(model().attribute("currentPage", 0))
+                .andExpect(model().attribute("totalPages", 1))
                 .andExpect(model().attributeExists("pageTitle"))
                 .andExpect(model().attribute("pageTitle", "Wyniki Wyszukiwania"));
 
-        verify(employeeService, times(1)).getEmployeesByCompany("TechCorp");
+        verify(employeeService, times(1)).getEmployeesByCompanyProjection(eq("TechCorp"), any(Pageable.class));
     }
 
     @Test
     public void testSearchEmployees_NoResults() throws Exception {
-        // Given
-        when(employeeService.getEmployeesByCompany("NonexistentCorp")).thenReturn(Arrays.asList());
+        // Given - pusta strona wyników
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<SimpleEmployeeView> emptyPage = new PageImpl<>(Arrays.asList(), pageable, 0);
+
+        when(employeeService.getEmployeesByCompanyProjection(eq("NonexistentCorp"), any(Pageable.class)))
+                .thenReturn((Page) emptyPage);
 
         // When & Then
         mockMvc.perform(post("/employees/search")
-                        .param("company", "NonexistentCorp"))
+                        .param("company", "NonexistentCorp")
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("employees/search-results"))
                 .andExpect(model().attributeExists("employees"))
                 .andExpect(model().attributeExists("searchCompany"))
+                .andExpect(model().attribute("searchCompany", "NonexistentCorp"))
                 .andExpect(model().attributeExists("message"))
                 .andExpect(model().attribute("message", "Nie znaleziono pracowników dla firmy: NonexistentCorp"));
 
-        verify(employeeService, times(1)).getEmployeesByCompany("NonexistentCorp");
+        verify(employeeService, times(1)).getEmployeesByCompanyProjection(eq("NonexistentCorp"), any(Pageable.class));
     }
 
     @Test

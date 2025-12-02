@@ -1,14 +1,19 @@
-
 package com.techcorp.employee.controller;
 
 import com.techcorp.employee.dto.EmployeeDTO;
+import com.techcorp.employee.dto.EmployeeListView;
 import com.techcorp.employee.exception.InvalidDataException;
 import com.techcorp.employee.model.Employee;
+import com.techcorp.employee.model.Position;
 import com.techcorp.employee.service.EmployeeService;
 import com.techcorp.employee.service.EmployeeFormService;
 import com.techcorp.employee.service.ImportService;
 import com.techcorp.employee.model.ImportSummary;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -35,12 +40,63 @@ public class EmployeeViewController {
         this.importService = importService;
     }
 
+    // ✅ OPTYMALIZOWANA METODA Z PAGINACJĄ I PROJEKCJĄ
     @GetMapping
-    public String listEmployees(Model model) {
-        List<Employee> employees = employeeService.getAllEmployees();
-        model.addAttribute("employees", employees);
+    public String listEmployees(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "2") int size,
+            @RequestParam(defaultValue = "name") String sort,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+
+        // Użyj OPTYMALIZOWANEJ metody z projekcją
+        Page<EmployeeListView> employeesPage = employeeService.getAllEmployeesSummary(pageable);
+
+        model.addAttribute("employees", employeesPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalItems", employeesPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("sortField", sort);
         model.addAttribute("pageTitle", "Lista Pracowników");
+
         return "employees/list";
+    }
+
+    // ✅ ALTERNATYWNA WERSJA: Z OPTYMALIZOWANYM WYSZUKIWANIEM
+    @GetMapping("/optimized")
+    public String listEmployeesOptimized(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) Position position,
+            @RequestParam(required = false) Double minSalary,
+            @RequestParam(required = false) Double maxSalary,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+
+        // Użyj OPTYMALIZOWANEJ metody z filtrami
+        Page<EmployeeListView> employeesPage = employeeService.findEmployeesWithFiltersOptimized(
+                name, company, position != null ? position.name() : null,
+                minSalary, maxSalary, pageable);
+
+        model.addAttribute("employees", employeesPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalItems", employeesPage.getTotalElements());
+        model.addAttribute("pageTitle", "Lista Pracowników (Optymalizowana)");
+
+        // Dodaj parametry wyszukiwania dla formularza
+        model.addAttribute("searchName", name);
+        model.addAttribute("searchCompany", company);
+        model.addAttribute("searchPosition", position);
+        model.addAttribute("searchMinSalary", minSalary);
+        model.addAttribute("searchMaxSalary", maxSalary);
+
+        return "employees/list-optimized"; // Możesz użyć tego samego widoku
     }
 
     @GetMapping("/add")
@@ -99,6 +155,34 @@ public class EmployeeViewController {
         }
     }
 
+//    @PostMapping("/edit")
+//    public String updateEmployee(@Valid @ModelAttribute("employee") EmployeeDTO employeeDTO,
+//                                 BindingResult bindingResult,
+//                                 RedirectAttributes redirectAttributes) throws InvalidDataException {
+//
+//        if (bindingResult.hasErrors()) {
+//            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.employee", bindingResult);
+//            redirectAttributes.addFlashAttribute("employee", employeeDTO);
+//            return "redirect:/employees/edit/" + employeeDTO.getEmail();
+//        }
+//
+//        EmployeeFormService.FormValidationResult validation = employeeFormService.validateEmployee(employeeDTO);
+//        if (!validation.isValid()) {
+//            redirectAttributes.addFlashAttribute("error", validation.getMessage());
+//            redirectAttributes.addFlashAttribute("employee", employeeDTO);
+//            return "redirect:/employees/edit/" + employeeDTO.getEmail();
+//        }
+//
+//        Employee updatedEmployee = employeeFormService.convertToEntity(employeeDTO);
+//        employeeService.updateEmployee(updatedEmployee);
+//        redirectAttributes.addFlashAttribute("message", "Pracownik zaktualizowany pomyślnie!");
+//
+//        return "redirect:/employees";
+//    }
+
+
+
+    // W EmployeeViewController - poprawiona metoda updateEmployee:
     @PostMapping("/edit")
     public String updateEmployee(@Valid @ModelAttribute("employee") EmployeeDTO employeeDTO,
                                  BindingResult bindingResult,
@@ -117,9 +201,30 @@ public class EmployeeViewController {
             return "redirect:/employees/edit/" + employeeDTO.getEmail();
         }
 
-        Employee updatedEmployee = employeeFormService.convertToEntity(employeeDTO);
-        employeeService.updateEmployee(updatedEmployee);
-        redirectAttributes.addFlashAttribute("message", "Pracownik zaktualizowany pomyślnie!");
+        try {
+            // 1. Znajdź istniejącego pracownika po emailu
+            Optional<Employee> existingEmployeeOpt = employeeService.findEmployeeByEmail(employeeDTO.getEmail());
+
+            if (existingEmployeeOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Pracownik nie został znaleziony.");
+                return "redirect:/employees";
+            }
+
+            // 2. Pobierz istniejące ID
+            Employee existingEmployee = existingEmployeeOpt.get();
+
+            // 3. Przekonwertuj DTO na Entity, zachowując ID
+            Employee updatedEmployee = employeeFormService.convertToEntity(employeeDTO);
+            updatedEmployee.setId(existingEmployee.getId()); // KLUCZOWE: ustaw ID
+
+            // 4. Zaktualizuj pracownika
+            employeeService.updateEmployee(updatedEmployee);
+
+            redirectAttributes.addFlashAttribute("message", "Pracownik zaktualizowany pomyślnie!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Błąd podczas aktualizacji: " + e.getMessage());
+            return "redirect:/employees/edit/" + employeeDTO.getEmail();
+        }
 
         return "redirect:/employees";
     }
@@ -143,15 +248,28 @@ public class EmployeeViewController {
         return "employees/search-form";
     }
 
+    // ✅ OPTYMALIZOWANE WYSZUKIWANIE Z PAGINACJĄ
+    // ✅ POPRAWIONE: Użyj metody z projekcją
     @PostMapping("/search")
-    public String searchEmployees(@RequestParam("company") String company, Model model) {
-        List<Employee> employees = employeeService.getEmployeesByCompany(company);
+    public String searchEmployees(
+            @RequestParam("company") String company,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Model model) {
 
-        model.addAttribute("employees", employees);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+
+        // Użyj metody z PROJEKCJĄ
+        Page<EmployeeListView> employeesPage = employeeService.getEmployeesByCompanyProjection(company, pageable);
+
+        model.addAttribute("employees", employeesPage.getContent());
         model.addAttribute("searchCompany", company);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalItems", employeesPage.getTotalElements());
         model.addAttribute("pageTitle", "Wyniki Wyszukiwania");
 
-        if (employees.isEmpty()) {
+        if (employeesPage.isEmpty()) {
             model.addAttribute("message", "Nie znaleziono pracowników dla firmy: " + company);
         }
 
@@ -204,4 +322,3 @@ public class EmployeeViewController {
         return "redirect:/employees";
     }
 }
-

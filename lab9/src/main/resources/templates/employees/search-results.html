@@ -1,3 +1,70 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org"-->
+<!--      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"-->
+<!--      layout:decorate="~{layout}">-->
+
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title th:text="${pageTitle}">Wyniki Wyszukiwania - System Zarządzania Pracownikami</title>-->
+<!--&lt;!&ndash;    <link rel="stylesheet" th:href="@{/css/style.css}">&ndash;&gt;-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div layout:fragment="content">-->
+<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
+<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+
+<!--    <section class="content-section">-->
+<!--        <div class="section-header">-->
+<!--            <h1 class="section-title">Wyniki Wyszukiwania</h1>-->
+<!--            <a th:href="@{/employees/search}" class="btn btn-secondary">Nowe wyszukiwanie</a>-->
+<!--            <a th:href="@{/employees}" class="btn btn-primary" style="margin-left: 1rem;">Wszyscy pracownicy</a>-->
+<!--        </div>-->
+
+<!--        <div th:if="${searchCompany}" class="search-info">-->
+<!--            <p>Wyniki dla firmy: <strong th:text="${searchCompany}"></strong></p>-->
+<!--        </div>-->
+
+<!--        <div class="table-container">-->
+<!--            <table class="data-table" th:if="${not #lists.isEmpty(employees)}">-->
+<!--                <thead>-->
+<!--                <tr>-->
+<!--                    <th>Imię i Nazwisko</th>-->
+<!--                    <th>Email</th>-->
+<!--                    <th>Firma</th>-->
+<!--                    <th>Stanowisko</th>-->
+<!--                    <th>Wynagrodzenie</th>-->
+<!--                    <th>Status</th>-->
+<!--                </tr>-->
+<!--                </thead>-->
+<!--                <tbody>-->
+<!--                <tr th:each="employee : ${employees}">-->
+<!--                    <td th:text="${employee.name}">Jan Kowalski</td>-->
+<!--                    <td th:text="${employee.email}">jan@example.com</td>-->
+<!--                    <td th:text="${employee.company}">TechCorp</td>-->
+<!--                    <td th:text="${employee.position}">DEVELOPER</td>-->
+<!--                    <td th:text="'$' + ${#numbers.formatDecimal(employee.salary, 1, 2)}">$5000.00</td>-->
+<!--                    <td th:text="${employee.status}">ACTIVE</td>-->
+<!--                </tr>-->
+<!--                </tbody>-->
+<!--            </table>-->
+
+<!--            <div th:if="${#lists.isEmpty(employees)}" class="no-results">-->
+<!--                <p>Nie znaleziono pracowników dla podanej firmy.</p>-->
+<!--                <a th:href="@{/employees/search}" class="btn btn-primary">Spróbuj ponownie</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </section>-->
+<!--</div>-->
+
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
@@ -6,28 +73,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${pageTitle}">Wyniki Wyszukiwania - System Zarządzania Pracownikami</title>
-<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+    <title>Wyniki Wyszukiwania</title>
 </head>
 <body>
 
 <div layout:fragment="content">
-    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
-
     <section class="content-section">
         <div class="section-header">
-            <h1 class="section-title">Wyniki Wyszukiwania</h1>
+            <h1 class="section-title">
+                Wyniki wyszukiwania
+                <span th:if="${searchCompany}" style="font-size: 1.2rem; color: #666;">
+                    dla firmy: "<span th:text="${searchCompany}"></span>"
+                </span>
+            </h1>
             <a th:href="@{/employees/search}" class="btn btn-secondary">Nowe wyszukiwanie</a>
-            <a th:href="@{/employees}" class="btn btn-primary" style="margin-left: 1rem;">Wszyscy pracownicy</a>
         </div>
 
-        <div th:if="${searchCompany}" class="search-info">
-            <p>Wyniki dla firmy: <strong th:text="${searchCompany}"></strong></p>
+        <!-- Statystyki -->
+        <div class="stats-bar" th:if="${totalItems != null}">
+            <span class="stat-item">Znaleziono: <strong th:text="${totalItems}">0</strong></span>
+            <span class="stat-item">Strona: <strong th:text="${currentPage + 1}">1</strong> z <strong th:text="${totalPages}">1</strong></span>
         </div>
 
+        <!-- Tabela -->
         <div class="table-container">
-            <table class="data-table" th:if="${not #lists.isEmpty(employees)}">
+            <table class="data-table">
                 <thead>
                 <tr>
                     <th>Imię i Nazwisko</th>
@@ -36,27 +106,169 @@
                     <th>Stanowisko</th>
                     <th>Wynagrodzenie</th>
                     <th>Status</th>
+                    <th>Akcje</th>
                 </tr>
                 </thead>
                 <tbody>
+                <!-- Pełne dane Employee (wszystkie pola) -->
                 <tr th:each="employee : ${employees}">
                     <td th:text="${employee.name}">Jan Kowalski</td>
                     <td th:text="${employee.email}">jan@example.com</td>
                     <td th:text="${employee.company}">TechCorp</td>
                     <td th:text="${employee.position}">DEVELOPER</td>
                     <td th:text="'$' + ${#numbers.formatDecimal(employee.salary, 1, 2)}">$5000.00</td>
-                    <td th:text="${employee.status}">ACTIVE</td>
+                    <td>
+                        <span th:switch="${employee.status}">
+                            <span th:case="'ACTIVE'" class="badge badge-success">Aktywny</span>
+                            <span th:case="'INACTIVE'" class="badge badge-secondary">Nieaktywny</span>
+                            <span th:case="*" class="badge" th:text="${employee.status}"></span>
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a th:href="@{'/employees/edit/' + ${employee.email}}"
+                               class="btn btn-secondary btn-sm">Edytuj</a>
+                            <a th:href="@{'/employees/delete/' + ${employee.email}}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Usunąć pracownika?')">Usuń</a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(employees)}">
+                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                        ❌ Nie znaleziono pracowników
+                    </td>
                 </tr>
                 </tbody>
             </table>
+        </div>
 
-            <div th:if="${#lists.isEmpty(employees)}" class="no-results">
-                <p>Nie znaleziono pracowników dla podanej firmy.</p>
-                <a th:href="@{/employees/search}" class="btn btn-primary">Spróbuj ponownie</a>
+        <!-- PAGINACJA - TAK SAMO JAK W POPRZEDNIEJ LIŚCIE -->
+        <div th:if="${totalPages > 1}" class="pagination-container">
+            <nav>
+                <ul class="pagination">
+                    <!-- Poprzednia strona -->
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/employees/search(company=${searchCompany}, page=${currentPage - 1}, size=${pageSize})}">
+                            ← Poprzednia
+                        </a>
+                    </li>
+
+                    <!-- Aktualna strona -->
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Strona <span th:text="${currentPage + 1}">1</span> z <span th:text="${totalPages}">1</span>
+                        </span>
+                    </li>
+
+                    <!-- Następna strona -->
+                    <li class="page-item" th:classappend="${currentPage >= totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/employees/search(company=${searchCompany}, page=${currentPage + 1}, size=${pageSize})}">
+                            Następna →
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="pagination-info text-muted">
+                Pracownicy <strong th:text="${currentPage * pageSize + 1}">1</strong>-
+                <strong th:text="${(currentPage + 1) * pageSize > totalItems ? totalItems : (currentPage + 1) * pageSize}">20</strong>
+                z <strong th:text="${totalItems}">100</strong>
             </div>
+        </div>
+
+        <!-- Przyciski -->
+        <div style="margin-top: 2rem;">
+            <a th:href="@{/employees}" class="btn btn-success">← Lista pracowników</a>
+            <a th:href="@{/employees/search}" class="btn btn-primary" style="margin-left: 1rem;">Nowe wyszukiwanie</a>
         </div>
     </section>
 </div>
+
+<!-- Style (te same co wcześniej) -->
+<style>
+    .stats-bar {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+    }
+    .stat-item {
+        margin-right: 1.5rem;
+        color: #6c757d;
+    }
+    .pagination-container {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+    .pagination-info {
+        margin-top: 0.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    .badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.75rem;
+    }
+    .badge-success {
+        background: #28a745;
+        color: white;
+    }
+    .badge-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    .table-container {
+        overflow-x: auto;
+    }
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .data-table th, .data-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #ddd;
+    }
+    .data-table th {
+        background-color: #f2f2f2;
+    }
+    .btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.875rem;
+    }
+    .action-buttons {
+        display: flex;
+        gap: 5px;
+    }
+</style>
 
 </body>
 </html>

@@ -2,9 +2,11 @@ package com.techcorp.employee.service;
 
 import com.techcorp.employee.dto.EmployeeDTO;
 import com.techcorp.employee.exception.InvalidDataException;
+import com.techcorp.employee.model.Department;
 import com.techcorp.employee.model.Employee;
 import com.techcorp.employee.model.Position;
 import com.techcorp.employee.model.EmploymentStatus;
+import com.techcorp.employee.repository.DepartmentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -15,9 +17,12 @@ import java.util.Optional;
 public class EmployeeFormService {
 
     private final EmployeeService employeeService;
+    private final DepartmentRepository departmentRepository; // ✅ DODAJ
 
-    public EmployeeFormService(EmployeeService employeeService) {
+    // ✅ DODAJ DepartmentRepository DO KONSTRUKTORA
+    public EmployeeFormService(EmployeeService employeeService, DepartmentRepository departmentRepository) {
         this.employeeService = employeeService;
+        this.departmentRepository = departmentRepository; // ✅ DODAJ
     }
 
     public EmployeeFormData getFormData() {
@@ -38,8 +43,11 @@ public class EmployeeFormService {
                 employeeDTO.getStatus()
         );
 
+        // ✅ TERAZ departmentRepository JEST DOSTĘPNE
         if (employeeDTO.getDepartmentId() != null) {
-            employee.setDepartmentId(employeeDTO.getDepartmentId());
+            Department department = departmentRepository.findById(employeeDTO.getDepartmentId())
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + employeeDTO.getDepartmentId()));
+            employee.setDepartment(department);
         }
 
         return employee;
@@ -55,7 +63,12 @@ public class EmployeeFormService {
         dto.setPosition(employee.getPosition());
         dto.setSalary(employee.getSalary());
         dto.setStatus(employee.getStatus());
-        dto.setDepartmentId(employee.getDepartmentId());
+
+        // ✅ POPRAWIONE: Sprawdź czy department nie jest null
+        if (employee.getDepartment() != null) {
+            dto.setDepartmentId(employee.getDepartment().getId());
+        }
+
         return dto;
     }
 

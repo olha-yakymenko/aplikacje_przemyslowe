@@ -19,8 +19,8 @@ public class DashboardService {
         long totalEmployees = employeeService.getEmployeeCount();
         long totalDepartments = departmentService.getDepartmentCount();
 
-        double averageSalary = employeeService.calculateAverageSalary()
-                .orElse(0.0);
+        double averageSalary = employeeService.calculateAverageSalary();
+//                .orElse(0.0);
 
         return new DashboardStatisticsDTO(totalEmployees, averageSalary, totalDepartments);
     }

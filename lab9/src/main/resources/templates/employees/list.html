@@ -7,41 +7,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista Pracowników - System Zarządzania Pracownikami</title>
-<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
 </head>
 <body>
 
 <div layout:fragment="content">
-<!--    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>-->
-<!--    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>-->
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
     <section class="content-section">
         <div class="section-header">
-            <h1 class="section-title">Lista Pracowników</h1>
+            <h1 class="section-title">Lista Pracowników (Optymalizowana)</h1>
             <a th:href="@{/employees/add}" class="btn btn-primary">Dodaj Nowego Pracownika</a>
         </div>
 
+        <!-- Statystyki -->
+        <div class="stats-bar" th:if="${totalItems != null}">
+            <span class="stat-item">Łącznie: <strong th:text="${totalItems}">0</strong> pracowników</span>
+            <span class="stat-item">Strona: <strong th:text="${currentPage + 1}">1</strong> z <strong th:text="${totalPages}">1</strong></span>
+        </div>
+
+        <!-- Tabela pracowników - TYLKO DANE Z EmployeeListView -->
         <div class="table-container">
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th>Imię i Nazwisko</th>
+                    <th>
+                        <a th:href="@{/employees(page=0, size=${pageSize}, sort='name')}">
+                            Imię i Nazwisko
+                        </a>
+                    </th>
                     <th>Email</th>
-                    <th>Firma</th>
                     <th>Stanowisko</th>
-                    <th>Wynagrodzenie</th>
-                    <th>Status</th>
+                    <th>Departament</th>
                     <th>Akcje</th>
                 </tr>
                 </thead>
                 <tbody>
+                <!-- ✅ TYLKO pola z EmployeeListView -->
                 <tr th:each="employee : ${employees}">
                     <td th:text="${employee.name}">Jan Kowalski</td>
                     <td th:text="${employee.email}">jan@example.com</td>
-                    <td th:text="${employee.company}">TechCorp</td>
                     <td th:text="${employee.position}">DEVELOPER</td>
-                    <td th:text="'$' + ${#numbers.formatDecimal(employee.salary, 1, 2)}">$5000.00</td>
-                    <td th:text="${employee.status}">ACTIVE</td>
+                    <td>
+                        <span th:text="${employee.departmentName}"
+                              th:class="${employee.departmentName == 'Brak departamentu'} ? 'text-muted' : ''">
+                            IT Department
+                        </span>
+                    </td>
                     <td>
                         <div class="action-buttons">
                             <a th:href="@{'/employees/edit/' + ${employee.email}}"
@@ -53,7 +65,7 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(employees)}">
-                    <td colspan="7" style="text-align: center; padding: 2rem;">
+                    <td colspan="5" style="text-align: center; padding: 2rem;">
                         Brak pracowników w systemie.
                         <a th:href="@{/employees/add}">Dodaj pierwszego pracownika</a>
                     </td>
@@ -62,13 +74,91 @@
             </table>
         </div>
 
+        <!-- ✅ ALTERNATYWNA PAGINACJA - 100% POPRAWNA -->
+        <div th:if="${totalPages > 1}" class="pagination-container">
+            <nav>
+                <ul class="pagination">
+                    <!-- Poprzednia strona -->
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/employees(page=${currentPage - 1}, size=${pageSize}, sort=${sortField})}">
+                            ← Poprzednia
+                        </a>
+                    </li>
+
+                    <!-- Numery stron - UPROSZCZONE -->
+                    <th:block th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}">
+                        <li th:if="${pageNum >= currentPage - 2 and pageNum <= currentPage + 2}"
+                            class="page-item" th:classappend="${pageNum == currentPage} ? 'active'">
+                            <a class="page-link"
+                               th:href="@{/employees(page=${pageNum}, size=${pageSize}, sort=${sortField})}"
+                               th:text="${pageNum + 1}">1</a>
+                        </li>
+                    </th:block>
+
+                    <!-- Następna strona -->
+                    <li class="page-item" th:classappend="${currentPage >= totalPages - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/employees(page=${currentPage + 1}, size=${pageSize}, sort=${sortField})}">
+                            Następna →
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="pagination-info text-muted">
+                Strona <strong th:text="${currentPage + 1}">1</strong> z <strong th:text="${totalPages}">1</strong>
+                (pracownicy <strong th:text="${currentPage * pageSize + 1}">1</strong>-
+                <strong th:text="${(currentPage + 1) * pageSize > totalItems ? totalItems : (currentPage + 1) * pageSize}">20</strong>
+                z <strong th:text="${totalItems}">100</strong>)
+            </div>
+        </div>
+
+        <!-- Przyciski dodatkowe -->
         <div style="margin-top: 2rem;">
-            <a th:href="@{/employees/search}" class="btn btn-success">Wyszukaj Pracowników</a>
-            <a th:href="@{/employees/import}" class="btn btn-info" style="margin-left: 1rem;">Import z Pliku</a>
+            <a th:href="@{/employees/search}" class="btn btn-success">Wyszukaj (Pełne dane)</a>
+            <a th:href="@{/employees}" class="btn btn-warning" style="margin-left: 1rem;">
+                Widok Optymalizowany
+            </a>
+            <a th:href="@{/api/employees}" class="btn btn-info" style="margin-left: 1rem;" target="_blank">
+                API (JSON)
+            </a>
+        </div>
+
+        <!-- Informacja o optymalizacji -->
+        <div class="alert alert-info" style="margin-top: 1rem;">
+            <strong>ℹ️ Widok optymalizowany:</strong> Wyświetlane są tylko podstawowe dane (nazwa, email, stanowisko, departament).
+            Aby zobaczyć pełne dane (wynagrodzenie, status), użyj <a th:href="@{/employees/search}" class="alert-link">wyszukiwania</a>.
         </div>
     </section>
 </div>
 
+<style>
+    .stats-bar {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+    }
+    .stat-item {
+        margin-right: 1.5rem;
+        color: #6c757d;
+    }
+    .pagination-container {
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+    .pagination-info {
+        margin-top: 0.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    .text-muted {
+        color: #6c757d;
+        font-style: italic;
+    }
+</style>
 
 </body>
 </html>

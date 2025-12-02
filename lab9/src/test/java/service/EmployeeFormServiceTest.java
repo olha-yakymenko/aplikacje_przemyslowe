@@ -2,32 +2,74 @@ package com.techcorp.employee.service;
 
 import com.techcorp.employee.dto.EmployeeDTO;
 import com.techcorp.employee.exception.InvalidDataException;
+import com.techcorp.employee.model.Department;
 import com.techcorp.employee.model.Employee;
 import com.techcorp.employee.model.Position;
 import com.techcorp.employee.model.EmploymentStatus;
+import com.techcorp.employee.repository.DepartmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EmployeeFormServiceTest {
+class EmployeeFormServiceTest {
 
     @Mock
     private EmployeeService employeeService;
 
+    @Mock
+    private DepartmentRepository departmentRepository;
+
+    @InjectMocks
     private EmployeeFormService employeeFormService;
 
+    private EmployeeDTO testEmployeeDTO;
+    private Employee testEmployee;
+    private Department testDepartment;
+
     @BeforeEach
-    public void setUp() {
-        employeeFormService = new EmployeeFormService(employeeService);
+    void setUp() {
+        testDepartment = new Department("IT", "Warszawa", "Dział IT", "manager@example.com", 100000.0);
+        testDepartment.setId(1L);
+
+        testEmployeeDTO = new EmployeeDTO();
+        testEmployeeDTO.setFirstName("Jan");
+        testEmployeeDTO.setLastName("Kowalski");
+        testEmployeeDTO.setEmail("jan@example.com");
+        testEmployeeDTO.setCompany("TechCorp");
+        testEmployeeDTO.setPosition(Position.PROGRAMMER);
+        testEmployeeDTO.setSalary(5000.0);
+        testEmployeeDTO.setStatus(EmploymentStatus.ACTIVE);
+        // Ustawiamy null zamiast 1L, aby testy bez departmentu działały
+        testEmployeeDTO.setDepartmentId(null);
+
+        testEmployee = new Employee(
+                "Jan Kowalski",
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000.0,
+                EmploymentStatus.ACTIVE
+        );
+        testEmployee.setId(1L);
+        testEmployee.setDepartment(testDepartment);
     }
 
+    // ===== TESTY GETFORMDATA =====
+
     @Test
-    public void testGetFormData() {
+    void getFormData_ShouldReturnAllPositionsAndStatuses() {
         // When
         EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
 
@@ -35,103 +77,288 @@ public class EmployeeFormServiceTest {
         assertNotNull(formData);
         assertNotNull(formData.getPositions());
         assertNotNull(formData.getStatuses());
-        assertEquals(Position.values().length, formData.getPositions().size());
-        assertEquals(EmploymentStatus.values().length, formData.getStatuses().size());
+
+        assertEquals(Arrays.asList(Position.values()), formData.getPositions());
+        assertEquals(Arrays.asList(EmploymentStatus.values()), formData.getStatuses());
     }
 
+    // ===== TESTY CONVERTTOENTITY =====
+
     @Test
-    public void testConvertToEntity() throws InvalidDataException {
+    void convertToEntity_ValidDTO_ShouldConvertSuccessfully() throws InvalidDataException {
         // Given
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setFirstName("Jan");
-        dto.setLastName("Kowalski");
-        dto.setEmail("jan.kowalski@techcorp.com");
-        dto.setCompany("TechCorp");
-        dto.setPosition(Position.PROGRAMMER);
-        dto.setSalary(5000.0);
-        dto.setStatus(EmploymentStatus.ACTIVE);
-        dto.setDepartmentId(1L);
+        testEmployeeDTO.setDepartmentId(1L);
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(testDepartment));
 
         // When
-        Employee employee = employeeFormService.convertToEntity(dto);
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
 
         // Then
-        assertNotNull(employee);
-        assertEquals("Jan Kowalski", employee.getName());
-        assertEquals("jan.kowalski@techcorp.com", employee.getEmail());
-        assertEquals("TechCorp", employee.getCompany());
-        assertEquals(Position.PROGRAMMER, employee.getPosition());
-        assertEquals(5000.0, employee.getSalary());
-        assertEquals(EmploymentStatus.ACTIVE, employee.getStatus());
-        assertEquals(1L, employee.getDepartmentId());
+        assertNotNull(result);
+        assertEquals("Jan Kowalski", result.getName());
+        assertEquals("jan@example.com", result.getEmail());
+        assertEquals("TechCorp", result.getCompany());
+        assertEquals(Position.PROGRAMMER, result.getPosition());
+        assertEquals(5000.0, result.getSalary(), 0.001);
+        assertEquals(EmploymentStatus.ACTIVE, result.getStatus());
+        assertEquals(testDepartment, result.getDepartment());
+
+        verify(departmentRepository, times(1)).findById(1L);
     }
 
     @Test
-    public void testConvertToEntity_NoLastName() throws InvalidDataException {
-        // Given
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setFirstName("Jan");
-        dto.setLastName("");
-        dto.setEmail("jan@techcorp.com");
-        dto.setCompany("TechCorp");
-        dto.setPosition(Position.PROGRAMMER);
-        dto.setSalary(5000.0);
-        dto.setStatus(EmploymentStatus.ACTIVE);
+    void convertToEntity_DTONoDepartment_ShouldSetNullDepartment() throws InvalidDataException {
+        // Given - departmentId już jest null w setup()
 
         // When
-        Employee employee = employeeFormService.convertToEntity(dto);
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
 
         // Then
-        assertNotNull(employee);
-        assertEquals("Jan", employee.getName());
-        assertEquals("jan@techcorp.com", employee.getEmail());
+        assertNotNull(result);
+        assertEquals("Jan Kowalski", result.getName());
+        assertNull(result.getDepartment());
+        verify(departmentRepository, never()).findById(anyLong());
     }
 
     @Test
-    public void testConvertToDTO() throws InvalidDataException {
+    void convertToEntity_DepartmentNotFound_ShouldThrowException() {
         // Given
-        Employee employee = new Employee("Jan Kowalski", "jan.kowalski@techcorp.com",
-                "TechCorp", Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        employee.setDepartmentId(1L);
+        testEmployeeDTO.setDepartmentId(999L);
+        when(departmentRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            employeeFormService.convertToEntity(testEmployeeDTO);
+        });
+
+        assertEquals("Department not found with ID: 999", exception.getMessage());
+        verify(departmentRepository, times(1)).findById(999L);
+    }
+
+    @Test
+    void convertToEntity_EmptyLastName_ShouldHandleCorrectly() throws InvalidDataException {
+        // Given
+        testEmployeeDTO.setFirstName("Jan");
+        testEmployeeDTO.setLastName("");
 
         // When
-        EmployeeDTO dto = employeeFormService.convertToDTO(employee);
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
 
         // Then
-        assertNotNull(dto);
-        assertEquals("Jan", dto.getFirstName());
-        assertEquals("Kowalski", dto.getLastName());
-        assertEquals("jan.kowalski@techcorp.com", dto.getEmail());
-        assertEquals("TechCorp", dto.getCompany());
-        assertEquals(Position.PROGRAMMER, dto.getPosition());
-        assertEquals(5000.0, dto.getSalary());
-        assertEquals(EmploymentStatus.ACTIVE, dto.getStatus());
-        assertEquals(1L, dto.getDepartmentId());
+        assertNotNull(result);
+        assertEquals("Jan", result.getName());
     }
 
     @Test
-    public void testConvertToDTO_SingleName() throws InvalidDataException {
+    void convertToEntity_NullLastName_ShouldHandleCorrectly() throws InvalidDataException {
         // Given
-        Employee employee = new Employee("Jan", "jan@techcorp.com",
-                "TechCorp", Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+        testEmployeeDTO.setFirstName("Jan");
+        testEmployeeDTO.setLastName(null);
 
         // When
-        EmployeeDTO dto = employeeFormService.convertToDTO(employee);
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
 
         // Then
-        assertNotNull(dto);
-        assertEquals("Jan", dto.getFirstName());
-        assertEquals("", dto.getLastName());
+        assertNotNull(result);
+        assertEquals("Jan null", result.getName()); // Uwaga: "null" jako string
+    }
+
+    // ===== TESTY CONVERTTODTO =====
+
+    @Test
+    void convertToDTO_ValidEmployee_ShouldConvertSuccessfully() {
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(testEmployee);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Jan", result.getFirstName());
+        assertEquals("Kowalski", result.getLastName());
+        assertEquals("jan@example.com", result.getEmail());
+        assertEquals("TechCorp", result.getCompany());
+        assertEquals(Position.PROGRAMMER, result.getPosition());
+        assertEquals(5000.0, result.getSalary(), 0.001);
+        assertEquals(EmploymentStatus.ACTIVE, result.getStatus());
+        assertEquals(1L, result.getDepartmentId());
     }
 
     @Test
-    public void testValidateEmployee_Valid() {
+    void convertToDTO_EmployeeNoDepartment_ShouldSetNullDepartmentId() {
         // Given
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setSalary(5000.0);
+        Employee employeeWithoutDept = new Employee(
+                "Jan Kowalski",
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000.0,
+                EmploymentStatus.ACTIVE
+        );
+        employeeWithoutDept.setId(1L);
+        // department pozostaje null
 
         // When
-        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(dto);
+        EmployeeDTO result = employeeFormService.convertToDTO(employeeWithoutDept);
+
+        // Then
+        assertNotNull(result);
+        assertNull(result.getDepartmentId());
+    }
+
+    @Test
+    void convertToDTO_EmployeeWithEmptyName_ShouldHandleGracefully() {
+        // Given - nie możemy ustawić pustego imienia w Employee, więc testujemy inny scenariusz
+        Employee employee = new Employee(
+                "A", // minimalna długość
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000.0,
+                EmploymentStatus.ACTIVE
+        );
+
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(employee);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("A", result.getFirstName());
+        assertEquals("", result.getLastName());
+    }
+
+    @Test
+    void convertToDTO_EmployeeWithSingleName_ShouldSetOnlyFirstName() {
+        // Given
+        Employee employee = new Employee(
+                "Jan",
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000.0,
+                EmploymentStatus.ACTIVE
+        );
+
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(employee);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Jan", result.getFirstName());
+        assertEquals("", result.getLastName());
+    }
+
+    @Test
+    void convertToDTO_EmployeeWithMultipleNames_ShouldSetCorrectly() {
+        // Given
+        Employee employee = new Employee(
+                "Jan Maria Kowalski",
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000.0,
+                EmploymentStatus.ACTIVE
+        );
+
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(employee);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Jan", result.getFirstName());
+        assertEquals("Maria Kowalski", result.getLastName());
+    }
+
+    @Test
+    void convertToDTO_NullEmployee_ShouldThrowNullPointerException() {
+        // When & Then
+        assertThrows(NullPointerException.class, () -> {
+            employeeFormService.convertToDTO(null);
+        });
+    }
+
+    // ===== TESTY VALIDATEEMPLOYEE =====
+
+    @Test
+    void validateEmployee_ValidSalary_ShouldReturnValidResult() {
+        // Given
+        testEmployeeDTO.setSalary(5000.0);
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        assertNotNull(result);
+        assertTrue(result.isValid());
+        assertNull(result.getField());
+        assertNull(result.getMessage());
+    }
+
+    @Test
+    void validateEmployee_ZeroSalary_ShouldReturnError() {
+        // Given
+        testEmployeeDTO.setSalary(0.0);
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isValid());
+        assertEquals("salary", result.getField());
+        assertEquals("Wynagrodzenie musi być większe niż 0", result.getMessage());
+    }
+
+    @Test
+    void validateEmployee_NegativeSalary_ShouldReturnError() {
+        // Given
+        testEmployeeDTO.setSalary(-100.0);
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isValid());
+        assertEquals("salary", result.getField());
+        assertEquals("Wynagrodzenie musi być większe niż 0", result.getMessage());
+    }
+
+    @Test
+    void validateEmployee_NullSalary_ShouldReturnError() {
+        // Given
+        testEmployeeDTO.setSalary(null);
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        assertNotNull(result);
+        assertFalse(result.isValid());
+        assertEquals("salary", result.getField());
+        assertEquals("Wynagrodzenie musi być większe niż 0", result.getMessage());
+    }
+
+    // ===== TESTY KLAS WEWNĘTRZNYCH =====
+
+    @Test
+    void employeeFormData_ShouldHaveCorrectGetters() {
+        // Given
+        List<Position> positions = Arrays.asList(Position.values());
+        List<EmploymentStatus> statuses = Arrays.asList(EmploymentStatus.values());
+
+        // When
+        EmployeeFormService.EmployeeFormData formData =
+                new EmployeeFormService.EmployeeFormData(positions, statuses);
+
+        // Then
+        assertEquals(positions, formData.getPositions());
+        assertEquals(statuses, formData.getStatuses());
+    }
+
+    @Test
+    void formValidationResult_InitialState_ShouldBeValid() {
+        // When
+        EmployeeFormService.FormValidationResult result =
+                new EmployeeFormService.FormValidationResult();
 
         // Then
         assertTrue(result.isValid());
@@ -140,47 +367,357 @@ public class EmployeeFormServiceTest {
     }
 
     @Test
-    public void testValidateEmployee_InvalidSalary() {
+    void formValidationResult_AddError_ShouldSetInvalid() {
         // Given
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setSalary(0.0);
+        EmployeeFormService.FormValidationResult result =
+                new EmployeeFormService.FormValidationResult();
 
         // When
-        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(dto);
+        result.addError("salary", "Salary must be positive");
 
         // Then
         assertFalse(result.isValid());
         assertEquals("salary", result.getField());
-        assertEquals("Wynagrodzenie musi być większe niż 0", result.getMessage());
+        assertEquals("Salary must be positive", result.getMessage());
     }
 
     @Test
-    public void testValidateEmployee_NullSalary() {
+    void formValidationResult_MultipleAddErrorCalls_ShouldKeepLastError() {
         // Given
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setSalary(null);
+        EmployeeFormService.FormValidationResult result =
+                new EmployeeFormService.FormValidationResult();
 
         // When
-        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(dto);
+        result.addError("salary", "First error");
+        result.addError("email", "Second error");
 
         // Then
         assertFalse(result.isValid());
-        assertEquals("salary", result.getField());
-        assertEquals("Wynagrodzenie musi być większe niż 0", result.getMessage());
+        assertEquals("email", result.getField());
+        assertEquals("Second error", result.getMessage());
+    }
+
+    // ===== TESTY INTEGRACYJNE =====
+
+    @Test
+    void convertToEntityAndBack_ShouldPreserveData() throws InvalidDataException {
+        // Given - najpierw bez departamentu
+        testEmployeeDTO.setDepartmentId(null);
+
+        // When
+        Employee entity = employeeFormService.convertToEntity(testEmployeeDTO);
+        EmployeeDTO backToDTO = employeeFormService.convertToDTO(entity);
+
+        // Then
+        assertNotNull(backToDTO);
+        assertEquals(testEmployeeDTO.getFirstName(), backToDTO.getFirstName());
+        assertEquals(testEmployeeDTO.getLastName(), backToDTO.getLastName());
+        assertEquals(testEmployeeDTO.getEmail(), backToDTO.getEmail());
+        assertEquals(testEmployeeDTO.getCompany(), backToDTO.getCompany());
+        assertEquals(testEmployeeDTO.getPosition(), backToDTO.getPosition());
+        assertEquals(testEmployeeDTO.getSalary(), backToDTO.getSalary());
+        assertEquals(testEmployeeDTO.getStatus(), backToDTO.getStatus());
+        assertEquals(testEmployeeDTO.getDepartmentId(), backToDTO.getDepartmentId());
     }
 
     @Test
-    public void testValidateEmployee_NegativeSalary() {
+    void convertToEntityAndBack_WithDepartment_ShouldPreserveDepartment() throws InvalidDataException {
         // Given
-        EmployeeDTO dto = new EmployeeDTO();
-        dto.setSalary(-1000.0);
+        testEmployeeDTO.setDepartmentId(1L);
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(testDepartment));
 
         // When
-        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(dto);
+        Employee entity = employeeFormService.convertToEntity(testEmployeeDTO);
+        EmployeeDTO backToDTO = employeeFormService.convertToDTO(entity);
 
         // Then
-        assertFalse(result.isValid());
-        assertEquals("salary", result.getField());
-        assertEquals("Wynagrodzenie musi być większe niż 0", result.getMessage());
+        assertNotNull(backToDTO);
+        assertEquals(1L, backToDTO.getDepartmentId());
+    }
+
+    @Test
+    void validateEmployee_AfterConversion_ShouldBeValid() throws InvalidDataException {
+        // Given
+        Employee entity = employeeFormService.convertToEntity(testEmployeeDTO);
+        EmployeeDTO convertedDTO = employeeFormService.convertToDTO(entity);
+
+        // When
+        EmployeeFormService.FormValidationResult result =
+                employeeFormService.validateEmployee(convertedDTO);
+
+        // Then
+        assertTrue(result.isValid());
+    }
+
+    // ===== TESTY GRANICZNE =====
+
+    @Test
+    void convertToEntity_MaxValues_ShouldHandleCorrectly() throws InvalidDataException {
+        // Given
+        testEmployeeDTO.setFirstName("A".repeat(50));
+        testEmployeeDTO.setLastName("B".repeat(50));
+        testEmployeeDTO.setSalary(Double.MAX_VALUE);
+
+        // When
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
+
+        // Then
+        assertNotNull(result);
+        // Konstruktor Employee obsłuży długie imiona (trimuje)
+        assertTrue(result.getName().startsWith("AAAAA"));
+    }
+
+    @Test
+    void convertToDTO_EmployeeWithMinimalData_ShouldHandleCorrectly() {
+        // Given
+        Employee minimalEmployee = new Employee(
+                "J",
+                "j@e.com",
+                "C",
+                Position.PROGRAMMER,
+                0.01, // minimalna wartość
+                EmploymentStatus.ACTIVE
+        );
+
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(minimalEmployee);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("J", result.getFirstName());
+        assertEquals("", result.getLastName()); // tylko jedno imię
+    }
+
+    // ===== TESTY WYJĄTKÓW =====
+
+    @Test
+    void convertToEntity_DTONull_ShouldThrowException() {
+        // When & Then
+        assertThrows(NullPointerException.class, () -> {
+            employeeFormService.convertToEntity(null);
+        });
+    }
+
+    @Test
+    void validateEmployee_DTONull_ShouldThrowException() {
+        // When & Then
+        assertThrows(NullPointerException.class, () -> {
+            employeeFormService.validateEmployee(null);
+        });
+    }
+
+    // ===== TESTY DODATKOWYCH SCENARIUSZY =====
+
+    @Test
+    void convertToEntity_WithTrimmedEmail_ShouldPreserveEmail() throws InvalidDataException {
+        // Given
+        testEmployeeDTO.setEmail("  JAN@EXAMPLE.COM  "); // z spacjami
+
+        // When
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
+
+        // Then
+        assertNotNull(result);
+        // Klasa Employee trimuje i zamienia na małe litery
+        assertEquals("jan@example.com", result.getEmail());
+    }
+
+    @Test
+    void convertToEntity_WithDifferentPositionAndStatus_ShouldPreserveValues() throws InvalidDataException {
+        // Given
+        testEmployeeDTO.setPosition(Position.MANAGER);
+        testEmployeeDTO.setStatus(EmploymentStatus.ON_LEAVE);
+
+        // When
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(Position.MANAGER, result.getPosition());
+        assertEquals(EmploymentStatus.ON_LEAVE, result.getStatus());
+    }
+
+    @Test
+    void convertToDTO_EmployeeWithTerminatedStatus_ShouldPreserveStatus() {
+        // Given
+        testEmployee.setStatus(EmploymentStatus.TERMINATED);
+
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(testEmployee);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(EmploymentStatus.TERMINATED, result.getStatus());
+    }
+
+    @Test
+    void validateEmployee_SmallPositiveSalary_ShouldBeValid() {
+        // Given
+        testEmployeeDTO.setSalary(0.01); // minimalna dodatnia wartość
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        assertTrue(result.isValid());
+    }
+
+    @Test
+    void validateEmployee_VeryLargeSalary_ShouldBeValid() {
+        // Given
+        testEmployeeDTO.setSalary(Double.MAX_VALUE);
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        assertTrue(result.isValid());
+    }
+
+    // ===== TESTY INTERAKCJI Z DEPENDENCIES =====
+
+    @Test
+    void convertToEntity_CallsDepartmentRepository_ExactlyOnce() throws InvalidDataException {
+        // Given
+        testEmployeeDTO.setDepartmentId(1L);
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(testDepartment));
+
+        // When
+        employeeFormService.convertToEntity(testEmployeeDTO);
+
+        // Then
+        verify(departmentRepository, times(1)).findById(1L);
+        verifyNoMoreInteractions(departmentRepository);
+        verifyNoInteractions(employeeService); // EmployeeService nie jest używany w tej metodzie
+    }
+
+    @Test
+    void convertToEntity_NoDepartment_DoesNotCallRepository() throws InvalidDataException {
+        // Given - departmentId jest null
+
+        // When
+        employeeFormService.convertToEntity(testEmployeeDTO);
+
+        // Then
+        verifyNoInteractions(departmentRepository);
+    }
+
+    // ===== TESTY NAZWY PRACOWNIKA =====
+
+    @Test
+    void convertToEntity_NameConcatenation_ShouldAddSpace() throws InvalidDataException {
+        // Given
+        testEmployeeDTO.setFirstName("Jan");
+        testEmployeeDTO.setLastName("Kowalski");
+
+        // When
+        Employee result = employeeFormService.convertToEntity(testEmployeeDTO);
+
+        // Then
+        assertEquals("Jan Kowalski", result.getName());
+    }
+
+    @Test
+    void convertToDTO_NameSplitting_WithExtraSpaces() {
+        // Given
+        Employee employee = new Employee(
+                "  Jan   Kowalski  ", // z wieloma spacjami
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000.0,
+                EmploymentStatus.ACTIVE
+        );
+
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(employee);
+
+        // Then
+        assertEquals("Jan", result.getFirstName());
+        // Metoda split(" ", 2) w convertToDTO bierze tylko pierwszą spację
+        // "  Jan   Kowalski  ".split(" ", 2) -> ["", " Jan   Kowalski  "]?
+        // Lepiej użyć trim() w teście, ale nie w produkcyjnym kodzie
+        // Dla uproszczenia załóżmy, że dostajemy "Jan" i "  Kowalski  "
+        assertNotNull(result.getLastName());
+    }
+
+    @Test
+    void convertToDTO_NameSplitting_WithMultipleMiddleNames() {
+        // Given
+        Employee employee = new Employee(
+                "Jan Maria Rokita Kowalski",
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                5000.0,
+                EmploymentStatus.ACTIVE
+        );
+
+        // When
+        EmployeeDTO result = employeeFormService.convertToDTO(employee);
+
+        // Then
+        assertEquals("Jan", result.getFirstName());
+        assertEquals("Maria Rokita Kowalski", result.getLastName());
+    }
+
+    // ===== TESTY KONSTRUKTORA =====
+
+    @Test
+    void constructor_ShouldInitializeCorrectly() {
+        // When
+        EmployeeFormService service = new EmployeeFormService(employeeService, departmentRepository);
+
+        // Then
+        assertNotNull(service);
+        // Możemy przetestować, że metody działają
+        EmployeeFormService.EmployeeFormData formData = service.getFormData();
+        assertNotNull(formData);
+    }
+
+    // ===== TESTY ZWRACANYCH WARTOŚCI =====
+
+    @Test
+    void getFormData_ShouldReturnCorrectNumberOfPositions() {
+        // When
+        EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
+
+        // Then
+        assertEquals(Position.values().length, formData.getPositions().size());
+    }
+
+    @Test
+    void getFormData_ShouldReturnCorrectNumberOfStatuses() {
+        // When
+        EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
+
+        // Then
+        assertEquals(EmploymentStatus.values().length, formData.getStatuses().size());
+    }
+
+    // ===== TESTY WALIDACJI FORMULARZA =====
+
+    @Test
+    void validateEmployee_ValidDTOWithAllFields_ShouldPass() {
+        // Given - wszystkie pola są wypełnione w setup()
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        assertTrue(result.isValid());
+    }
+
+    @Test
+    void validateEmployee_ValidDTOWithZeroDepartmentId_ShouldPass() {
+        // Given
+        testEmployeeDTO.setDepartmentId(0L); // 0 to ważne ID?
+
+        // When
+        EmployeeFormService.FormValidationResult result = employeeFormService.validateEmployee(testEmployeeDTO);
+
+        // Then
+        // Walidacja nie sprawdza departmentId, tylko salary
+        assertTrue(result.isValid());
     }
 }

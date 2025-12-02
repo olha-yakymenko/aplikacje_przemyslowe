@@ -3,12 +3,15 @@ package com.techcorp.employee.service;
 
 import com.techcorp.employee.exception.ApiException;
 import com.techcorp.employee.model.Employee;
+import com.techcorp.employee.model.EmploymentStatus;
 import com.techcorp.employee.model.Position;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import jakarta.transaction.Status;
+import jdk.jshell.Snippet;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -78,7 +81,8 @@ public class ApiService {
                         email,
                         companyName,
                         Position.PROGRAMMER,
-                        Position.PROGRAMMER.getBaseSalary()
+                        Position.PROGRAMMER.getBaseSalary(),
+                        EmploymentStatus.ACTIVE
                 );
 
                 employees.add(employee);

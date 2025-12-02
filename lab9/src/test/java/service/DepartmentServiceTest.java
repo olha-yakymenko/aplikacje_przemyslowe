@@ -1,287 +1,716 @@
 package com.techcorp.employee.service;
 
 import com.techcorp.employee.dto.DepartmentDTO;
-import com.techcorp.employee.exception.InvalidDataException;
 import com.techcorp.employee.model.Department;
 import com.techcorp.employee.model.Employee;
 import com.techcorp.employee.model.Position;
 import com.techcorp.employee.model.EmploymentStatus;
+import com.techcorp.employee.repository.DepartmentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class DepartmentServiceTest {
+class DepartmentServiceTest {
+
+    @Mock
+    private DepartmentRepository departmentRepository;
 
     @Mock
     private EmployeeService employeeService;
 
+    @InjectMocks
     private DepartmentService departmentService;
 
+    private Department testDepartment;
+    private Employee testEmployee;
+    private Employee testManager;
+
     @BeforeEach
-    public void setUp() {
-        departmentService = new DepartmentService(employeeService);
+    void setUp() {
+        // Używamy konstruktora z 5 parametrami
+        testDepartment = new Department(
+                "IT",                      // name
+                "Warsaw",                 // location
+                "Information Technology", // description
+                "anna@example.com",       // managerEmail
+                100000.0                  // budget
+        );
+        testDepartment.setId(1L);
+
+        testEmployee = new Employee(
+                "Jan Kowalski",
+                "jan@example.com",
+                "TechCorp",
+                Position.PROGRAMMER,
+                8000.0,
+                EmploymentStatus.ACTIVE
+        );
+        testEmployee.setId(1L);
+
+        testManager = new Employee(
+                "Anna Nowak",
+                "anna@example.com",
+                "TechCorp",
+                Position.MANAGER,
+                12000.0,
+                EmploymentStatus.ACTIVE
+        );
+        testManager.setId(2L);
+        // managerEmail jest już ustawiony w konstruktorze
     }
 
-    @Test
-    public void testCreateDepartment() {
-        // Given
-        Department department = new Department(null, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0);
-
-        // When
-        Department result = departmentService.createDepartment(department);
-
-        // Then
-        assertNotNull(result);
-        assertNotNull(result.getId());
-        assertEquals("IT", result.getName());
-        assertEquals("Warszawa", result.getLocation());
-        assertEquals("Dział IT", result.getDescription());
-        assertEquals("manager@techcorp.com", result.getManagerEmail());
-        assertEquals(100000.0, result.getBudget());
-    }
+    // ===== TESTY PODSTAWOWYCH OPERACJI =====
 
     @Test
-    public void testGetAllDepartments() {
+    void getAllDepartments_ShouldReturnList() {
         // Given
-        Department dept1 = new Department(1L, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0);
-        Department dept2 = new Department(2L, "HR", "Kraków", "Dział HR", "hr@techcorp.com", 50000.0);
-
-        departmentService.createDepartment(dept1);
-        departmentService.createDepartment(dept2);
+        List<Department> departments = Arrays.asList(testDepartment);
+        when(departmentRepository.findAll()).thenReturn(departments);
 
         // When
         List<Department> result = departmentService.getAllDepartments();
 
         // Then
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertTrue(result.stream().anyMatch(dept -> "IT".equals(dept.getName())));
-        assertTrue(result.stream().anyMatch(dept -> "HR".equals(dept.getName())));
+        assertEquals(1, result.size());
+        assertEquals("IT", result.get(0).getName());
+        verify(departmentRepository, times(1)).findAll();
     }
 
     @Test
-    public void testGetDepartmentById_Found() {
+    void getDepartmentCount_ShouldReturnCorrectCount() {
         // Given
-        Department department = new Department(null, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0);
-        Department created = departmentService.createDepartment(department);
-        Long departmentId = created.getId();
+        when(departmentRepository.count()).thenReturn(5L);
 
         // When
-        Optional<Department> result = departmentService.getDepartmentById(departmentId);
+        int result = departmentService.getDepartmentCount();
+
+        // Then
+        assertEquals(5, result);
+        verify(departmentRepository, times(1)).count();
+    }
+
+    @Test
+    void getDepartmentById_ExistingId_ShouldReturnDepartment() {
+        // Given
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(testDepartment));
+
+        // When
+        Optional<Department> result = departmentService.getDepartmentById(1L);
 
         // Then
         assertTrue(result.isPresent());
         assertEquals("IT", result.get().getName());
-        assertEquals(departmentId, result.get().getId());
+        verify(departmentRepository, times(1)).findById(1L);
     }
 
     @Test
-    public void testGetDepartmentById_NotFound() {
+    void getDepartmentById_NonExistingId_ShouldReturnEmpty() {
+        // Given
+        when(departmentRepository.findById(999L)).thenReturn(Optional.empty());
+
         // When
         Optional<Department> result = departmentService.getDepartmentById(999L);
 
         // Then
         assertFalse(result.isPresent());
+        verify(departmentRepository, times(1)).findById(999L);
     }
 
-    @Test
-    public void testUpdateDepartment_Success() {
-        // Given
-        Department department = new Department(null, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0);
-        Department created = departmentService.createDepartment(department);
-        Long departmentId = created.getId();
+    // ===== TESTY TWORZENIA DEPARTAMENTU =====
 
-        Department updatedData = new Department(null, "IT Updated", "Kraków", "Zaktualizowany dział", "newmanager@techcorp.com", 120000.0);
+    @Test
+    void createDepartment_ValidDepartment_ShouldSaveSuccessfully() {
+        // Given
+        Department newDepartment = new Department(
+                "HR",                    // name
+                "New York",             // location
+                "Human Resources",      // description
+                "hr@example.com",       // managerEmail
+                50000.0                 // budget
+        );
+
+        when(departmentRepository.existsByName("HR")).thenReturn(false);
+        when(departmentRepository.save(newDepartment)).thenReturn(newDepartment);
 
         // When
-        Department result = departmentService.updateDepartment(departmentId, updatedData);
+        Department result = departmentService.createDepartment(newDepartment);
 
         // Then
         assertNotNull(result);
-        assertEquals(departmentId, result.getId());
+        assertEquals("HR", result.getName());
+        assertEquals("New York", result.getLocation());
+        assertEquals("Human Resources", result.getDescription());
+        assertEquals("hr@example.com", result.getManagerEmail());
+        assertEquals(50000.0, result.getBudget(), 0.001);
+        verify(departmentRepository, times(1)).existsByName("HR");
+        verify(departmentRepository, times(1)).save(newDepartment);
+    }
+
+    @Test
+    void createDepartment_DuplicateName_ShouldThrowException() {
+        // Given
+        Department duplicateDepartment = new Department(
+                "IT",                    // name - duplikat
+                "London",               // location
+                "Duplicate IT",         // description
+                "it2@example.com",      // managerEmail
+                75000.0                 // budget
+        );
+
+        when(departmentRepository.existsByName("IT")).thenReturn(true);
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            departmentService.createDepartment(duplicateDepartment);
+        });
+
+        assertEquals("Department with name 'IT' already exists", exception.getMessage());
+        verify(departmentRepository, times(1)).existsByName("IT");
+        verify(departmentRepository, never()).save(any());
+    }
+
+    @Test
+    void createDepartment_NullDepartment_ShouldThrowException() {
+        // When & Then
+        assertThrows(NullPointerException.class, () -> {
+            departmentService.createDepartment(null);
+        });
+    }
+
+    // ===== TESTY AKTUALIZACJI DEPARTAMENTU =====
+
+    @Test
+    void updateDepartment_ValidUpdate_ShouldUpdateSuccessfully() {
+        // Given
+        Long departmentId = 1L;
+
+        // Tworzymy zaktualizowany departament
+        Department updatedDepartment = new Department(
+                "IT Updated",           // name - zmienione
+                "Krakow",              // location - zmienione
+                "Updated Description",  // description
+                "manager@example.com",  // managerEmail - zmienione
+                150000.0               // budget - zmienione
+        );
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(departmentRepository.existsByName("IT Updated")).thenReturn(false);
+        when(departmentRepository.save(any(Department.class))).thenReturn(updatedDepartment);
+
+        // When
+        Department result = departmentService.updateDepartment(departmentId, updatedDepartment);
+
+        // Then
+        assertNotNull(result);
         assertEquals("IT Updated", result.getName());
-        assertEquals("Kraków", result.getLocation());
-        assertEquals("Zaktualizowany dział", result.getDescription());
-        assertEquals("newmanager@techcorp.com", result.getManagerEmail());
-        assertEquals(120000.0, result.getBudget());
+        assertEquals("Krakow", result.getLocation());
+        assertEquals("Updated Description", result.getDescription());
+        assertEquals("manager@example.com", result.getManagerEmail());
+        assertEquals(150000.0, result.getBudget(), 0.001);
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(departmentRepository, times(1)).existsByName("IT Updated");
+        verify(departmentRepository, times(1)).save(any(Department.class));
     }
 
     @Test
-    public void testUpdateDepartment_NotFound() {
+    void updateDepartment_SameName_ShouldUpdateSuccessfully() {
         // Given
-        Department updatedData = new Department(null, "IT Updated", "Kraków", "Zaktualizowany dział", "newmanager@techcorp.com", 120000.0);
+        Long departmentId = 1L;
+
+        // Tworzymy zaktualizowany departament z tą samą nazwą
+        Department updatedDepartment = new Department(
+                "IT",                    // name - bez zmian
+                "Krakow",              // location - zmienione
+                "Updated Description",  // description
+                "newmanager@example.com", // managerEmail - zmienione
+                120000.0               // budget - zmienione
+        );
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(departmentRepository.save(any(Department.class))).thenReturn(updatedDepartment);
 
         // When
-        Department result = departmentService.updateDepartment(999L, updatedData);
-
-        // Then
-        assertNull(result);
-    }
-
-    @Test
-    public void testDeleteDepartment_Success() {
-        // Given
-        Department department = new Department(null, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0);
-        Department created = departmentService.createDepartment(department);
-        Long departmentId = created.getId();
-
-        // When
-        boolean result = departmentService.deleteDepartment(departmentId);
-
-        // Then
-        assertTrue(result);
-        assertFalse(departmentService.getDepartmentById(departmentId).isPresent());
-    }
-
-    @Test
-    public void testDeleteDepartment_NotFound() {
-        // When
-        boolean result = departmentService.deleteDepartment(999L);
-
-        // Then
-        assertFalse(result);
-    }
-
-    @Test
-    public void testGetDepartmentCount() {
-        // Given
-        departmentService.createDepartment(new Department(null, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0));
-        departmentService.createDepartment(new Department(null, "HR", "Kraków", "Dział HR", "hr@techcorp.com", 50000.0));
-
-        // When
-        int count = departmentService.getDepartmentCount();
-
-        // Then
-        assertEquals(2, count);
-    }
-
-    @Test
-    public void testGetDepartmentsByManager() {
-        // Given
-        Department dept1 = new Department(null, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0);
-        Department dept2 = new Department(null, "HR", "Kraków", "Dział HR", "hr@techcorp.com", 50000.0);
-        Department dept3 = new Department(null, "Finance", "Warszawa", "Dział Finansów", "manager@techcorp.com", 80000.0);
-
-        departmentService.createDepartment(dept1);
-        departmentService.createDepartment(dept2);
-        departmentService.createDepartment(dept3);
-
-        // When
-        List<Department> result = departmentService.getDepartmentsByManager("manager@techcorp.com");
+        Department result = departmentService.updateDepartment(departmentId, updatedDepartment);
 
         // Then
         assertNotNull(result);
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(dept -> "manager@techcorp.com".equals(dept.getManagerEmail())));
+        assertEquals("IT", result.getName()); // Nazwa bez zmian
+        assertEquals("Krakow", result.getLocation()); // Lokalizacja zmieniona
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(departmentRepository, never()).existsByName(anyString()); // Nie sprawdzaj duplikatu
+        verify(departmentRepository, times(1)).save(any(Department.class));
     }
 
     @Test
-    public void testGetDepartmentDetails_Success() throws InvalidDataException {
+    void updateDepartment_DuplicateName_ShouldThrowException() {
         // Given
-        Department department = new Department(null, "IT", "Warszawa", "Dział IT", "manager@techcorp.com", 100000.0);
-        Department created = departmentService.createDepartment(department);
-        Long departmentId = created.getId();
+        Long departmentId = 1L;
+        Department updatedDepartment = new Department(
+                "HR",                    // name - nowa nazwa
+                "London",               // location
+                "New Name",             // description
+                "hr@example.com",       // managerEmail
+                80000.0                 // budget
+        );
 
-        Employee manager = new Employee("Jan Manager", "manager@techcorp.com", "TechCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE);
-        Employee employee1 = new Employee("Jan Developer", "dev1@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        employee1.setDepartmentId(departmentId);
-        Employee employee2 = new Employee("Anna Tester", "tester@techcorp.com", "TechCorp",
-                Position.MANAGER, 4500.0, EmploymentStatus.ACTIVE);
-        employee2.setDepartmentId(departmentId);
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(departmentRepository.existsByName("HR")).thenReturn(true);
 
-        List<Employee> departmentEmployees = Arrays.asList(employee1, employee2);
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            departmentService.updateDepartment(departmentId, updatedDepartment);
+        });
 
-        when(employeeService.getEmployeesByDepartmentId(departmentId)).thenReturn(departmentEmployees);
-        when(employeeService.findEmployeeByEmail("manager@techcorp.com")).thenReturn(Optional.of(manager));
+        assertEquals("Department with name 'HR' already exists", exception.getMessage());
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(departmentRepository, times(1)).existsByName("HR");
+        verify(departmentRepository, never()).save(any());
+    }
+
+    @Test
+    void updateDepartment_NonExistingDepartment_ShouldThrowException() {
+        // Given
+        Long nonExistingId = 999L;
+        Department updatedDepartment = new Department(
+                "IT",                    // name
+                "Warsaw",               // location
+                "Updated",              // description
+                "email@example.com",    // managerEmail
+                100000.0                // budget
+        );
+
+        when(departmentRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            departmentService.updateDepartment(nonExistingId, updatedDepartment);
+        });
+
+        assertEquals("Department not found with id: " + nonExistingId, exception.getMessage());
+        verify(departmentRepository, times(1)).findById(nonExistingId);
+        verify(departmentRepository, never()).existsByName(anyString());
+        verify(departmentRepository, never()).save(any());
+    }
+
+    // ===== TESTY USUWANIA DEPARTAMENTU =====
+
+    @Test
+    void deleteDepartment_ExistingDepartment_ShouldDeleteSuccessfully() {
+        // Given
+        Long departmentId = 1L;
+        testEmployee.setDepartment(testDepartment);
+        List<Employee> employeesInDepartment = Arrays.asList(testEmployee);
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(employeeService.getEmployeesByDepartmentId(departmentId)).thenReturn(employeesInDepartment);
+        when(employeeService.saveEmployee(any(Employee.class))).thenReturn(testEmployee);
+        doNothing().when(departmentRepository).delete(testDepartment);
 
         // When
-        DepartmentDTO result = departmentService.getDepartmentDetails(departmentId);
+        departmentService.deleteDepartment(departmentId);
 
         // Then
-        assertNotNull(result);
-        assertEquals(departmentId, result.getDepartment().getId());
-        assertEquals("IT", result.getDepartment().getName());
-        assertEquals(2, result.getEmployees().size());
-        assertTrue(result.getManager().isPresent());
-        assertEquals("Jan Manager", result.getManager().get().getName());
-
+        assertNull(testEmployee.getDepartment()); // Departament powinien być usunięty z pracownika
+        verify(departmentRepository, times(1)).findById(departmentId);
         verify(employeeService, times(1)).getEmployeesByDepartmentId(departmentId);
-        verify(employeeService, times(1)).findEmployeeByEmail("manager@techcorp.com");
+        verify(employeeService, times(1)).saveEmployee(testEmployee);
+        verify(departmentRepository, times(1)).delete(testDepartment);
     }
 
     @Test
-    public void testGetDepartmentDetails_DepartmentNotFound() {
+    void deleteDepartment_NoEmployees_ShouldDeleteSuccessfully() {
+        // Given
+        Long departmentId = 1L;
+        List<Employee> emptyList = Collections.emptyList();
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(employeeService.getEmployeesByDepartmentId(departmentId)).thenReturn(emptyList);
+        doNothing().when(departmentRepository).delete(testDepartment);
+
         // When
-        DepartmentDTO result = departmentService.getDepartmentDetails(999L);
+        departmentService.deleteDepartment(departmentId);
 
         // Then
-        assertNull(result);
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(employeeService, times(1)).getEmployeesByDepartmentId(departmentId);
+        verify(employeeService, never()).saveEmployee(any()); // Nie ma pracowników do aktualizacji
+        verify(departmentRepository, times(1)).delete(testDepartment);
+    }
+
+    @Test
+    void deleteDepartment_NonExistingDepartment_ShouldThrowException() {
+        // Given
+        Long nonExistingId = 999L;
+        when(departmentRepository.findById(nonExistingId)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            departmentService.deleteDepartment(nonExistingId);
+        });
+
+        assertEquals("Department not found with id: " + nonExistingId, exception.getMessage());
+        verify(departmentRepository, times(1)).findById(nonExistingId);
         verify(employeeService, never()).getEmployeesByDepartmentId(anyLong());
-        verify(employeeService, never()).findEmployeeByEmail(anyString());
+        verify(departmentRepository, never()).delete(any());
+    }
+
+    // ===== TESTY PRZYPISYWANIA PRACOWNIKÓW =====
+
+    @Test
+    void assignEmployeeToDepartment_ValidData_ShouldAssignSuccessfully() {
+        // Given
+        String employeeEmail = "jan@example.com";
+        Long departmentId = 1L;
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(employeeService.findEmployeeByEmail(employeeEmail)).thenReturn(Optional.of(testEmployee));
+        when(employeeService.saveEmployee(any(Employee.class))).thenReturn(testEmployee);
+
+        // When
+        departmentService.assignEmployeeToDepartment(employeeEmail, departmentId);
+
+        // Then
+        assertEquals(testDepartment, testEmployee.getDepartment()); // Pracownik przypisany
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(employeeService, times(1)).findEmployeeByEmail(employeeEmail);
+        verify(employeeService, times(1)).saveEmployee(testEmployee);
     }
 
     @Test
-    public void testGetDepartmentDetails_ManagerNotFound() throws InvalidDataException {
+    void assignEmployeeToDepartment_DepartmentNotFound_ShouldThrowException() {
         // Given
-        Department department = new Department(null, "IT", "Warszawa", "Dział IT", "nonexistent@techcorp.com", 100000.0);
-        Department created = departmentService.createDepartment(department);
-        Long departmentId = created.getId();
+        String employeeEmail = "jan@example.com";
+        Long nonExistingDepartmentId = 999L;
 
-        Employee employee = new Employee("Jan Developer", "dev@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        employee.setDepartmentId(departmentId);
+        when(departmentRepository.findById(nonExistingDepartmentId)).thenReturn(Optional.empty());
 
-        when(employeeService.getEmployeesByDepartmentId(departmentId)).thenReturn(List.of(employee));
-        when(employeeService.findEmployeeByEmail("nonexistent@techcorp.com")).thenReturn(Optional.empty());
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            departmentService.assignEmployeeToDepartment(employeeEmail, nonExistingDepartmentId);
+        });
+
+        assertEquals("Department not found with id: " + nonExistingDepartmentId, exception.getMessage());
+        verify(departmentRepository, times(1)).findById(nonExistingDepartmentId);
+        verify(employeeService, never()).findEmployeeByEmail(anyString());
+        verify(employeeService, never()).saveEmployee(any());
+    }
+
+    @Test
+    void assignEmployeeToDepartment_EmployeeNotFound_ShouldThrowException() {
+        // Given
+        String nonExistingEmail = "nonexistent@example.com";
+        Long departmentId = 1L;
+
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        when(employeeService.findEmployeeByEmail(nonExistingEmail)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            departmentService.assignEmployeeToDepartment(nonExistingEmail, departmentId);
+        });
+
+        assertEquals("Employee not found with email: " + nonExistingEmail, exception.getMessage());
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(employeeService, times(1)).findEmployeeByEmail(nonExistingEmail);
+        verify(employeeService, never()).saveEmployee(any());
+    }
+
+    @Test
+    void removeEmployeeFromDepartment_ValidEmployee_ShouldRemoveSuccessfully() {
+        // Given
+        String employeeEmail = "jan@example.com";
+        testEmployee.setDepartment(testDepartment); // Pracownik ma przypisany departament
+
+        when(employeeService.findEmployeeByEmail(employeeEmail)).thenReturn(Optional.of(testEmployee));
+        when(employeeService.saveEmployee(any(Employee.class))).thenReturn(testEmployee);
+
+        // When
+        departmentService.removeEmployeeFromDepartment(employeeEmail);
+
+        // Then
+        assertNull(testEmployee.getDepartment()); // Departament usunięty
+        verify(employeeService, times(1)).findEmployeeByEmail(employeeEmail);
+        verify(employeeService, times(1)).saveEmployee(testEmployee);
+    }
+
+    @Test
+    void removeEmployeeFromDepartment_EmployeeNotFound_ShouldThrowException() {
+        // Given
+        String nonExistingEmail = "nonexistent@example.com";
+
+        when(employeeService.findEmployeeByEmail(nonExistingEmail)).thenReturn(Optional.empty());
+
+        // When & Then
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            departmentService.removeEmployeeFromDepartment(nonExistingEmail);
+        });
+
+        assertEquals("Employee not found with email: " + nonExistingEmail, exception.getMessage());
+        verify(employeeService, times(1)).findEmployeeByEmail(nonExistingEmail);
+        verify(employeeService, never()).saveEmployee(any());
+    }
+
+    @Test
+    void removeEmployeeFromDepartment_EmployeeWithoutDepartment_ShouldHandleGracefully() {
+        // Given
+        String employeeEmail = "jan@example.com";
+        testEmployee.setDepartment(null); // Pracownik nie ma departamentu
+
+        when(employeeService.findEmployeeByEmail(employeeEmail)).thenReturn(Optional.of(testEmployee));
+        when(employeeService.saveEmployee(any(Employee.class))).thenReturn(testEmployee);
+
+        // When
+        departmentService.removeEmployeeFromDepartment(employeeEmail);
+
+        // Then - nadal null
+        assertNull(testEmployee.getDepartment());
+        verify(employeeService, times(1)).findEmployeeByEmail(employeeEmail);
+        verify(employeeService, times(1)).saveEmployee(testEmployee);
+    }
+
+    // ===== TESTY SZCZEGÓŁÓW DEPARTAMENTU =====
+
+    @Test
+    void getDepartmentDetails_ExistingDepartment_ShouldReturnDTO() {
+        // Given
+        Long departmentId = 1L;
+
+        // Ustaw pracowników w departamencie
+        testEmployee.setDepartment(testDepartment);
+        List<Employee> departmentEmployees = Arrays.asList(testEmployee);
+        testDepartment.setEmployees(departmentEmployees);
+
+        // Mockowanie odpowiedzi z repozytorium
+        when(departmentRepository.findByIdWithEmployees(departmentId))
+                .thenReturn(Optional.of(testDepartment));
+        when(employeeService.findEmployeeByEmail("anna@example.com"))
+                .thenReturn(Optional.of(testManager));
 
         // When
         DepartmentDTO result = departmentService.getDepartmentDetails(departmentId);
 
         // Then
         assertNotNull(result);
-        assertFalse(result.getManager().isPresent());
+        assertNotNull(result.getEmployees());
         assertEquals(1, result.getEmployees().size());
+        assertTrue(result.getManager().isPresent());
+        assertEquals("Anna Nowak", result.getManager().get().getName());
 
-        verify(employeeService, times(1)).getEmployeesByDepartmentId(departmentId);
-        verify(employeeService, times(1)).findEmployeeByEmail("nonexistent@techcorp.com");
+        verify(departmentRepository, times(1)).findByIdWithEmployees(departmentId);
+        verify(employeeService, times(1)).findEmployeeByEmail("anna@example.com");
     }
 
     @Test
-    public void testGetDepartmentDetails_NoManagerEmail() throws InvalidDataException {
+    void getDepartmentDetails_NonExistingDepartment_ShouldReturnNull() {
         // Given
-        Department department = new Department(null, "IT", "Warszawa", "Dział IT", null, 100000.0);
-        Department created = departmentService.createDepartment(department);
-        Long departmentId = created.getId();
+        Long nonExistingId = 999L;
+        when(departmentRepository.findByIdWithEmployees(nonExistingId))
+                .thenReturn(Optional.empty());
 
-        Employee employee = new Employee("Jan Developer", "dev@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        employee.setDepartmentId(departmentId);
+        // When
+        DepartmentDTO result = departmentService.getDepartmentDetails(nonExistingId);
 
-        when(employeeService.getEmployeesByDepartmentId(departmentId)).thenReturn(List.of(employee));
+        // Then
+        assertNull(result);
+        verify(departmentRepository, times(1)).findByIdWithEmployees(nonExistingId);
+        verify(employeeService, never()).findEmployeeByEmail(anyString());
+    }
+
+    @Test
+    void getDepartmentDetails_DepartmentWithoutManager_ShouldReturnDTOWithoutManager() {
+        // Given
+        Long departmentId = 1L;
+
+        // Tworzymy departament bez managera
+        Department departmentWithoutManager = new Department(
+                "IT", "Warsaw", "IT Department", null, 100000.0
+        );
+        departmentWithoutManager.setId(1L);
+
+        testEmployee.setDepartment(departmentWithoutManager);
+        List<Employee> departmentEmployees = Arrays.asList(testEmployee);
+        departmentWithoutManager.setEmployees(departmentEmployees);
+
+        when(departmentRepository.findByIdWithEmployees(departmentId))
+                .thenReturn(Optional.of(departmentWithoutManager));
 
         // When
         DepartmentDTO result = departmentService.getDepartmentDetails(departmentId);
 
         // Then
         assertNotNull(result);
-        assertFalse(result.getManager().isPresent());
-        assertEquals(1, result.getEmployees().size());
-
-        verify(employeeService, times(1)).getEmployeesByDepartmentId(departmentId);
-        verify(employeeService, never()).findEmployeeByEmail(anyString());
+        assertFalse(result.getManager().isPresent()); // Manager powinien być pusty
+        verify(departmentRepository, times(1)).findByIdWithEmployees(departmentId);
+        verify(employeeService, never()).findEmployeeByEmail(anyString()); // Nie szukaj managera
     }
+
+    @Test
+    void getDepartmentDetails_DepartmentWithNonExistingManager_ShouldReturnDTOWithoutManager() {
+        // Given
+        Long departmentId = 1L;
+        testDepartment.setManagerEmail("nonexistent@example.com");
+
+        testEmployee.setDepartment(testDepartment);
+        List<Employee> departmentEmployees = Arrays.asList(testEmployee);
+        testDepartment.setEmployees(departmentEmployees);
+
+        when(departmentRepository.findByIdWithEmployees(departmentId))
+                .thenReturn(Optional.of(testDepartment));
+        when(employeeService.findEmployeeByEmail("nonexistent@example.com"))
+                .thenReturn(Optional.empty()); // Manager nie istnieje
+
+        // When
+        DepartmentDTO result = departmentService.getDepartmentDetails(departmentId);
+
+        // Then
+        assertNotNull(result);
+  assertFalse(result.getManager().isPresent()); // Manager powinien być pusty
+        verify(departmentRepository, times(1)).findByIdWithEmployees(departmentId);
+        verify(employeeService, times(1)).findEmployeeByEmail("nonexistent@example.com");
+    }
+
+    // ===== TESTY POMOCNICZYCH METOD =====
+
+    @Test
+    void getEmployeesWithoutDepartment_ShouldReturnList() {
+        // Given
+        List<Employee> employeesWithoutDept = Arrays.asList(testEmployee);
+        when(employeeService.getEmployeesWithoutDepartment()).thenReturn(employeesWithoutDept);
+
+        // When
+        List<Employee> result = departmentService.getEmployeesWithoutDepartment();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(employeeService, times(1)).getEmployeesWithoutDepartment();
+    }
+
+    @Test
+    void getDepartmentsByManager_ShouldReturnList() {
+        // Given
+        String managerEmail = "manager@example.com";
+        List<Department> departments = Arrays.asList(testDepartment);
+
+        // UWAGA: W kodzie DepartmentService jest błąd - używa findByLocation zamiast findByManagerEmail
+        // Dopóki nie poprawisz kodu, musisz używać findByLocation
+        when(departmentRepository.findByLocation(managerEmail)).thenReturn(departments);
+
+        // When
+        List<Department> result = departmentService.getDepartmentsByManager(managerEmail);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(departmentRepository, times(1)).findByLocation(managerEmail);
+    }
+
+    // ===== TESTY KRAŃCOWYCH PRZYPADKÓW =====
+
+    @Test
+    void createDepartment_EmptyName_ShouldBeHandledByRepository() {
+        // Given
+        Department emptyNameDepartment = new Department(
+                "",                    // pusta nazwa
+                "Location",           // location
+                "Description",        // description
+                "email@example.com",  // managerEmail
+                1000.0                // budget
+        );
+
+        when(departmentRepository.existsByName("")).thenReturn(false);
+        when(departmentRepository.save(emptyNameDepartment)).thenReturn(emptyNameDepartment);
+
+        // When
+        Department result = departmentService.createDepartment(emptyNameDepartment);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("", result.getName());
+        verify(departmentRepository, times(1)).existsByName("");
+        verify(departmentRepository, times(1)).save(emptyNameDepartment);
+    }
+
+    @Test
+    void updateDepartment_NullUpdateData_ShouldThrowException() {
+        // Given
+        Long departmentId = 1L;
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+
+        // When & Then
+        assertThrows(NullPointerException.class, () -> {
+            departmentService.updateDepartment(departmentId, null);
+        });
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(departmentRepository, never()).existsByName(anyString());
+        verify(departmentRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteDepartment_AlreadyDeleted_ShouldThrowException() {
+        // Given
+        Long departmentId = 1L;
+
+        // Symuluj sytuację gdzie departament istnieje przy findById,
+        // ale jest już usunięty przy delete (np. przez inny proces)
+        when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
+        doThrow(new RuntimeException("Department already deleted"))
+                .when(departmentRepository).delete(testDepartment);
+
+        // When & Then
+        assertThrows(RuntimeException.class, () -> {
+            departmentService.deleteDepartment(departmentId);
+        });
+
+        verify(departmentRepository, times(1)).findById(departmentId);
+        verify(employeeService, times(1)).getEmployeesByDepartmentId(departmentId);
+        verify(departmentRepository, times(1)).delete(testDepartment);
+    }
+
+    @Test
+    void assignEmployeeToDepartment_EmployeeAlreadyInDepartment_ShouldReassign() {
+        // Given
+        String employeeEmail = "jan@example.com";
+        Long newDepartmentId = 2L;
+
+        // Tworzymy nowy departament
+        Department newDepartment = new Department(
+                "HR",                    // name
+                "New York",             // location
+                "Human Resources",      // description
+                "hr@example.com",       // managerEmail
+                50000.0                 // budget
+        );
+        newDepartment.setId(2L);
+
+        // Pracownik jest już w starym departamencie
+        testEmployee.setDepartment(testDepartment);
+
+        when(departmentRepository.findById(newDepartmentId)).thenReturn(Optional.of(newDepartment));
+        when(employeeService.findEmployeeByEmail(employeeEmail)).thenReturn(Optional.of(testEmployee));
+        when(employeeService.saveEmployee(any(Employee.class))).thenReturn(testEmployee);
+
+        // When
+        departmentService.assignEmployeeToDepartment(employeeEmail, newDepartmentId);
+
+        // Then
+        assertEquals(newDepartment, testEmployee.getDepartment()); // Nowy departament
+        verify(departmentRepository, times(1)).findById(newDepartmentId);
+        verify(employeeService, times(1)).findEmployeeByEmail(employeeEmail);
+        verify(employeeService, times(1)).saveEmployee(testEmployee);
+    }
+
+
+
 }

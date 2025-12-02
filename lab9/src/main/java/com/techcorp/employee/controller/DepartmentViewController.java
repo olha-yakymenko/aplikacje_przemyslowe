@@ -107,6 +107,7 @@ public class DepartmentViewController {
                                              RedirectAttributes redirectAttributes) {
         try {
             departmentService.assignEmployeeToDepartment(employeeEmail, id);
+            System.out.println("jesten tutaj");
             redirectAttributes.addFlashAttribute("message", "Pracownik został przypisany do departamentu!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Błąd podczas przypisywania pracownika: " + e.getMessage());

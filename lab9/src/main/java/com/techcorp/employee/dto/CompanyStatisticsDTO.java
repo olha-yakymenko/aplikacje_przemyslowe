@@ -20,6 +20,15 @@ public class CompanyStatisticsDTO {
         this.topEarnerName = topEarnerName;
     }
 
+    public CompanyStatisticsDTO(String companyName, Long employeeCount, Double averageSalary,
+                                Double maxSalary, String topEarnerName) {
+        this.companyName = companyName;
+        this.employeeCount = employeeCount != null ? employeeCount.intValue() : 0;
+        this.averageSalary = averageSalary != null ? averageSalary : 0.0;
+        this.highestSalary = maxSalary != null ? maxSalary : 0.0;
+        this.topEarnerName = topEarnerName != null ? topEarnerName : "";
+    }
+
     // Gettery i settery
     public String getCompanyName() { return companyName; }
     public void setCompanyName(String companyName) { this.companyName = companyName; }

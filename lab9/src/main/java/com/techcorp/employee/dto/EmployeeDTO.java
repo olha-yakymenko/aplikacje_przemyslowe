@@ -54,6 +54,7 @@
 
 package com.techcorp.employee.dto;
 
+import com.techcorp.employee.model.Department;
 import com.techcorp.employee.model.EmploymentStatus;
 import com.techcorp.employee.model.Position;
 import jakarta.validation.constraints.*;
@@ -139,4 +140,6 @@ public class EmployeeDTO {
                 ", departmentId=" + departmentId +
                 '}';
     }
+
+
 }

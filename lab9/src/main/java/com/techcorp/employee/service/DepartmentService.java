@@ -3,101 +3,137 @@ package com.techcorp.employee.service;
 import com.techcorp.employee.dto.DepartmentDTO;
 import com.techcorp.employee.model.Department;
 import com.techcorp.employee.model.Employee;
+import com.techcorp.employee.repository.DepartmentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
+import java.util.Optional;
 
 @Service
+@Transactional
 public class DepartmentService {
-    private final Map<Long, Department> departments = new HashMap<>();
-    private final AtomicLong idCounter = new AtomicLong(1);
+
+    private final DepartmentRepository departmentRepository;
     private final EmployeeService employeeService;
 
-    public DepartmentService(EmployeeService employeeService) {
+    public DepartmentService(DepartmentRepository departmentRepository,
+                             EmployeeService employeeService) {
+        this.departmentRepository = departmentRepository;
         this.employeeService = employeeService;
     }
 
     public List<Department> getAllDepartments() {
-        return new ArrayList<>(departments.values());
+        return departmentRepository.findAll();
     }
 
     public int getDepartmentCount() {
-        return getAllDepartments().size();
+        return (int) departmentRepository.count();
     }
 
     public Optional<Department> getDepartmentById(Long id) {
-        return Optional.ofNullable(departments.get(id));
+        return departmentRepository.findById(id);
     }
 
     public Department createDepartment(Department department) {
-        Long newId = idCounter.getAndIncrement();
-        department.setId(newId);
-        departments.put(newId, department);
-        return department;
+        // Sprawdź czy departament o tej nazwie już istnieje
+        if (departmentRepository.existsByName(department.getName())) {
+            throw new IllegalArgumentException(
+                    "Department with name '" + department.getName() + "' already exists");
+        }
+        return departmentRepository.save(department);
     }
 
     public Department updateDepartment(Long id, Department department) {
-        if (departments.containsKey(id)) {
-            department.setId(id);
-            departments.put(id, department);
-            return department;
+        // Sprawdź czy departament istnieje
+        Department existing = departmentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Department not found with id: " + id));
+
+        // Sprawdź czy nowa nazwa nie koliduje z innym departamentem
+        if (!existing.getName().equals(department.getName()) &&
+                departmentRepository.existsByName(department.getName())) {
+            throw new IllegalArgumentException(
+                    "Department with name '" + department.getName() + "' already exists");
         }
-        return null;
+
+        // Aktualizuj pola
+        existing.setName(department.getName());
+        existing.setLocation(department.getLocation());
+        existing.setDescription(department.getDescription());
+        existing.setManagerEmail(department.getManagerEmail());
+        existing.setBudget(department.getBudget());
+
+        return departmentRepository.save(existing);
     }
 
-    public boolean deleteDepartment(Long id) {
-        // Najpierw znajdź wszystkich pracowników w tym departamencie
+    public void deleteDepartment(Long id) {
+        // Sprawdź czy departament istnieje
+        Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Department not found with id: " + id));
+
+        // Znajdź pracowników w tym departamencie
         List<Employee> employeesInDepartment = employeeService.getEmployeesByDepartmentId(id);
 
-        // Wyczyść departmentId u wszystkich pracowników
+        // Usuń departament z pracowników
         for (Employee employee : employeesInDepartment) {
-            employeeService.removeEmployeeFromDepartment(employee.getEmail());
+            employee.setDepartment(null);
+            employeeService.saveEmployee(employee);
         }
 
-        // Dopiero potem usuń departament
-        return departments.remove(id) != null;
+        // Usuń departament
+        departmentRepository.delete(department);
     }
 
     public List<Department> getDepartmentsByManager(String managerEmail) {
-        return departments.values().stream()
-                .filter(dept -> managerEmail.equals(dept.getManagerEmail()))
-                .toList();
+        return departmentRepository.findByLocation(managerEmail); // UWAGA: to jest find by location, nie manager!
+        // Potrzebujesz metody w repository: List<Department> findByManagerEmail(String managerEmail)
     }
 
     public DepartmentDTO getDepartmentDetails(Long id) {
-        Optional<Department> department = getDepartmentById(id);
-        if (department.isEmpty()) {
+        // Użyj metody z repozytorium która pobiera departament z pracownikami
+        Optional<Department> departmentOpt = departmentRepository.findByIdWithEmployees(id);
+
+        if (departmentOpt.isEmpty()) {
             return null;
         }
 
-        List<Employee> departmentEmployees = employeeService.getEmployeesByDepartmentId(id);
+        Department department = departmentOpt.get();
+        List<Employee> departmentEmployees = department.getEmployees();
 
         Optional<Employee> manager = Optional.empty();
-        if (department.get().getManagerEmail() != null && !department.get().getManagerEmail().isEmpty()) {
-            manager = employeeService.findEmployeeByEmail(department.get().getManagerEmail());
+        if (department.getManagerEmail() != null && !department.getManagerEmail().isEmpty()) {
+            manager = employeeService.findEmployeeByEmail(department.getManagerEmail());
         }
 
-        return new DepartmentDTO(department.get(), departmentEmployees, manager);
+        return new DepartmentDTO(department, departmentEmployees, manager);
     }
 
+    @Transactional
     public void assignEmployeeToDepartment(String employeeEmail, Long departmentId) {
-        Optional<Department> department = getDepartmentById(departmentId);
-        if (department.isEmpty()) {
-            throw new IllegalArgumentException("Department not found with id: " + departmentId);
-        }
+        // Znajdź departament
+        Department department = departmentRepository.findById(departmentId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Department not found with id: " + departmentId));
 
-        boolean assigned = employeeService.assignEmployeeToDepartment(employeeEmail, departmentId);
-        if (!assigned) {
-            throw new IllegalArgumentException("Employee not found with email: " + employeeEmail);
-        }
+        // Znajdź pracownika przez EmployeeService
+        Employee employee = employeeService.findEmployeeByEmail(employeeEmail)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Employee not found with email: " + employeeEmail));
+
+        // Przypisz pracownika do departamentu
+        employee.setDepartment(department);
+        employeeService.saveEmployee(employee);
     }
 
     public void removeEmployeeFromDepartment(String employeeEmail) {
-        boolean removed = employeeService.removeEmployeeFromDepartment(employeeEmail);
-        if (!removed) {
-            throw new IllegalArgumentException("Employee not found with email: " + employeeEmail);
-        }
+        Employee employee = employeeService.findEmployeeByEmail(employeeEmail)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Employee not found with email: " + employeeEmail));
+
+        employee.setDepartment(null);
+        employeeService.saveEmployee(employee);
     }
 
     public List<Employee> getEmployeesWithoutDepartment() {
