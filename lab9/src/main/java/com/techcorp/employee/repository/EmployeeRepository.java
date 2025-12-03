@@ -157,31 +157,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     List<String> findDistinctCompanies();
 
 
-@Query("SELECT e.name as name, e.email as email, e.company as company, " +
-        "e.position as position, e.salary as salary, e.status as status, " +
-        "COALESCE(d.name, 'Brak departamentu') as departmentName " +  // Użyj alias 'd'
-        "FROM Employee e LEFT JOIN e.department d " +  // Masz już alias 'd'
-        "WHERE (:name IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
-        "AND (:company IS NULL OR LOWER(e.company) LIKE LOWER(CONCAT('%', :company, '%'))) " +  // ZMIANA
-        "AND (:position IS NULL OR e.position = :position) " +
-        "AND (:status IS NULL OR e.status = :status) " +
-        "AND (:minSalary IS NULL OR e.salary >= :minSalary) " +
-        "AND (:maxSalary IS NULL OR e.salary <= :maxSalary) " +
-        "AND (:departmentName IS NULL " +
-        "     OR (:departmentName = 'Brak departamentu' AND d IS NULL) " +  // Użyj 'd' zamiast 'e.department'
-        "     OR (d IS NOT NULL AND LOWER(d.name) = LOWER(:departmentName)))")
-    Page<EmployeeListView> findEmployeesWithFiltersProjection(
-            @Param("name") String name,
-            @Param("company") String company,
-            @Param("position") Position position,
-            @Param("status") EmploymentStatus status,
-            @Param("minSalary") Double minSalary,
-            @Param("maxSalary") Double maxSalary,
-            @Param("departmentName") String departmentName,
-            Pageable pageable);
-
 
 //    Page<EmployeeListView> findAll(@Nullable Specification<Employee> spec, Pageable pageable, Class<EmployeeListView> type);
 
 
+//    Page<EmployeeListView> findAllProjection(Specification<Employee> spec, Pageable pageable);
 }

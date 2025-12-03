@@ -677,90 +677,142 @@ public class EmployeeService {
 
         return employeeRepository.findDistinctCompanies();
     }
+//
+//    public Page<EmployeeListView> searchEmployeesAdvanced(
+//            String name, String company, Position position, EmploymentStatus status,
+//            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+//
+//        System.out.println("=== SERVICE: Using Specifications ===");
+//        System.out.println("Parameters received:");
+//        System.out.println("  name: '" + name + "'");
+//        System.out.println("  company: '" + company + "'");
+//        System.out.println("  position: " + position);
+//        System.out.println("  departmentName: '" + departmentName + "'");
+//        System.out.println("  status: '" + status + "'");
+//
+//
+//        // Naprawienie parametrów
+//        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
+//            departmentName = null;
+//        }
+//
+//        // 1. Utwórz Specification
+//        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
+//                name, company, position, status, minSalary, maxSalary, departmentName);
+//
+//        // 2. Wykonaj zapytanie z Specification
+//        Page<Employee> employeesPage = employeeRepository.findAll(spec, pageable);
+//
+//        System.out.println("Found " + employeesPage.getTotalElements() + " employees");
+//
+//        // 3. Mapuj Employee na EmployeeListView
+//        return employeesPage.map(this::convertToEmployeeListView);
+//    }
+//
+//    private EmployeeListView convertToEmployeeListView(Employee employee) {
+//        return new EmployeeListView() {
+//            @Override
+//            public String getName() {
+//                return employee.getName();
+//            }
+//
+//            @Override
+//            public String getEmail() {
+//                return employee.getEmail();
+//            }
+//
+//            @Override
+//            public String getCompany() {
+//                return employee.getCompany();
+//            }
+//
+//            @Override
+//            public String getPosition() {
+//                return employee.getPosition() != null ? employee.getPosition().name() : null;
+//            }
+//
+//            @Override
+//            public Double getSalary() {
+//                return employee.getSalary();
+//            }
+//
+//            @Override
+//            public EmploymentStatus getStatus() {
+//                return employee.getStatus();
+//            }
+//
+//            @Override
+//            public String getDepartmentName() {
+//                return employee.getDepartment() != null ?
+//                        employee.getDepartment().getName() : "Brak departamentu";
+//            }
+//        };
+//    }
+
 
     public Page<EmployeeListView> searchEmployeesAdvanced(
             String name, String company, Position position, EmploymentStatus status,
             Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
 
-        System.out.println("=== SERVICE: Using Specifications ===");
-        System.out.println("Parameters received:");
-        System.out.println("  name: '" + name + "'");
-        System.out.println("  company: '" + company + "'");
-        System.out.println("  position: " + position);
-        System.out.println("  departmentName: '" + departmentName + "'");
-        System.out.println("  status: '" + status + "'");
-
-
-        // Naprawienie parametrów
-        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
-            departmentName = null;
-        }
-
-        // 1. Utwórz Specification
         Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
-                name, company, position, status, minSalary, maxSalary, departmentName);
+                name, company, position, status, minSalary, maxSalary, departmentName
+        );
 
-        // 2. Wykonaj zapytanie z Specification
-        Page<Employee> employeesPage = employeeRepository.findAll(spec, pageable);
+        Page<Employee> page = employeeRepository.findAll(spec, pageable);
 
-        System.out.println("Found " + employeesPage.getTotalElements() + " employees");
-
-        // 3. Mapuj Employee na EmployeeListView
-        return employeesPage.map(this::convertToEmployeeListView);
+        Page<EmployeeListView> employeesPage = page.map(employee -> new EmployeeListView() {
+            @Override public String getName() { return employee.getName(); }
+            @Override public String getEmail() { return employee.getEmail(); }
+            @Override public String getCompany() { return employee.getCompany(); }
+            @Override public String getPosition() { return employee.getPosition() != null ? employee.getPosition().name() : null; }
+            @Override public Double getSalary() { return employee.getSalary(); }
+            @Override public EmploymentStatus getStatus() { return employee.getStatus(); }
+            @Override public String getDepartmentName() { return employee.getDepartment() != null ? employee.getDepartment().getName() : "Brak departamentu"; }
+        });
+        return employeesPage;
     }
 
-    private EmployeeListView convertToEmployeeListView(Employee employee) {
-        return new EmployeeListView() {
-            @Override
-            public String getName() {
-                return employee.getName();
-            }
 
-            @Override
-            public String getEmail() {
-                return employee.getEmail();
-            }
 
-            @Override
-            public String getCompany() {
-                return employee.getCompany();
-            }
 
-            @Override
-            public String getPosition() {
-                return employee.getPosition() != null ? employee.getPosition().name() : null;
-            }
 
-            @Override
-            public Double getSalary() {
-                return employee.getSalary();
-            }
-
-            @Override
-            public EmploymentStatus getStatus() {
-                return employee.getStatus();
-            }
-
-            @Override
-            public String getDepartmentName() {
-                return employee.getDepartment() != null ?
-                        employee.getDepartment().getName() : "Brak departamentu";
-            }
-        };
-    }
 
 
 //    public Page<EmployeeListView> searchEmployeesAdvanced(
 //            String name, String company, Position position, EmploymentStatus status,
 //            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
 //
+//        System.out.println("=== SERVICE: Using Specifications with Projection ===");
+//
+//        // Naprawienie parametrów
+//        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
+//            departmentName = null;
+//        }
+//
 //        return employeeRepository.findEmployeesWithFiltersProjection(
 //                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
 //    }
 
-
-
-
+//
+//    public Page<EmployeeListView> searchEmployeesAdvanced(
+//            String name, String company, Position position, EmploymentStatus status,
+//            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+//
+//        System.out.println("=== SERVICE: searchEmployeesAdvanced ===");
+//        System.out.println("Specification params:");
+//        System.out.println("  name: '" + name + "'");
+//        System.out.println("  company: '" + company + "'");
+//
+//        // Utwórz Specification
+//        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
+//                name, company, position, status, minSalary, maxSalary, departmentName);
+//
+//        // ✅ SPRAWDŹ CZY SPEC JEST UTWORZONE
+//        System.out.println("Spec created: " + (spec != null));
+//
+//        // ✅ UŻYJ PROJEKCJI Z REPOSITORY
+//        return employeeRepository.findAllProjection(spec, pageable);
+//    }
 
 
 }

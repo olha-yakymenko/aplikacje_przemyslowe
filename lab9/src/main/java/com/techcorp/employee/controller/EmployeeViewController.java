@@ -121,6 +121,8 @@ public class EmployeeViewController {
         return "employees/list";
     }
 
+
+
     // ✅ METODA POMOCNICZA do budowania query string dla redirectów
     private String buildRedirectQueryString(String name, String company, Position position,
                                             EmploymentStatus status, Double minSalary, Double maxSalary,
