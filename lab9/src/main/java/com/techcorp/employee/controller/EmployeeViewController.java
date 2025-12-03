@@ -45,82 +45,212 @@ public class EmployeeViewController {
     }
 
 
-    @GetMapping
-    public String listEmployees(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String company,
-            @RequestParam(required = false) Position position,
-            @RequestParam(required = false) EmploymentStatus status,
-            @RequestParam(required = false) Double minSalary,
-            @RequestParam(required = false) Double maxSalary,
-            @RequestParam(required = false) String departmentName,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "2") int size,
-            @RequestParam(defaultValue = "name") String sort,
-            Model model) {
+//    @GetMapping
+//    public String listEmployees(
+//            @RequestParam(required = false) String name,
+//            @RequestParam(required = false) String company,
+//            @RequestParam(required = false) Position position,
+//            @RequestParam(required = false) EmploymentStatus status,
+//            @RequestParam(required = false) Double minSalary,
+//            @RequestParam(required = false) Double maxSalary,
+//            @RequestParam(required = false) String departmentName,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "2") int size,
+//            @RequestParam(defaultValue = "name") String sort,
+//            Model model) {
+//
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+//
+//        System.out.println("=== DEBUG: listEmployees ===");
+//        System.out.println("name: " + name);
+//        System.out.println("company: " + company);
+//        System.out.println("position: " + position);
+//        System.out.println("status: " + status);
+//
+////        Page<EmployeeListView> employeesPage = employeeService.searchEmployeesAdvanced(
+////                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
+//
+//
+//        Page<EmployeeListView> employeesPage;
+//        if (name == null && company == null && position == null && status == null &&
+//                minSalary == null && maxSalary == null && departmentName == null) {
+//            // Kiedy brak filtrów, użyj prostej metody
+//            employeesPage = employeeService.getAllEmployeesProjection(pageable);
+//        } else {
+//            // Kiedy są filtry, użyj zaawansowanej z projekcją
+//            employeesPage = employeeService.searchEmployeesAdvanced(
+//                    name, company, position, status, minSalary, maxSalary, departmentName, pageable);
+//        }
+//
+//
+//        String baseRedirectQuery = buildRedirectQueryString(
+//                name, company, position, status, minSalary, maxSalary, departmentName, size, sort);
+//
+//        if (page >= employeesPage.getTotalPages() && employeesPage.getTotalPages() > 0) {
+//            // Przekieruj na ostatnią istniejącą stronę
+//            return "redirect:/employees?page=" + (employeesPage.getTotalPages() - 1) + baseRedirectQuery;
+//        }
+//
+//        if (page < 0) {
+//            return "redirect:/employees?page=0" + baseRedirectQuery;
+//        }
+//
+//        model.addAttribute("employees", employeesPage.getContent());
+//        model.addAttribute("currentPage", page);
+//        model.addAttribute("totalPages", employeesPage.getTotalPages());
+//        model.addAttribute("totalItems", employeesPage.getTotalElements());
+//        model.addAttribute("pageSize", size);
+//        model.addAttribute("sortField", sort);
+//        model.addAttribute("pageTitle", "Lista Pracowników");
+//
+//        EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
+//        model.addAttribute("positions", formData.getPositions());
+//        model.addAttribute("statuses", formData.getStatuses());
+//
+//        List<String> companies = employeeService.getAllUniqueCompanies();
+//        model.addAttribute("companies", companies);
+//
+//        List<String> departments = departmentService.getAllDepartmentNames();
+//        model.addAttribute("departments", departments);
+//
+//        model.addAttribute("searchName", name);
+//        model.addAttribute("searchCompany", company);
+//        model.addAttribute("searchPosition", position);
+//        model.addAttribute("searchStatus", status);
+//        model.addAttribute("searchMinSalary", minSalary);
+//        model.addAttribute("searchMaxSalary", maxSalary);
+//        model.addAttribute("searchDepartmentName", departmentName);
+//
+//        System.out.println("=== DEBUG END ===");
+//        return "employees/list";
+//    }
 
+
+
+@GetMapping
+public String listEmployees(
+        @RequestParam(required = false) String name,
+        @RequestParam(required = false) String company,
+        @RequestParam(required = false) Position position,
+        @RequestParam(required = false) EmploymentStatus status,
+        @RequestParam(required = false) Double minSalary,
+        @RequestParam(required = false) Double maxSalary,
+        @RequestParam(required = false) String departmentName,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "2") int size,
+        @RequestParam(defaultValue = "name") String sort,
+        Model model,
+        RedirectAttributes redirectAttributes) {  // ✅ Dodaj RedirectAttributes
+
+    try {
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
 
-        // DEBUG: Wyświetl parametry
-        System.out.println("=== DEBUG: listEmployees ===");
-        System.out.println("name: " + name);
-        System.out.println("company: " + company);
-        System.out.println("position: " + position);
-        System.out.println("status: " + status);
-
-        // ✅ Użyj metody z zaawansowanym wyszukiwaniem
+        // ✅ 1. JEDNO wywołanie serwisu - serwis sam decyduje o optymalizacji
         Page<EmployeeListView> employeesPage = employeeService.searchEmployeesAdvanced(
                 name, company, position, status, minSalary, maxSalary, departmentName, pageable);
 
-        // ✅ UTWÓRZ BAZOWY QUERY STRING DLA REDIRECTÓW
-        String baseRedirectQuery = buildRedirectQueryString(
-                name, company, position, status, minSalary, maxSalary, departmentName, size, sort);
-
-        // ✅ SPRAWDŹ CZY STRONA ISTNIEJE
+        // ✅ 2. Walidacja paginacji (można przenieść do osobnej metody)
         if (page >= employeesPage.getTotalPages() && employeesPage.getTotalPages() > 0) {
-            // Przekieruj na ostatnią istniejącą stronę
-            return "redirect:/employees?page=" + (employeesPage.getTotalPages() - 1) + baseRedirectQuery;
+            String redirectUrl = buildPaginationRedirectUrl(
+                    employeesPage.getTotalPages() - 1, name, company, position, status,
+                    minSalary, maxSalary, departmentName, size, sort);
+            return "redirect:" + redirectUrl;
         }
 
-        // ✅ SPRAWDŹ CZY STRONA JEST UJEMNA
         if (page < 0) {
-            return "redirect:/employees?page=0" + baseRedirectQuery;
+            String redirectUrl = buildPaginationRedirectUrl(0, name, company, position, status,
+                    minSalary, maxSalary, departmentName, size, sort);
+            return "redirect:" + redirectUrl;
         }
 
+        // ✅ 3. Wypełnianie modelu (można przenieść do osobnej metody)
+        populateModel(model, employeesPage, page, size, sort, name, company, position,
+                status, minSalary, maxSalary, departmentName);
+
+        return "employees/list";
+
+    } catch (Exception e) {
+        // ✅ 4. Obsługa błędów
+        redirectAttributes.addFlashAttribute("error",
+                "Błąd podczas ładowania listy pracowników: " + e.getMessage());
+        return "redirect:/employees";
+    }
+}
+
+
+    // ✅ 1. Metoda do budowania URL dla przekierowań paginacji
+    private String buildPaginationRedirectUrl(int targetPage,
+                                              String name, String company, Position position,
+                                              EmploymentStatus status, Double minSalary,
+                                              Double maxSalary, String departmentName,
+                                              int size, String sort) {
+
+        StringBuilder url = new StringBuilder("/employees?page=").append(targetPage);
+
+        if (size != 2) url.append("&size=").append(size);
+        if (!"name".equals(sort)) url.append("&sort=").append(sort);
+
+        if (name != null && !name.trim().isEmpty()) {
+            url.append("&name=").append(URLEncoder.encode(name.trim(), StandardCharsets.UTF_8));
+        }
+        if (company != null && !company.trim().isEmpty()) {
+            url.append("&company=").append(URLEncoder.encode(company.trim(), StandardCharsets.UTF_8));
+        }
+        if (position != null) {
+            url.append("&position=").append(position);
+        }
+        if (status != null) {
+            url.append("&status=").append(status);
+        }
+        if (minSalary != null) {
+            url.append("&minSalary=").append(minSalary);
+        }
+        if (maxSalary != null) {
+            url.append("&maxSalary=").append(maxSalary);
+        }
+        if (departmentName != null && !departmentName.trim().isEmpty() &&
+                !"null".equalsIgnoreCase(departmentName)) {
+            url.append("&departmentName=")
+                    .append(URLEncoder.encode(departmentName.trim(), StandardCharsets.UTF_8));
+        }
+
+        return url.toString();
+    }
+
+    // ✅ 2. Metoda do wypełniania modelu (separacja odpowiedzialności)
+    private void populateModel(Model model, Page<EmployeeListView> employeesPage,
+                               int currentPage, int pageSize, String sortField,
+                               String searchName, String searchCompany, Position searchPosition,
+                               EmploymentStatus searchStatus, Double searchMinSalary,
+                               Double searchMaxSalary, String searchDepartmentName) {
+
+        // Podstawowe atrybuty paginacji
         model.addAttribute("employees", employeesPage.getContent());
-        model.addAttribute("currentPage", page);
+        model.addAttribute("currentPage", currentPage);
         model.addAttribute("totalPages", employeesPage.getTotalPages());
         model.addAttribute("totalItems", employeesPage.getTotalElements());
-        model.addAttribute("pageSize", size);
-        model.addAttribute("sortField", sort);
+        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("sortField", sortField);
         model.addAttribute("pageTitle", "Lista Pracowników");
 
-        // ✅ Dodaj dane dla formularza wyszukiwania
+        // Wartości wyszukiwania (dla formularza)
+        model.addAttribute("searchName", searchName);
+        model.addAttribute("searchCompany", searchCompany);
+        model.addAttribute("searchPosition", searchPosition);
+        model.addAttribute("searchStatus", searchStatus);
+        model.addAttribute("searchMinSalary", searchMinSalary);
+        model.addAttribute("searchMaxSalary", searchMaxSalary);
+        model.addAttribute("searchDepartmentName", searchDepartmentName);
+
+        // Dane dla selectów w formularzu
         EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
         model.addAttribute("positions", formData.getPositions());
         model.addAttribute("statuses", formData.getStatuses());
 
-        // ✅ Lista firm z serwisu (SQL)
-        List<String> companies = employeeService.getAllUniqueCompanies();
-        model.addAttribute("companies", companies);
-
-        // ✅ Lista departamentów
-        List<String> departments = departmentService.getAllDepartmentNames();
-        model.addAttribute("departments", departments);
-
-        // ✅ Zapisz wartości wyszukiwania dla formularza
-        model.addAttribute("searchName", name);
-        model.addAttribute("searchCompany", company);
-        model.addAttribute("searchPosition", position);
-        model.addAttribute("searchStatus", status);
-        model.addAttribute("searchMinSalary", minSalary);
-        model.addAttribute("searchMaxSalary", maxSalary);
-        model.addAttribute("searchDepartmentName", departmentName);
-
-        System.out.println("=== DEBUG END ===");
-        return "employees/list";
+        // Listy firm i departamentów
+        model.addAttribute("companies", employeeService.getAllUniqueCompanies());
+        model.addAttribute("departments", departmentService.getAllDepartmentNames());
     }
-
 
 
     // ✅ METODA POMOCNICZA do budowania query string dla redirectów

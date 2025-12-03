@@ -90,7 +90,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
             "FROM Employee e GROUP BY e.company")
     List<Object[]> getCompanyStatistics();
 
-    // ✅ DODANE: Statystyki z CompanyStatisticsDTO
     @Query("SELECT NEW com.techcorp.employee.dto.CompanyStatisticsDTO(" +
             "e.company, " +
             "COUNT(e), " +
@@ -158,8 +157,58 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
 
 
-//    Page<EmployeeListView> findAll(@Nullable Specification<Employee> spec, Pageable pageable, Class<EmployeeListView> type);
+    // ✅ DODAJ w EmployeeRepository.java
+    @Query("SELECT e.name as name, e.email as email, e.company as company, " +
+            "e.position as position, e.salary as salary, e.status as status, " +
+            "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
+            "FROM Employee e LEFT JOIN e.department")
+    Page<EmployeeListView> findAllProjection(Pageable pageable);
 
 
-//    Page<EmployeeListView> findAllProjection(Specification<Employee> spec, Pageable pageable);
+    @Query("""
+        SELECT 
+            e.name as name, 
+            e.email as email, 
+            e.company as company,
+            e.position as position, 
+            e.salary as salary, 
+            e.status as status,
+            CASE 
+                WHEN e.department IS NULL THEN 'Brak departamentu'
+                ELSE e.department.name 
+            END as departmentName
+        FROM Employee e 
+        LEFT JOIN e.department d
+        WHERE 
+            (:name IS NULL OR :name = '' OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%')))
+            AND (:company IS NULL OR :company = '' OR LOWER(e.company) = LOWER(:company))
+            AND (:position IS NULL OR e.position = :position)
+            AND (:status IS NULL OR e.status = :status)
+            AND (:minSalary IS NULL OR e.salary >= :minSalary)
+            AND (:maxSalary IS NULL OR e.salary <= :maxSalary)
+            AND (
+                :departmentName IS NULL 
+                OR :departmentName = ''
+                OR (
+                    LOWER(:departmentName) = 'brak departamentu' 
+                    AND e.department IS NULL
+                )
+                OR (
+                    LOWER(:departmentName) != 'brak departamentu' 
+                    AND LOWER(e.department.name) = LOWER(:departmentName)
+                )
+            )
+        ORDER BY e.name ASC
+    """)
+    Page<EmployeeListView> findWithFiltersProjection(
+            @Param("name") String name,
+            @Param("company") String company,
+            @Param("position") Position position,
+            @Param("status") EmploymentStatus status,
+            @Param("minSalary") Double minSalary,
+            @Param("maxSalary") Double maxSalary,
+            @Param("departmentName") String departmentName,
+            Pageable pageable);
+
+
 }

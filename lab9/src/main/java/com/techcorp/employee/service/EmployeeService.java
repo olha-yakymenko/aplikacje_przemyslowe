@@ -677,7 +677,7 @@ public class EmployeeService {
 
         return employeeRepository.findDistinctCompanies();
     }
-//
+
 //    public Page<EmployeeListView> searchEmployeesAdvanced(
 //            String name, String company, Position position, EmploymentStatus status,
 //            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
@@ -750,29 +750,78 @@ public class EmployeeService {
 //    }
 
 
+    //uzywa specification i projection ale pobiera z danych wszystkie elementy i filtruje
+//
+//    public Page<EmployeeListView> searchEmployeesAdvanced(
+//            String name, String company, Position position, EmploymentStatus status,
+//            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+//
+//        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
+//                name, company, position, status, minSalary, maxSalary, departmentName
+//        );
+//
+//        Page<Employee> page = employeeRepository.findAll(spec, pageable);
+//
+//        Page<EmployeeListView> employeesPage = page.map(employee -> new EmployeeListView() {
+//            @Override public String getName() { return employee.getName(); }
+//            @Override public String getEmail() { return employee.getEmail(); }
+//            @Override public String getCompany() { return employee.getCompany(); }
+//            @Override public String getPosition() { return employee.getPosition() != null ? employee.getPosition().name() : null; }
+//            @Override public Double getSalary() { return employee.getSalary(); }
+//            @Override public EmploymentStatus getStatus() { return employee.getStatus(); }
+//            @Override public String getDepartmentName() { return employee.getDepartment() != null ? employee.getDepartment().getName() : "Brak departamentu"; }
+//        });
+//        return employeesPage;
+//    }
+
+
+
     public Page<EmployeeListView> searchEmployeesAdvanced(
             String name, String company, Position position, EmploymentStatus status,
             Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
 
-        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
-                name, company, position, status, minSalary, maxSalary, departmentName
-        );
+        if (areAllFiltersEmpty(name, company, position, status,
+                minSalary, maxSalary, departmentName)) {
+            return employeeRepository.findAllProjection(pageable);
+        } else {
+            return employeeRepository.findWithFiltersProjection(
+                    name, company, position, status, minSalary, maxSalary,
+                    departmentName, pageable);
+        }
+    }
 
-        Page<Employee> page = employeeRepository.findAll(spec, pageable);
-
-        Page<EmployeeListView> employeesPage = page.map(employee -> new EmployeeListView() {
-            @Override public String getName() { return employee.getName(); }
-            @Override public String getEmail() { return employee.getEmail(); }
-            @Override public String getCompany() { return employee.getCompany(); }
-            @Override public String getPosition() { return employee.getPosition() != null ? employee.getPosition().name() : null; }
-            @Override public Double getSalary() { return employee.getSalary(); }
-            @Override public EmploymentStatus getStatus() { return employee.getStatus(); }
-            @Override public String getDepartmentName() { return employee.getDepartment() != null ? employee.getDepartment().getName() : "Brak departamentu"; }
-        });
-        return employeesPage;
+    private boolean areAllFiltersEmpty(String name, String company, Position position,
+                                       EmploymentStatus status, Double minSalary,
+                                       Double maxSalary, String departmentName) {
+        return (name == null || name.trim().isEmpty()) &&
+                (company == null || company.trim().isEmpty()) &&
+                position == null &&
+                status == null &&
+                minSalary == null &&
+                maxSalary == null &&
+                (departmentName == null || departmentName.trim().isEmpty() ||
+                        "null".equalsIgnoreCase(departmentName));
     }
 
 
+    //nie uzywa specification
+//    public Page<EmployeeListView> searchEmployeesAdvanced(
+//            String name, String company, Position position, EmploymentStatus status,
+//            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+//
+//        return employeeRepository.findWithFiltersProjection(
+//                name, company, position, status, minSalary, maxSalary, departmentName, pageable
+//        );
+//    }
+
+
+
+
+
+
+    public Page<EmployeeListView> getAllEmployeesProjection(Pageable pageable) {
+        return employeeRepository.findAllProjection(pageable);
+    }
 
 
 
@@ -807,10 +856,8 @@ public class EmployeeService {
 //        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
 //                name, company, position, status, minSalary, maxSalary, departmentName);
 //
-//        // ✅ SPRAWDŹ CZY SPEC JEST UTWORZONE
 //        System.out.println("Spec created: " + (spec != null));
 //
-//        // ✅ UŻYJ PROJEKCJI Z REPOSITORY
 //        return employeeRepository.findAllProjection(spec, pageable);
 //    }
 
