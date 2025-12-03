@@ -284,7 +284,6 @@ public class EmployeeSpecification {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary));
             }
 
-            // ✅ Department (LEFT JOIN z możliwością null)
             if (departmentName != null && !departmentName.trim().isEmpty()) {
                 if (departmentName.equalsIgnoreCase("Brak departamentu")) {
                     predicates.add(criteriaBuilder.isNull(root.get("department")));

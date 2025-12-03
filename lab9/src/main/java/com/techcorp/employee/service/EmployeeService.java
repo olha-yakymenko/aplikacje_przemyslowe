@@ -373,22 +373,7 @@ public class EmployeeService {
         return employeeRepository.findByDepartmentId(departmentId);
     }
 
-//    @Transactional
-//    public boolean assignEmployeeToDepartment(String employeeEmail, Long departmentId) {
-//        Optional<Employee> employeeOpt = employeeRepository.findByEmail(employeeEmail);
-//        Optional<Department> departmentOpt = departmentRepository.findById(departmentId);
-//
-//        if (employeeOpt.isPresent() && departmentOpt.isPresent()) {
-//            Employee employee = employeeOpt.get();
-//            employee.setDepartment(departmentOpt.get());
-//            employeeRepository.save(employee);
-//            return true;
-//        }
-//        return false;
-//    }
 
-
-    // W EmployeeService dodaj więcej informacji diagnostycznych:
     public boolean assignEmployeeToDepartment(String employeeEmail, Long departmentId) {
         System.out.println("=== DEBUG: assignEmployeeToDepartment ===");
         System.out.println("Employee email: '" + employeeEmail + "'");
@@ -457,52 +442,11 @@ public class EmployeeService {
         return false;
     }
 
-    // ===== OPERACJE ANALITYCZNE =====
 
-    public List<Employee> sortEmployeesByName() {
-        return employeeRepository.findAll().stream()
-                .sorted(Comparator.comparing(Employee::getName))
-                .collect(Collectors.toList());
-    }
-
-    public Map<Position, List<Employee>> groupEmployeesByPosition() {
-        return employeeRepository.findAll().stream()
-                .collect(Collectors.groupingBy(
-                        Employee::getPosition,
-                        TreeMap::new,
-                        Collectors.toList()
-                ));
-    }
-
-    public Map<Position, Long> countEmployeesByPosition() {
-        return employeeRepository.findAll().stream()
-                .collect(Collectors.groupingBy(
-                        Employee::getPosition,
-                        TreeMap::new,
-                        Collectors.counting()
-                ));
-    }
-
-    public Map<String, List<Employee>> groupEmployeesByCompany() {
-        return employeeRepository.findAll().stream()
-                .collect(Collectors.groupingBy(
-                        Employee::getCompany,
-                        TreeMap::new,
-                        Collectors.toList()
-                ));
-    }
-
-    public List<Employee> validateSalaryConsistency(double baseSalary) {
-        return employeeRepository.findAll().stream()
-                .filter(employee -> employee.getSalary() < baseSalary)
-                .collect(Collectors.toList());
-    }
 
     public boolean isEmpty() {
         return employeeRepository.findAll().isEmpty();
     }
-
-    // ===== ZARZĄDZANIE ZDJĘCIAMI PRACOWNIKÓW =====
 
     @Transactional
     public ResponseEntity<String> uploadEmployeePhoto(String email, MultipartFile file) {
@@ -610,19 +554,7 @@ public class EmployeeService {
         }
     }
 
-//    @Transactional
-//    public Employee updateEmployee(Employee updatedEmployee) {
-//        Employee existing = employeeRepository.findByEmail(updatedEmployee.getEmail())
-//                .orElseThrow(() -> new EmployeeNotFoundException(
-//                        "Employee not found with email: " + updatedEmployee.getEmail()));
-//
-//        // Zachowaj ID i inne niezmienne pola
-//        updatedEmployee.setId(existing.getId());
-//        return employeeRepository.save(updatedEmployee);
-//    }
 
-
-    // Dla tworzenia NOWEGO pracownika
     public Employee createEmployee(Employee employee) throws InvalidDataException {
         validateEmployee(employee);
 
@@ -636,58 +568,13 @@ public class EmployeeService {
     }
 
 
-//    @Transactional
-//    public Employee updateEmployee(Employee updatedEmployee) throws InvalidDataException {
-//        System.out.println("=== DEBUG: updateEmployee ===");
-//        System.out.println("Employee ID: " + updatedEmployee.getId());
-//        System.out.println("Employee email: " + updatedEmployee.getEmail());
-//
-//        validateEmployee(updatedEmployee);
-//
-//        // Sprawdź czy pracownik istnieje
-//        Optional<Employee> existingOpt = employeeRepository.findById(updatedEmployee.getId());
-//
-//        if (existingOpt.isEmpty()) {
-//            System.out.println("ERROR: Employee not found with ID: " + updatedEmployee.getId());
-//            throw new IllegalArgumentException("Cannot update non-existing employee");
-//        }
-//
-//        Employee existing = existingOpt.get();
-//        System.out.println("Found existing employee: " + existing.getName());
-//        System.out.println("Existing department: " +
-//                (existing.getDepartment() != null ? existing.getDepartment().getName() : "null"));
-//
-//        // Sprawdź email
-//        if (!existing.getEmail().equalsIgnoreCase(updatedEmployee.getEmail()) &&
-//                employeeRepository.existsByEmail(updatedEmployee.getEmail())) {
-//            throw new DuplicateEmailException(
-//                    "Another employee with email " + updatedEmployee.getEmail() + " already exists");
-//        }
-//
-//        // Aktualizuj
-//        existing.setName(updatedEmployee.getName());
-//        existing.setEmail(updatedEmployee.getEmail());
-//        existing.setCompany(updatedEmployee.getCompany());
-//        existing.setPosition(updatedEmployee.getPosition());
-//        existing.setSalary(updatedEmployee.getSalary());
-//        existing.setStatus(updatedEmployee.getStatus());
-//
-//        System.out.println("=== DEBUG END ===");
-//
-//        return employeeRepository.save(existing);
-//    }
-
-
-
-
-    @Transactional
+ @Transactional
     public Employee updateEmployee(Employee updatedEmployee) throws InvalidDataException {
         System.out.println("=== DEBUG: updateEmployee ===");
         System.out.println("Employee ID: " + updatedEmployee.getId());
         System.out.println("Employee email: " + updatedEmployee.getEmail());
 
         if (updatedEmployee.getId() == null) {
-            // Jeśli ID jest null, próbuj znaleźć po emailu
             System.out.println("ID is null, trying to find by email...");
             Optional<Employee> existingByEmail = employeeRepository.findByEmail(updatedEmployee.getEmail());
             if (existingByEmail.isPresent()) {
@@ -700,7 +587,6 @@ public class EmployeeService {
 
         validateEmployee(updatedEmployee);
 
-        // Sprawdź czy pracownik istnieje
         Optional<Employee> existingOpt = employeeRepository.findById(updatedEmployee.getId());
 
         if (existingOpt.isEmpty()) {
@@ -733,33 +619,7 @@ public class EmployeeService {
         return employeeRepository.save(existing);
     }
 
-    // Dla aktualizacji ISTNIEJĄCEGO pracownika
-//    public Employee updateEmployee(Employee employee) throws InvalidDataException {
-//        validateEmployee(employee);
-//
-//        // Sprawdź czy pracownik istnieje
-//        if (employee.getId() == null || !employeeRepository.existsById(employee.getId())) {
-//            throw new IllegalArgumentException("Cannot update non-existing employee");
-//        }
-//
-//        // Sprawdź czy email się nie zmienił na istniejący inny email
-//        Optional<Employee> existingEmployee = employeeRepository.findById(employee.getId());
-//        if (existingEmployee.isPresent()) {
-//            String currentEmail = existingEmployee.get().getEmail();
-//            String newEmail = employee.getEmail();
-//
-//            if (!currentEmail.equalsIgnoreCase(newEmail) &&
-//                    employeeRepository.existsByEmail(newEmail)) {
-//                throw new DuplicateEmailException(
-//                        "Another employee with email " + newEmail + " already exists"
-//                );
-//            }
-//        }
-//
-//        return employeeRepository.save(employee);
-//    }
 
-    // Dla kompatybilności - zostaw starą metodę ale popraw logikę
     public Employee saveEmployee(Employee employee) throws InvalidDataException {
         if (employee.getId() == null) {
             return createEmployee(employee);
@@ -777,7 +637,6 @@ public class EmployeeService {
         return false;
     }
 
-    // ===== WALIDACJA =====
 
     private void validateEmployee(Employee employee) throws InvalidDataException {
         if (employee == null) {
@@ -813,86 +672,42 @@ public class EmployeeService {
         return lastDotIndex > 0 ? fileName.substring(lastDotIndex) : ".jpg";
     }
 
-    public Double findHighestSalaryByCompany(String company) {
-        validateCompany(company);
-        return employeeRepository.findMaxSalaryByCompany(company);
-    }
 
-
-    // ✅ DODAJ TE METODY DO EmployeeService.java:
-
-    /**
-     * Zwraca unikalne nazwy firm (optymalizacja przez DISTINCT w SQL)
-     */
     public List<String> getAllUniqueCompanies() {
-        // DODAJ TĘ METODĘ W EmployeeRepository:
-        // @Query("SELECT DISTINCT e.company FROM Employee e ORDER BY e.company")
-        // List<String> findDistinctCompanies();
+
         return employeeRepository.findDistinctCompanies();
     }
 
-    /**
-     * Zwraca unikalne nazwy departamentów (optymalizacja przez SQL)
-     */
-    public List<String> getAllDepartmentNames() {
-        // DODAJ TĘ METODĘ W EmployeeRepository LUB DepartmentRepository
-        return departmentRepository.findAllDepartmentNames();
-    }
-
-    /**
-     * Zwraca listę stanowisk (enum, ale można pobrać z bazy)
-     */
-    public List<Position> getAllPositions() {
-        // Jeśli chcesz pobrać z bazy używane stanowiska:
-        return employeeRepository.findDistinctPositions();
-
-    }
-
-    // ✅ DODAJ TĘ METODĘ DO EmployeeService.java:
-
-    public Page<EmployeeListView> searchEmployeesWithFilters(
-            String name, String company, Position position, EmploymentStatus status,
-            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
-
-        // ✅ Wersja 1: Użyj istniejącej metody z repozytorium (jeśli masz)
-        return employeeRepository.findEmployeesWithFiltersProjection(
-                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
-
-    }
-
-
-
-    // ✅ W EmployeeService.java ZASTĄP metodę searchEmployeesAdvanced:
-    public Page<EmployeeListView> searchEmployeesAdvanced(
-            String name, String company, Position position, EmploymentStatus status,
-            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
-
-        System.out.println("=== SERVICE: Using Specifications ===");
-        System.out.println("Parameters received:");
-        System.out.println("  name: '" + name + "'");
-        System.out.println("  company: '" + company + "'");
-        System.out.println("  position: " + position);
-        System.out.println("  departmentName: '" + departmentName + "'");
-        System.out.println("  status: '" + status + "'");
-
-
-        // Naprawienie parametrów
-        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
-            departmentName = null;
-        }
-
-        // 1. Utwórz Specification
-        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
-                name, company, position, status, minSalary, maxSalary, departmentName);
-
-        // 2. Wykonaj zapytanie z Specification
-        Page<Employee> employeesPage = employeeRepository.findAll(spec, pageable);
-
-        System.out.println("Found " + employeesPage.getTotalElements() + " employees");
-
-        // 3. Mapuj Employee na EmployeeListView
-        return employeesPage.map(this::convertToEmployeeListView);
-    }
+//    public Page<EmployeeListView> searchEmployeesAdvanced(
+//            String name, String company, Position position, EmploymentStatus status,
+//            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+//
+//        System.out.println("=== SERVICE: Using Specifications ===");
+//        System.out.println("Parameters received:");
+//        System.out.println("  name: '" + name + "'");
+//        System.out.println("  company: '" + company + "'");
+//        System.out.println("  position: " + position);
+//        System.out.println("  departmentName: '" + departmentName + "'");
+//        System.out.println("  status: '" + status + "'");
+//
+//
+//        // Naprawienie parametrów
+//        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
+//            departmentName = null;
+//        }
+//
+//        // 1. Utwórz Specification
+//        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
+//                name, company, position, status, minSalary, maxSalary, departmentName);
+//
+//        // 2. Wykonaj zapytanie z Specification
+//        Page<Employee> employeesPage = employeeRepository.findAll(spec, pageable);
+//
+//        System.out.println("Found " + employeesPage.getTotalElements() + " employees");
+//
+//        // 3. Mapuj Employee na EmployeeListView
+//        return employeesPage.map(this::convertToEmployeeListView);
+//    }
 
     // ✅ Dodaj metodę konwertującą:
     private EmployeeListView convertToEmployeeListView(Employee employee) {
@@ -934,11 +749,16 @@ public class EmployeeService {
             }
         };
     }
-    /**
-     * Proste wyszukiwanie po firmie z projekcją
-     */
-    public Page<EmployeeListView> searchEmployeesByCompany(String company, Pageable pageable) {
-        validateCompany(company);
-        return employeeRepository.findByCompanyProjection(company, pageable);
+
+
+    public Page<EmployeeListView> searchEmployeesAdvanced(
+            String name, String company, Position position, EmploymentStatus status,
+            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+
+        return employeeRepository.findEmployeesWithFiltersProjection(
+                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
     }
+
+
+
 }

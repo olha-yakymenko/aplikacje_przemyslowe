@@ -173,7 +173,6 @@ public class StatisticsService {
     @Autowired
     private DepartmentRepository departmentRepository;
 
-    // ===== METODY DLA STATISTICSVIEWCONTROLLER =====
 
     public Map<String, Object> getAllStatistics() {
         Map<String, Object> statistics = new HashMap<>();

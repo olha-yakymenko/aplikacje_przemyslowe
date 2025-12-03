@@ -269,9 +269,9 @@ class CompanyStatisticsTest {
 
         // Then
         assertThat(toString).contains("TechCorp");
-        assertThat(toString).contains("Employees: 10");
-        assertThat(toString).contains("Avg Salary: 5000,00");
-        assertThat(toString).contains("Max Salary: 8000,00");
-        assertThat(toString).contains("Highest Paid: Jan Kowalski");
+        assertThat(toString).contains("employees=10");
+        assertThat(toString).contains("avg=5000,00");
+        assertThat(toString).contains("max=8000,00");
+        assertThat(toString).contains("topEarner='Jan Kowalski'");
     }
 }

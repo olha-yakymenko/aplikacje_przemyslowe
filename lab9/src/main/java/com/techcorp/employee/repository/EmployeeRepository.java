@@ -25,7 +25,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     boolean existsByEmail(String email);
 
-    // ✅ DODANE: Usuwanie po email
     void deleteByEmail(String email);
 
     List<Employee> findByCompany(String company);
@@ -34,22 +33,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     List<Employee> findByDepartmentIsNull();
 
-    // ✅ DODANE: Metody dla paginacji
     Page<Employee> findByStatus(EmploymentStatus status, Pageable pageable);
 
     Page<Employee> findByCompany(String company, Pageable pageable);
 
-    // ✅ DODANE: Metoda bez paginacji dla kompatybilności
     List<Employee> findByStatus(EmploymentStatus status);
-
-    // Optymalizacja: Projekcja dla listy pracowników
-//    // W EmployeeRepository ZMIEŃ:
-//    @Query("SELECT e.name as name, e.email as email, e.company as company, " +
-//            "e.position as position, e.salary as salary, e.status as status, " +
-//            "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
-//            "FROM Employee e LEFT JOIN e.department")
-//    // <-- ZMIANA: LEFT JOIN!
-//    Page<EmployeeListView> findAllEmployeesSummary(Pageable pageable);
 
     @Query("SELECT e.name as name, e.email as email, e.company as company, " +
             "e.position as position, e.salary as salary, e.status as status, " +
@@ -57,7 +45,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
             "FROM Employee e LEFT JOIN e.department")
     Page<EmployeeListView> findAllEmployeesSummary(Pageable pageable);
 
-    // ===== OPERACJE MATEMATYCZNE W SQL =====
 
     @Query("SELECT AVG(e.salary) FROM Employee e")
     Double findAverageSalary();
@@ -148,120 +135,17 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
             @Param("maxSalary") Double maxSalary,
             Pageable pageable);
 
-    // ✅ DODANE: Optymalizowane wyszukiwanie z projekcją
-//    @Query("SELECT e.name as name, e.email as email, e.position as position, " +
-//            "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
-//            "FROM Employee e WHERE " +
-//            "(:name IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-//            "(:company IS NULL OR LOWER(e.company) = LOWER(:company)) AND " +
-//            "(:position IS NULL OR e.position = :position) AND " +
-//            "(:minSalary IS NULL OR e.salary >= :minSalary) AND " +
-//            "(:maxSalary IS NULL OR e.salary <= :maxSalary)")
-//    Page<EmployeeListView> findEmployeesWithFiltersOptimized(
-//            @Param("name") String name,
-//            @Param("company") String company,
-//            @Param("position") Position position,
-//            @Param("minSalary") Double minSalary,
-//            @Param("maxSalary") Double maxSalary,
-//            Pageable pageable);
-//
-//    @Query("SELECT e.name as name, e.email as email, e.company as company, " +
-//            "e.position as position, e.salary as salary, e.status as status, " +
-//            "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
-//            "FROM Employee e LEFT JOIN e.department WHERE " +  // <-- DODANO LEFT JOIN i pola!
-//            "(:name IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-//            "(:company IS NULL OR LOWER(e.company) = LOWER(:company)) AND " +
-//            "(:position IS NULL OR e.position = :position) AND " +
-//            "(:minSalary IS NULL OR e.salary >= :minSalary) AND " +
-//            "(:maxSalary IS NULL OR e.salary <= :maxSalary)")
-//    Page<EmployeeListView> findEmployeesWithFiltersOptimized(
-//            @Param("name") String name,
-//            @Param("company") String company,
-//            @Param("position") Position position,
-//            @Param("minSalary") Double minSalary,
-//            @Param("maxSalary") Double maxSalary,
-//            Pageable pageable);
-
-    // Znajdź pracownika z najwyższą pensją
     @Query("SELECT e FROM Employee e WHERE e.salary = (SELECT MAX(e2.salary) FROM Employee e2)")
     List<Employee> findHighestPaidEmployees();
 
     @Query("SELECT e FROM Employee e WHERE e.salary = (SELECT MAX(e2.salary) FROM Employee e2 WHERE e2.company = :company)")
     List<Employee> findHighestPaidEmployeesByCompany(@Param("company") String company);
 
-    // Znajdź pracowników z pensją poniżej średniej
     @Query("SELECT e FROM Employee e WHERE e.salary < (SELECT AVG(e2.salary) FROM Employee e2)")
     List<Employee> findEmployeesBelowAverageSalary();
 
-    // TOP 10 najlepiej zarabiających
     @Query(value = "SELECT e FROM Employee e ORDER BY e.salary DESC")
     List<Employee> findTop10HighestPaidEmployees(Pageable pageable);
-
-    // ✅ DODANE: Metody pomocnicze
-    @Query("SELECT e FROM Employee e WHERE e.department.name = :departmentName")
-    List<Employee> findByDepartmentName(@Param("departmentName") String departmentName);
-
-    @Query("SELECT e FROM Employee e WHERE e.salary BETWEEN :minSalary AND :maxSalary")
-    List<Employee> findBySalaryBetween(@Param("minSalary") Double minSalary, @Param("maxSalary") Double maxSalary);
-
-    long countByCompany(String company);
-
-    // ✅ DODANE: Metody dla dostępnych menedżerów
-    @Query("SELECT e FROM Employee e WHERE e.position IN (com.techcorp.employee.model.Position.MANAGER, " +
-            "com.techcorp.employee.model.Position.VICE_PRESIDENT, com.techcorp.employee.model.Position.PRESIDENT)")
-    List<Employee> findAvailableManagers();
-
-
-//    // ✅ POPRAWIONE ZAPYTANIE:
-//    @Query("""
-//    SELECT e.name as name, e.email as email, e.company as company,
-//           e.position as position, e.salary as salary, e.status as status,
-//           COALESCE(e.department.name, 'Brak departamentu') as departmentName
-//    FROM Employee e LEFT JOIN e.department d
-//    WHERE (:name IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%')))
-//      AND (:company IS NULL OR LOWER(e.company) = LOWER(:company))
-//      AND (:position IS NULL OR e.position = :position)
-//      AND (:status IS NULL OR e.status = :status)
-//      AND (:minSalary IS NULL OR e.salary >= :minSalary)
-//      AND (:maxSalary IS NULL OR e.salary <= :maxSalary)
-//      AND (
-//          :departmentName IS NULL
-//          OR (
-//              :departmentName = 'Brak departamentu' AND e.department IS NULL
-//          )
-//          OR (
-//              e.department IS NOT NULL AND LOWER(e.department.name) = LOWER(:departmentName)
-//          )
-//      )
-//""")
-//    Page<EmployeeListView> findEmployeesWithFiltersProjection(
-//            @Param("name") String name,
-//            @Param("company") String company,
-//            @Param("position") Position position,
-//            @Param("status") EmploymentStatus status,
-//            @Param("minSalary") Double minSalary,
-//            @Param("maxSalary") Double maxSalary,
-//            @Param("departmentName") String departmentName,
-//            Pageable pageable);
-
-//    // ✅ DODANE: Pracownicy według statusu z PROJEKCJĄ
-//    @Query("SELECT e.name as name, e.email as email, e.company as company, " +
-//            "e.position as position, e.salary as salary, e.status as status, " +
-//            "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
-//            "FROM Employee e WHERE e.status = :status")
-//    Page<EmployeeListView> findByStatusProjection(
-//            @Param("status") EmploymentStatus status,
-//            Pageable pageable);
-//
-//    // ✅ POPRAWIONE: Użyj LEFT JOIN zamiast JOIN
-//    @Query("SELECT e.name as name, e.email as email, e.company as company, " +
-//            "e.position as position, e.salary as salary, e.status as status, " +
-//            "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
-//            "FROM Employee e LEFT JOIN e.department WHERE e.company = :company")
-//    // <-- LEFT JOIN!
-//    Page<EmployeeListView> findByCompanyProjection(
-//            @Param("company") String company,
-//            Pageable pageable);
 
 
     @Query("SELECT e.name as name, e.email as email, e.company as company, " +
@@ -272,7 +156,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
             @Param("status") EmploymentStatus status,
             Pageable pageable);
 
-    // ✅ POPRAWIONE: Pracownicy według firmy z PROJEKCJĄ
     @Query("SELECT e.name as name, e.email as email, e.company as company, " +
             "e.position as position, e.salary as salary, e.status as status, " +
             "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
@@ -286,29 +169,20 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     @Query("SELECT DISTINCT e.company FROM Employee e ORDER BY e.company ASC")
     List<String> findDistinctCompanies();
 
-    // Dla getAllPositions() - opcjonalne
-    @Query("SELECT DISTINCT e.position FROM Employee e")
-    List<Position> findDistinctPositions();
 
-    // Dla getAllDepartmentNames() - jeśli chcesz przez Employee
-    @Query("SELECT DISTINCT d.name FROM Employee e LEFT JOIN e.department d WHERE d.name IS NOT NULL ORDER BY d.name")
-    List<String> findDistinctDepartmentNames();
-
-
-
-    @Query("SELECT e.name as name, e.email as email, e.company as company, " +
-            "e.position as position, e.salary as salary, e.status as status, " +
-            "COALESCE(e.department.name, 'Brak departamentu') as departmentName " +
-            "FROM Employee e LEFT JOIN e.department d " +
-            "WHERE (:name IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
-            "AND (:company IS NULL OR LOWER(e.company) = LOWER(:company)) " +
-            "AND (:position IS NULL OR e.position = :position) " +
-            "AND (:status IS NULL OR e.status = :status) " +
-            "AND (:minSalary IS NULL OR e.salary >= :minSalary) " +
-            "AND (:maxSalary IS NULL OR e.salary <= :maxSalary) " +
-            "AND (:departmentName IS NULL " +
-            "     OR (:departmentName = 'Brak departamentu' AND e.department IS NULL) " +
-            "     OR (e.department IS NOT NULL AND LOWER(e.department.name) = LOWER(:departmentName)))")
+@Query("SELECT e.name as name, e.email as email, e.company as company, " +
+        "e.position as position, e.salary as salary, e.status as status, " +
+        "COALESCE(d.name, 'Brak departamentu') as departmentName " +  // Użyj alias 'd'
+        "FROM Employee e LEFT JOIN e.department d " +  // Masz już alias 'd'
+        "WHERE (:name IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))) " +
+        "AND (:company IS NULL OR LOWER(e.company) LIKE LOWER(CONCAT('%', :company, '%'))) " +  // ZMIANA
+        "AND (:position IS NULL OR e.position = :position) " +
+        "AND (:status IS NULL OR e.status = :status) " +
+        "AND (:minSalary IS NULL OR e.salary >= :minSalary) " +
+        "AND (:maxSalary IS NULL OR e.salary <= :maxSalary) " +
+        "AND (:departmentName IS NULL " +
+        "     OR (:departmentName = 'Brak departamentu' AND d IS NULL) " +  // Użyj 'd' zamiast 'e.department'
+        "     OR (d IS NOT NULL AND LOWER(d.name) = LOWER(:departmentName)))")
     Page<EmployeeListView> findEmployeesWithFiltersProjection(
             @Param("name") String name,
             @Param("company") String company,
