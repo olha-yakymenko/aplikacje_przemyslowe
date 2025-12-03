@@ -7,8 +7,8 @@ public interface EmployeeListView {
     String getEmail();
     String getPosition();
     String getCompany();
-    Double getSalary(); // DODAJ
-    EmploymentStatus getStatus();
+//    Double getSalary();
+//    EmploymentStatus getStatus();
     String getDepartmentName();
 
     default String getFirstName() {

@@ -4,9 +4,12 @@ import com.techcorp.employee.dto.EmployeeDTO;
 import com.techcorp.employee.dto.EmployeeListView;
 import com.techcorp.employee.exception.DuplicateEmailException;
 import com.techcorp.employee.exception.EmployeeNotFoundException;
+import com.techcorp.employee.exception.InvalidDataException;
 import com.techcorp.employee.model.Employee;
 import com.techcorp.employee.model.EmploymentStatus;
 import com.techcorp.employee.model.Position;
+import com.techcorp.employee.service.DepartmentService;
+import com.techcorp.employee.service.EmployeeFormService;
 import com.techcorp.employee.service.EmployeeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -44,6 +48,8 @@ class EmployeeControllerTest {
 
     private Employee testEmployee;
     private EmployeeDTO testEmployeeDTO;
+    private EmployeeFormService employeeFormService;
+    private DepartmentService departmentService;
 
     @BeforeEach
     void setUp() {
@@ -107,19 +113,29 @@ class EmployeeControllerTest {
         // Tworzymy anonimową implementację interfejsu EmployeeListView
         EmployeeListView employeeView = new EmployeeListView() {
             @Override
-            public String getName() { return "Jan Kowalski"; }
+            public String getName() {
+                return "Jan Kowalski";
+            }
+
             @Override
-            public String getEmail() { return "jan@example.com"; }
+            public String getEmail() {
+                return "jan@example.com";
+            }
+
             @Override
-            public String getCompany() { return "TechCorp"; }
+            public String getCompany() {
+                return "TechCorp";
+            }
+
             @Override
-            public String getPosition() { return "PROGRAMMER"; }
+            public String getPosition() {
+                return "PROGRAMMER";
+            }
+
             @Override
-            public Double getSalary() { return 8000.0; }
-            @Override
-            public EmploymentStatus getStatus() { return EmploymentStatus.ACTIVE; }
-            @Override
-            public String getDepartmentName() { return "IT"; }
+            public String getDepartmentName() {
+                return "IT";
+            }
         };
 
         Page<EmployeeListView> employeesPage = new PageImpl<>(Arrays.asList(employeeView), pageable, 1);
@@ -145,19 +161,29 @@ class EmployeeControllerTest {
 
         EmployeeListView employeeView = new EmployeeListView() {
             @Override
-            public String getName() { return "Jan Kowalski"; }
+            public String getName() {
+                return "Jan Kowalski";
+            }
+
             @Override
-            public String getEmail() { return "jan@example.com"; }
+            public String getEmail() {
+                return "jan@example.com";
+            }
+
             @Override
-            public String getCompany() { return "TechCorp"; }
+            public String getCompany() {
+                return "TechCorp";
+            }
+
             @Override
-            public String getPosition() { return "PROGRAMMER"; }
+            public String getPosition() {
+                return "PROGRAMMER";
+            }
+
             @Override
-            public Double getSalary() { return 8000.0; }
-            @Override
-            public EmploymentStatus getStatus() { return EmploymentStatus.ACTIVE; }
-            @Override
-            public String getDepartmentName() { return "IT"; }
+            public String getDepartmentName() {
+                return "IT";
+            }
         };
 
         Page<EmployeeListView> employeesPage = new PageImpl<>(Arrays.asList(employeeView), pageable, 1);

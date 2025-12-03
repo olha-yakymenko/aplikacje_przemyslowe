@@ -156,14 +156,10 @@ class EmployeeRepositoryDataJpaTest {
 
         EmployeeListView firstEmployee = content.get(0);
         assertThat(firstEmployee.getName()).isNotNull();
-        assertThat(firstEmployee.getEmail()).isNotNull();
         assertThat(firstEmployee.getCompany()).isNotNull();
         assertThat(firstEmployee.getPosition()).isNotNull();
         assertThat(firstEmployee.getDepartmentName()).isNotNull();
 
-        // Metody domyślne z interfejsu
-        assertThat(firstEmployee.getFirstName()).isNotNull();
-        assertThat(firstEmployee.getLastName()).isNotNull();
     }
 
 

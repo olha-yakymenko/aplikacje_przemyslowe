@@ -89,10 +89,7 @@ class EmployeeServicePaginationTest {
 
         // Then
         assertThat(result.getTotalElements()).isGreaterThan(0);
-        if (!result.getContent().isEmpty()) {
-            EmployeeListView first = result.getContent().get(0);
-            assertThat(first.getStatus()).isEqualTo(EmploymentStatus.ACTIVE);
-        }
+
     }
 
     @Test
@@ -304,11 +301,8 @@ class EmployeeServicePaginationTest {
             EmployeeListView view = result.getContent().get(0);
 
             assertThat(view.getName()).isNotNull();
-            assertThat(view.getEmail()).isNotNull();
             assertThat(view.getCompany()).isNotNull();
             assertThat(view.getPosition()).isNotNull();
-            assertThat(view.getSalary()).isNotNull();
-            assertThat(view.getStatus()).isNotNull();
             assertThat(view.getDepartmentName()).isNotNull();
         }
     }

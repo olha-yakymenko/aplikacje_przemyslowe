@@ -1,15 +1,86 @@
+//////package com.techcorp.employee.specification;
+//////
+//////import com.techcorp.employee.model.Employee;
+//////import com.techcorp.employee.model.Position;
+//////import com.techcorp.employee.model.EmploymentStatus;
+//////import org.springframework.data.jpa.domain.Specification;
+//////import jakarta.persistence.criteria.Predicate;
+//////import java.util.ArrayList;
+//////import java.util.List;
+//////
+//////public class EmployeeSpecification {
+//////
+//////    public static Specification<Employee> withDynamicQuery(
+//////            String name,
+//////            String company,
+//////            Position position,
+//////            EmploymentStatus status,
+//////            Double minSalary,
+//////            Double maxSalary,
+//////            String departmentName) {
+//////
+//////        return (root, query, criteriaBuilder) -> {
+//////            List<Predicate> predicates = new ArrayList<>();
+//////
+//////            if (name != null && !name.trim().isEmpty()) {
+//////                predicates.add(criteriaBuilder.like(
+//////                        criteriaBuilder.lower(root.get("name")),
+//////                        "%" + name.toLowerCase() + "%"
+//////                ));
+//////            }
+//////
+//////            if (company != null && !company.trim().isEmpty()) {
+//////                predicates.add(criteriaBuilder.equal(
+//////                        criteriaBuilder.lower(root.get("company")),
+//////                        company.toLowerCase()
+//////                ));
+//////            }
+//////
+//////            if (position != null) {
+//////                predicates.add(criteriaBuilder.equal(root.get("position"), position));
+//////            }
+//////
+//////            if (status != null) {
+//////                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+//////            }
+//////
+//////            if (minSalary != null) {
+//////                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), minSalary));
+//////            }
+//////
+//////            if (maxSalary != null) {
+//////                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary));
+//////            }
+//////
+//////            if (departmentName != null && !departmentName.trim().isEmpty()) {
+//////                predicates.add(criteriaBuilder.equal(
+//////                        criteriaBuilder.lower(root.get("department").get("name")),
+//////                        departmentName.toLowerCase()
+//////                ));
+//////            }
+//////
+//////            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+//////        };
+//////    }
+//////}
+////
+////
+////
+////
+////
 ////package com.techcorp.employee.specification;
 ////
 ////import com.techcorp.employee.model.Employee;
 ////import com.techcorp.employee.model.Position;
 ////import com.techcorp.employee.model.EmploymentStatus;
 ////import org.springframework.data.jpa.domain.Specification;
-////import jakarta.persistence.criteria.Predicate;
+////import jakarta.persistence.criteria.*;
 ////import java.util.ArrayList;
 ////import java.util.List;
 ////
 ////public class EmployeeSpecification {
 ////
+////    // ✅ DODANE: Pełna implementacja z wszystkimi możliwymi kryteriami
 ////    public static Specification<Employee> withDynamicQuery(
 ////            String name,
 ////            String company,
@@ -17,18 +88,24 @@
 ////            EmploymentStatus status,
 ////            Double minSalary,
 ////            Double maxSalary,
-////            String departmentName) {
+////            String departmentName,
+////            String email,
+////            String phone,
+////            Boolean hasPhoto) {
 ////
 ////        return (root, query, criteriaBuilder) -> {
 ////            List<Predicate> predicates = new ArrayList<>();
 ////
+////            // ✅ Wyszukiwanie po imieniu/nazwisku (częściowa zgodność)
 ////            if (name != null && !name.trim().isEmpty()) {
+////                String searchPattern = "%" + name.toLowerCase() + "%";
 ////                predicates.add(criteriaBuilder.like(
 ////                        criteriaBuilder.lower(root.get("name")),
-////                        "%" + name.toLowerCase() + "%"
+////                        searchPattern
 ////                ));
 ////            }
 ////
+////            // ✅ Firma (dokładna zgodność, case-insensitive)
 ////            if (company != null && !company.trim().isEmpty()) {
 ////                predicates.add(criteriaBuilder.equal(
 ////                        criteriaBuilder.lower(root.get("company")),
@@ -36,14 +113,17 @@
 ////                ));
 ////            }
 ////
+////            // ✅ Pozycja (enum)
 ////            if (position != null) {
 ////                predicates.add(criteriaBuilder.equal(root.get("position"), position));
 ////            }
 ////
+////            // ✅ Status zatrudnienia (enum)
 ////            if (status != null) {
 ////                predicates.add(criteriaBuilder.equal(root.get("status"), status));
 ////            }
 ////
+////            // ✅ Zakres wynagrodzenia
 ////            if (minSalary != null) {
 ////                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), minSalary));
 ////            }
@@ -52,14 +132,91 @@
 ////                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary));
 ////            }
 ////
+////            // ✅ Dział (join z Department)
 ////            if (departmentName != null && !departmentName.trim().isEmpty()) {
+////                Join<Object, Object> departmentJoin = root.join("department", JoinType.LEFT);
 ////                predicates.add(criteriaBuilder.equal(
-////                        criteriaBuilder.lower(root.get("department").get("name")),
+////                        criteriaBuilder.lower(departmentJoin.get("name")),
 ////                        departmentName.toLowerCase()
 ////                ));
 ////            }
 ////
+////            // ✅ Email (częściowa zgodność)
+////            if (email != null && !email.trim().isEmpty()) {
+////                String emailPattern = "%" + email.toLowerCase() + "%";
+////                predicates.add(criteriaBuilder.like(
+////                        criteriaBuilder.lower(root.get("email")),
+////                        emailPattern
+////                ));
+////            }
+////
+////            // ✅ Telefon
+////            if (phone != null && !phone.trim().isEmpty()) {
+////                String phonePattern = "%" + phone + "%";
+////                predicates.add(criteriaBuilder.like(root.get("phone"), phonePattern));
+////            }
+////
+////            // ✅ Czy ma zdjęcie
+////            if (hasPhoto != null) {
+////                if (hasPhoto) {
+////                    predicates.add(criteriaBuilder.isNotNull(root.get("photoFileName")));
+////                } else {
+////                    predicates.add(criteriaBuilder.isNull(root.get("photoFileName")));
+////                }
+////            }
+////
+////            // ✅ Sortowanie po nazwisku (domyślnie)
+////            query.orderBy(criteriaBuilder.asc(root.get("name")));
+////
 ////            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+////        };
+////    }
+////
+////    // ✅ DODANE: Specyficzne Specifications dla często używanych kryteriów
+////    public static Specification<Employee> hasPosition(Position position) {
+////        return (root, query, criteriaBuilder) ->
+////                position == null ? null : criteriaBuilder.equal(root.get("position"), position);
+////    }
+////
+////    public static Specification<Employee> hasStatus(EmploymentStatus status) {
+////        return (root, query, criteriaBuilder) ->
+////                status == null ? null : criteriaBuilder.equal(root.get("status"), status);
+////    }
+////
+////    public static Specification<Employee> companyEquals(String company) {
+////        return (root, query, criteriaBuilder) -> {
+////            if (company == null || company.trim().isEmpty()) {
+////                return null;
+////            }
+////            return criteriaBuilder.equal(
+////                    criteriaBuilder.lower(root.get("company")),
+////                    company.toLowerCase()
+////            );
+////        };
+////    }
+////
+////    public static Specification<Employee> salaryBetween(Double min, Double max) {
+////        return (root, query, criteriaBuilder) -> {
+////            List<Predicate> predicates = new ArrayList<>();
+////            if (min != null) {
+////                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), min));
+////            }
+////            if (max != null) {
+////                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), max));
+////            }
+////            return predicates.isEmpty() ? null : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+////        };
+////    }
+////
+////    public static Specification<Employee> nameContains(String name) {
+////        return (root, query, criteriaBuilder) -> {
+////            if (name == null || name.trim().isEmpty()) {
+////                return null;
+////            }
+////            return criteriaBuilder.like(
+////                    criteriaBuilder.lower(root.get("name")),
+////                    "%" + name.toLowerCase() + "%"
+////            );
 ////        };
 ////    }
 ////}
@@ -80,7 +237,74 @@
 //
 //public class EmployeeSpecification {
 //
-//    // ✅ DODANE: Pełna implementacja z wszystkimi możliwymi kryteriami
+////    public static Specification<Employee> withDynamicQuery(
+////            String name,
+////            String company,
+////            Position position,
+////            EmploymentStatus status,
+////            Double minSalary,
+////            Double maxSalary,
+////            String departmentName) {
+////
+////        return (root, query, criteriaBuilder) -> {
+////            List<Predicate> predicates = new ArrayList<>();
+////
+////            // ✅ Name - częściowa zgodność (case-insensitive)
+////            if (name != null && !name.trim().isEmpty()) {
+////                predicates.add(criteriaBuilder.like(
+////                        criteriaBuilder.lower(root.get("name")),
+////                        "%" + name.toLowerCase() + "%"
+////                ));
+////            }
+////
+////            // ✅ Company - dokładna zgodność (case-insensitive)
+////            if (company != null && !company.trim().isEmpty()) {
+////                predicates.add(criteriaBuilder.equal(
+////                        criteriaBuilder.lower(root.get("company")),
+////                        company.toLowerCase()
+////                ));
+////            }
+////
+////            // ✅ Position - enum
+////            if (position != null) {
+////                predicates.add(criteriaBuilder.equal(root.get("position"), position));
+////            }
+////
+////            // ✅ Status - enum
+////            if (status != null) {
+////                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+////            }
+////
+////            // ✅ Salary range
+////            if (minSalary != null) {
+////                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), minSalary));
+////            }
+////
+////            if (maxSalary != null) {
+////                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary));
+////            }
+////
+////            if (departmentName != null && !departmentName.trim().isEmpty()) {
+////                if (departmentName.equalsIgnoreCase("Brak departamentu")) {
+////                    predicates.add(criteriaBuilder.isNull(root.get("department")));
+////                } else {
+////                    // LEFT JOIN żeby nie tracić pracowników bez departamentu
+////                    Join<Object, Object> departmentJoin = root.join("department", JoinType.LEFT);
+////                    predicates.add(criteriaBuilder.equal(
+////                            criteriaBuilder.lower(departmentJoin.get("name")),
+////                            departmentName.toLowerCase()
+////                    ));
+////                }
+////            }
+////
+////            return predicates.isEmpty() ? null : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+////        };
+////    }
+//
+//
+//
+//
+//
 //    public static Specification<Employee> withDynamicQuery(
 //            String name,
 //            String company,
@@ -88,24 +312,20 @@
 //            EmploymentStatus status,
 //            Double minSalary,
 //            Double maxSalary,
-//            String departmentName,
-//            String email,
-//            String phone,
-//            Boolean hasPhoto) {
+//            String departmentName) {
 //
 //        return (root, query, criteriaBuilder) -> {
 //            List<Predicate> predicates = new ArrayList<>();
 //
-//            // ✅ Wyszukiwanie po imieniu/nazwisku (częściowa zgodność)
+//            // Name - częściowa zgodność
 //            if (name != null && !name.trim().isEmpty()) {
-//                String searchPattern = "%" + name.toLowerCase() + "%";
 //                predicates.add(criteriaBuilder.like(
 //                        criteriaBuilder.lower(root.get("name")),
-//                        searchPattern
+//                        "%" + name.toLowerCase() + "%"
 //                ));
 //            }
 //
-//            // ✅ Firma (dokładna zgodność, case-insensitive)
+//            // Company - dokładna zgodność
 //            if (company != null && !company.trim().isEmpty()) {
 //                predicates.add(criteriaBuilder.equal(
 //                        criteriaBuilder.lower(root.get("company")),
@@ -113,17 +333,17 @@
 //                ));
 //            }
 //
-//            // ✅ Pozycja (enum)
+//            // Position
 //            if (position != null) {
 //                predicates.add(criteriaBuilder.equal(root.get("position"), position));
 //            }
 //
-//            // ✅ Status zatrudnienia (enum)
+//            // Status
 //            if (status != null) {
 //                predicates.add(criteriaBuilder.equal(root.get("status"), status));
 //            }
 //
-//            // ✅ Zakres wynagrodzenia
+//            // Salary range
 //            if (minSalary != null) {
 //                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), minSalary));
 //            }
@@ -132,94 +352,38 @@
 //                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary));
 //            }
 //
-//            // ✅ Dział (join z Department)
+//            // Department
 //            if (departmentName != null && !departmentName.trim().isEmpty()) {
-//                Join<Object, Object> departmentJoin = root.join("department", JoinType.LEFT);
-//                predicates.add(criteriaBuilder.equal(
-//                        criteriaBuilder.lower(departmentJoin.get("name")),
-//                        departmentName.toLowerCase()
-//                ));
-//            }
-//
-//            // ✅ Email (częściowa zgodność)
-//            if (email != null && !email.trim().isEmpty()) {
-//                String emailPattern = "%" + email.toLowerCase() + "%";
-//                predicates.add(criteriaBuilder.like(
-//                        criteriaBuilder.lower(root.get("email")),
-//                        emailPattern
-//                ));
-//            }
-//
-//            // ✅ Telefon
-//            if (phone != null && !phone.trim().isEmpty()) {
-//                String phonePattern = "%" + phone + "%";
-//                predicates.add(criteriaBuilder.like(root.get("phone"), phonePattern));
-//            }
-//
-//            // ✅ Czy ma zdjęcie
-//            if (hasPhoto != null) {
-//                if (hasPhoto) {
-//                    predicates.add(criteriaBuilder.isNotNull(root.get("photoFileName")));
+//                if (departmentName.equalsIgnoreCase("Brak departamentu")) {
+//                    predicates.add(criteriaBuilder.isNull(root.get("department")));
 //                } else {
-//                    predicates.add(criteriaBuilder.isNull(root.get("photoFileName")));
+//                    Join<Object, Object> departmentJoin = root.join("department", JoinType.LEFT);
+//                    predicates.add(criteriaBuilder.equal(
+//                            criteriaBuilder.lower(departmentJoin.get("name")),
+//                            departmentName.toLowerCase()
+//                    ));
 //                }
 //            }
 //
-//            // ✅ Sortowanie po nazwisku (domyślnie)
-//            query.orderBy(criteriaBuilder.asc(root.get("name")));
-//
-//            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-//        };
-//    }
-//
-//    // ✅ DODANE: Specyficzne Specifications dla często używanych kryteriów
-//    public static Specification<Employee> hasPosition(Position position) {
-//        return (root, query, criteriaBuilder) ->
-//                position == null ? null : criteriaBuilder.equal(root.get("position"), position);
-//    }
-//
-//    public static Specification<Employee> hasStatus(EmploymentStatus status) {
-//        return (root, query, criteriaBuilder) ->
-//                status == null ? null : criteriaBuilder.equal(root.get("status"), status);
-//    }
-//
-//    public static Specification<Employee> companyEquals(String company) {
-//        return (root, query, criteriaBuilder) -> {
-//            if (company == null || company.trim().isEmpty()) {
-//                return null;
-//            }
-//            return criteriaBuilder.equal(
-//                    criteriaBuilder.lower(root.get("company")),
-//                    company.toLowerCase()
-//            );
-//        };
-//    }
-//
-//    public static Specification<Employee> salaryBetween(Double min, Double max) {
-//        return (root, query, criteriaBuilder) -> {
-//            List<Predicate> predicates = new ArrayList<>();
-//            if (min != null) {
-//                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), min));
-//            }
-//            if (max != null) {
-//                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), max));
-//            }
-//            return predicates.isEmpty() ? null : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-//        };
-//    }
-//
-//    public static Specification<Employee> nameContains(String name) {
-//        return (root, query, criteriaBuilder) -> {
-//            if (name == null || name.trim().isEmpty()) {
-//                return null;
-//            }
-//            return criteriaBuilder.like(
-//                    criteriaBuilder.lower(root.get("name")),
-//                    "%" + name.toLowerCase() + "%"
-//            );
+//            // ✅ NIGDY nie zwracaj null - używaj conjunction() lub and()
+//            return predicates.isEmpty()
+//                    ? criteriaBuilder.conjunction()  // <-- ZMIANA TUTAJ
+//                    : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
 //        };
 //    }
 //}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -237,138 +401,203 @@ import java.util.List;
 
 public class EmployeeSpecification {
 
-//    public static Specification<Employee> withDynamicQuery(
-//            String name,
-//            String company,
-//            Position position,
-//            EmploymentStatus status,
-//            Double minSalary,
-//            Double maxSalary,
-//            String departmentName) {
-//
-//        return (root, query, criteriaBuilder) -> {
-//            List<Predicate> predicates = new ArrayList<>();
-//
-//            // ✅ Name - częściowa zgodność (case-insensitive)
-//            if (name != null && !name.trim().isEmpty()) {
-//                predicates.add(criteriaBuilder.like(
-//                        criteriaBuilder.lower(root.get("name")),
-//                        "%" + name.toLowerCase() + "%"
-//                ));
-//            }
-//
-//            // ✅ Company - dokładna zgodność (case-insensitive)
-//            if (company != null && !company.trim().isEmpty()) {
-//                predicates.add(criteriaBuilder.equal(
-//                        criteriaBuilder.lower(root.get("company")),
-//                        company.toLowerCase()
-//                ));
-//            }
-//
-//            // ✅ Position - enum
-//            if (position != null) {
-//                predicates.add(criteriaBuilder.equal(root.get("position"), position));
-//            }
-//
-//            // ✅ Status - enum
-//            if (status != null) {
-//                predicates.add(criteriaBuilder.equal(root.get("status"), status));
-//            }
-//
-//            // ✅ Salary range
-//            if (minSalary != null) {
-//                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), minSalary));
-//            }
-//
-//            if (maxSalary != null) {
-//                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary));
-//            }
-//
-//            if (departmentName != null && !departmentName.trim().isEmpty()) {
-//                if (departmentName.equalsIgnoreCase("Brak departamentu")) {
-//                    predicates.add(criteriaBuilder.isNull(root.get("department")));
-//                } else {
-//                    // LEFT JOIN żeby nie tracić pracowników bez departamentu
-//                    Join<Object, Object> departmentJoin = root.join("department", JoinType.LEFT);
-//                    predicates.add(criteriaBuilder.equal(
-//                            criteriaBuilder.lower(departmentJoin.get("name")),
-//                            departmentName.toLowerCase()
-//                    ));
-//                }
-//            }
-//
-//            return predicates.isEmpty() ? null : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-//        };
-//    }
+    // ✅ POSZCZEGÓLNE SPECIFICATIONS - KAŻDE OSOBNO
 
-
-
-
-
-    public static Specification<Employee> withDynamicQuery(
-            String name,
-            String company,
-            Position position,
-            EmploymentStatus status,
-            Double minSalary,
-            Double maxSalary,
-            String departmentName) {
-
+    /**
+     * Filtruje po imieniu/nazwisku (częściowa zgodność, case-insensitive)
+     */
+    public static Specification<Employee> hasName(String name) {
         return (root, query, criteriaBuilder) -> {
+            if (name == null || name.trim().isEmpty()) {
+                return null; // ⚠️ Zwracamy null, nie conjunction!
+            }
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("name")),
+                    "%" + name.toLowerCase() + "%"
+            );
+        };
+    }
+
+    /**
+     * Filtruje po firmie (dokładna zgodność, case-insensitive)
+     */
+    public static Specification<Employee> fromCompany(String company) {
+        return (root, query, criteriaBuilder) -> {
+            if (company == null || company.trim().isEmpty()) {
+                return null;
+            }
+            return criteriaBuilder.equal(
+                    criteriaBuilder.lower(root.get("company")),
+                    company.toLowerCase()
+            );
+        };
+    }
+
+    /**
+     * Filtruje po stanowisku
+     */
+    public static Specification<Employee> withPosition(Position position) {
+        return (root, query, criteriaBuilder) -> {
+            if (position == null) {
+                return null;
+            }
+            return criteriaBuilder.equal(root.get("position"), position);
+        };
+    }
+
+    /**
+     * Filtruje po statusie zatrudnienia
+     */
+    public static Specification<Employee> withStatus(EmploymentStatus status) {
+        return (root, query, criteriaBuilder) -> {
+            if (status == null) {
+                return null;
+            }
+            return criteriaBuilder.equal(root.get("status"), status);
+        };
+    }
+
+    /**
+     * Filtruje po minimalnym wynagrodzeniu
+     */
+    public static Specification<Employee> salaryGreaterThanOrEqual(Double minSalary) {
+        return (root, query, criteriaBuilder) -> {
+            if (minSalary == null) {
+                return null;
+            }
+            return criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), minSalary);
+        };
+    }
+
+    /**
+     * Filtruje po maksymalnym wynagrodzeniu
+     */
+    public static Specification<Employee> salaryLessThanOrEqual(Double maxSalary) {
+        return (root, query, criteriaBuilder) -> {
+            if (maxSalary == null) {
+                return null;
+            }
+            return criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary);
+        };
+    }
+
+    /**
+     * Filtruje po zakresie wynagrodzenia
+     */
+    public static Specification<Employee> salaryBetween(Double minSalary, Double maxSalary) {
+        return (root, query, criteriaBuilder) -> {
+            if (minSalary == null && maxSalary == null) {
+                return null;
+            }
+
             List<Predicate> predicates = new ArrayList<>();
-
-            // Name - częściowa zgodność
-            if (name != null && !name.trim().isEmpty()) {
-                predicates.add(criteriaBuilder.like(
-                        criteriaBuilder.lower(root.get("name")),
-                        "%" + name.toLowerCase() + "%"
-                ));
-            }
-
-            // Company - dokładna zgodność
-            if (company != null && !company.trim().isEmpty()) {
-                predicates.add(criteriaBuilder.equal(
-                        criteriaBuilder.lower(root.get("company")),
-                        company.toLowerCase()
-                ));
-            }
-
-            // Position
-            if (position != null) {
-                predicates.add(criteriaBuilder.equal(root.get("position"), position));
-            }
-
-            // Status
-            if (status != null) {
-                predicates.add(criteriaBuilder.equal(root.get("status"), status));
-            }
-
-            // Salary range
             if (minSalary != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("salary"), minSalary));
             }
-
             if (maxSalary != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("salary"), maxSalary));
             }
 
-            // Department
-            if (departmentName != null && !departmentName.trim().isEmpty()) {
-                if (departmentName.equalsIgnoreCase("Brak departamentu")) {
-                    predicates.add(criteriaBuilder.isNull(root.get("department")));
-                } else {
-                    Join<Object, Object> departmentJoin = root.join("department", JoinType.LEFT);
-                    predicates.add(criteriaBuilder.equal(
-                            criteriaBuilder.lower(departmentJoin.get("name")),
-                            departmentName.toLowerCase()
-                    ));
-                }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    /**
+     * Filtruje po nazwie departamentu
+     * Obsługuje specjalną wartość "Brak departamentu"
+     */
+    public static Specification<Employee> inDepartment(String departmentName) {
+        return (root, query, criteriaBuilder) -> {
+            if (departmentName == null || departmentName.trim().isEmpty()) {
+                return null;
             }
 
-            // ✅ NIGDY nie zwracaj null - używaj conjunction() lub and()
-            return predicates.isEmpty()
-                    ? criteriaBuilder.conjunction()  // <-- ZMIANA TUTAJ
-                    : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+            if ("brak departamentu".equalsIgnoreCase(departmentName)) {
+                return criteriaBuilder.isNull(root.get("department"));
+            } else {
+                // Używamy LEFT JOIN, żeby nie tracić pracowników bez departamentu
+                Join<Employee, ?> departmentJoin = root.join("department", JoinType.LEFT);
+                return criteriaBuilder.equal(
+                        criteriaBuilder.lower(departmentJoin.get("name")),
+                        departmentName.toLowerCase()
+                );
+            }
         };
+    }
+
+    /**
+     * Filtruje po emailu (częściowa zgodność, case-insensitive)
+     */
+    public static Specification<Employee> hasEmail(String email) {
+        return (root, query, criteriaBuilder) -> {
+            if (email == null || email.trim().isEmpty()) {
+                return null;
+            }
+            return criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("email")),
+                    "%" + email.toLowerCase() + "%"
+            );
+        };
+    }
+
+    /**
+     * Filtruje pracowników którzy mają przypisany departament
+     */
+    public static Specification<Employee> hasDepartment() {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.isNotNull(root.get("department"));
+    }
+
+    /**
+     * Filtruje pracowników którzy NIE mają przypisanego departamentu
+     */
+    public static Specification<Employee> hasNoDepartment() {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.isNull(root.get("department"));
+    }
+
+    /**
+     * Filtruje pracowników którzy mają zdjęcie
+     */
+    public static Specification<Employee> hasPhoto() {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.isNotNull(root.get("photoFileName"));
+    }
+
+    /**
+     * Filtruje pracowników którzy NIE mają zdjęcia
+     */
+    public static Specification<Employee> hasNoPhoto() {
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.isNull(root.get("photoFileName"));
+    }
+
+    // ✅ PRZYKŁADY ZŁOŻONYCH SPECIFICATIONS
+
+    /**
+     * Przykład 1: "Wszyscy z IT zarabiający > 5000"
+     */
+    public static Specification<Employee> highEarnersInIT() {
+        return Specification
+                .where(fromCompany("IT"))
+                .and(salaryGreaterThanOrEqual(5000.0));
+    }
+
+    /**
+     * Przykład 2: "Managerowie w stanie ACTIVE"
+     */
+    public static Specification<Employee> activeManagers() {
+        return Specification
+                .where(withPosition(Position.MANAGER))
+                .and(withStatus(EmploymentStatus.ACTIVE));
+    }
+
+    /**
+     * Przykład 3: "Pracownicy bez departamentu z wynagrodzeniem < 3000"
+     */
+    public static Specification<Employee> lowPaidWithoutDepartment() {
+        return Specification
+                .where(hasNoDepartment())
+                .and(salaryLessThanOrEqual(3000.0));
     }
 }

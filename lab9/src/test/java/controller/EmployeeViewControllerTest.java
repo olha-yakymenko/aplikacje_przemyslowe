@@ -53,6 +53,8 @@ class EmployeeViewControllerTest {
     private Employee testEmployee;
     private EmployeeDTO testEmployeeDTO;
 
+    private EmployeeFormService.EmployeeFormData mockFormData;
+
     @BeforeEach
     void setUp() {
         testEmployee = new Employee(
@@ -521,4 +523,361 @@ class EmployeeViewControllerTest {
                 .andExpect(redirectedUrl("/employees")) // Kontroler przekierowuje do /employees, nie /employees/import
                 .andExpect(flash().attributeExists("error"));
     }
+
+
+
+    @Test
+    void listEmployees_ExceptionDuringSearch_ShouldRedirectWithError() throws Exception {
+        // Arrange
+        when(employeeService.searchEmployeesAdvanced(any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenThrow(new RuntimeException("Database error"));
+
+        // Act & Assert
+        mockMvc.perform(get("/employees"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees"))
+                .andExpect(flash().attributeExists("error"));
+    }
+
+    // ===== TESTY DLA ADD EMPLOYEE =====
+
+    @Test
+    void addEmployee_DuplicateEmail_ShouldShowErrorMessage() throws Exception {
+        // Arrange
+        when(employeeFormService.convertToEntity(any(EmployeeDTO.class))).thenReturn(testEmployee);
+        when(employeeService.addEmployee(any(Employee.class))).thenReturn(false); // email już istnieje
+
+        // Act & Assert
+        mockMvc.perform(post("/employees/add")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("firstName", "Jan")
+                        .param("lastName", "Kowalski")
+                        .param("email", "jan@example.com")
+                        .param("company", "TechCorp")
+                        .param("position", "PROGRAMMER")
+                        .param("salary", "8000.0")
+                        .param("status", "ACTIVE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees"))
+                .andExpect(flash().attribute("error", "Nie udało się dodać pracownika. Email może już istnieć."));
+    }
+
+    @Test
+    void addEmployee_ServiceThrowsException_ShouldPropagateException() throws Exception {
+        // Arrange
+        when(employeeFormService.convertToEntity(any(EmployeeDTO.class)))
+                .thenThrow(new InvalidDataException("Invalid data"));
+
+        // Act & Assert
+        mockMvc.perform(post("/employees/add")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("firstName", "Jan")
+                        .param("lastName", "Kowalski")
+                        .param("email", "jan@example.com"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees/add"));
+    }
+
+
+    // ===== TESTY DLA UPDATE EMPLOYEE =====
+
+    @Test
+    void updateEmployee_EmployeeNotFound_ShouldRedirectWithError() throws Exception {
+        // Arrange
+        String email = "nonexistent@example.com";
+        when(employeeService.findEmployeeByEmail(email)).thenReturn(Optional.empty());
+
+        EmployeeFormService.FormValidationResult validationResult =
+                mock(EmployeeFormService.FormValidationResult.class);
+        when(validationResult.isValid()).thenReturn(true);
+        when(employeeFormService.validateEmployee(any(EmployeeDTO.class)))
+                .thenReturn(validationResult);
+
+        // Act & Assert
+        mockMvc.perform(post("/employees/edit")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("firstName", "Jan")
+                        .param("lastName", "Kowalski")
+                        .param("email", email)
+                        .param("company", "TechCorp")
+                        .param("position", "PROGRAMMER")
+                        .param("salary", "8000.0")
+                        .param("status", "ACTIVE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees"))
+                .andExpect(flash().attributeExists("error"));
+    }
+
+    @Test
+    void updateEmployee_UpdateServiceThrowsException_ShouldRedirectWithError() throws Exception {
+        // Arrange
+        String email = "jan@example.com";
+
+        when(employeeService.findEmployeeByEmail(email))
+                .thenReturn(Optional.of(testEmployee));
+
+        EmployeeFormService.FormValidationResult validationResult =
+                mock(EmployeeFormService.FormValidationResult.class);
+        when(validationResult.isValid()).thenReturn(true);
+        when(employeeFormService.validateEmployee(any(EmployeeDTO.class)))
+                .thenReturn(validationResult);
+
+        when(employeeFormService.convertToEntity(any(EmployeeDTO.class))).thenReturn(testEmployee);
+        when(employeeService.updateEmployee(any(Employee.class)))
+                .thenThrow(new RuntimeException("Update failed"));
+
+        // Act & Assert
+        mockMvc.perform(post("/employees/edit")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("firstName", "Jan")
+                        .param("lastName", "Kowalski")
+                        .param("email", email)
+                        .param("company", "TechCorp")
+                        .param("position", "PROGRAMMER")
+                        .param("salary", "8000.0")
+                        .param("status", "ACTIVE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees/edit/" + email))
+                .andExpect(flash().attributeExists("error"));
+    }
+
+    // ===== TESTY DLA DELETE EMPLOYEE =====
+
+    @Test
+    void deleteEmployee_WithSpecialCharactersInEmail_ShouldHandleCorrectly() throws Exception {
+        // Arrange
+        String email = "zażółć@example.com";
+        when(employeeService.removeEmployee(email)).thenReturn(true);
+
+        // Act & Assert
+        mockMvc.perform(get("/employees/delete/{email}", email))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees"))
+                .andExpect(flash().attributeExists("message"));
+    }
+
+    // ===== TESTY DLA IMPORT EMPLOYEES =====
+
+    @Test
+    void importEmployees_UnsupportedFileType_ShouldShowErrorMessage() throws Exception {
+        // Arrange
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "test.pdf", "application/pdf", "test content".getBytes());
+
+        // Act & Assert
+        mockMvc.perform(multipart("/employees/import")
+                        .file(file)
+                        .param("fileType", "pdf"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees/import"))
+                .andExpect(flash().attributeExists("error"))
+                .andExpect(flash().attribute("error", "Nieobsługiwany typ pliku. Obsługiwane typy: CSV, XML"));
+    }
+
+    @Test
+    void importEmployees_ImportServiceReturnsErrors_ShouldShowErrorMessageWithCounts() throws Exception {
+        // Arrange
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "test.csv", "text/csv", "test content".getBytes());
+
+        ImportSummary summary = new ImportSummary();
+        summary.incrementImported(); // 1 zaimportowany
+        summary.addError("Error 1");
+        summary.addError("Error 2");
+
+        when(importService.importCsvFile(any())).thenReturn(summary);
+
+        // Act & Assert
+        mockMvc.perform(multipart("/employees/import")
+                        .file(file)
+                        .param("fileType", "csv"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees"))
+                .andExpect(flash().attributeExists("error"))
+                .andExpect(flash().attribute("error", "Import zakończony z błędami. Zaimportowano: 1, Błędy: 2"));
+    }
+
+    @Test
+    void importEmployees_SuccessfulImport_ShouldShowSuccessMessage() throws Exception {
+        // Arrange
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "test.csv", "text/csv", "test content".getBytes());
+
+        ImportSummary summary = new ImportSummary();
+        summary.incrementImported();
+        summary.incrementImported();
+        summary.incrementImported(); // 3 zaimportowane
+
+        when(importService.importCsvFile(any())).thenReturn(summary);
+
+        // Act & Assert
+        mockMvc.perform(multipart("/employees/import")
+                        .file(file)
+                        .param("fileType", "csv"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees"))
+                .andExpect(flash().attributeExists("message"))
+                .andExpect(flash().attribute("message", "Pomyślnie zaimportowano 3 pracowników"));
+    }
+
+    @Test
+    void importEmployees_XMLFileImport_ShouldCallXmlService() throws Exception {
+        // Arrange
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "test.xml", "text/xml", "test content".getBytes());
+
+        ImportSummary summary = new ImportSummary();
+        summary.incrementImported();
+
+        when(importService.importXmlFile(any())).thenReturn(summary);
+
+        // Act & Assert
+        mockMvc.perform(multipart("/employees/import")
+                        .file(file)
+                        .param("fileType", "xml"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees"))
+                .andExpect(flash().attributeExists("message"));
+
+        verify(importService, times(1)).importXmlFile(any());
+    }
+
+    // ===== TESTY DLA DODATKOWYCH ENDPOINTÓW =====
+
+    @Test
+    void listEmployeesQuick_ShouldReturnQuickListView() throws Exception {
+        // Arrange
+        Page<EmployeeListView> employeesPage = createTestPage();
+        when(employeeService.getAllEmployeesProjection(any(Pageable.class))).thenReturn(employeesPage);
+
+        // Act & Assert
+        mockMvc.perform(get("/employees/list"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("employees/list-quick"))
+                .andExpect(model().attributeExists("employees"))
+                .andExpect(model().attributeExists("pageTitle"))
+                .andExpect(model().attribute("pageTitle", "Szybka lista pracowników"));
+    }
+
+    @Test
+    void searchEmployeesFull_PageTooLarge_ShouldRedirectToLastPage() throws Exception {
+        // Arrange
+        Page<Employee> employeesPage = new PageImpl<>(
+                Collections.emptyList(),
+                PageRequest.of(0, 10),
+                1  // tylko 1 strona
+        );
+
+        when(employeeService.getAllEmployees(any(Pageable.class))).thenReturn(employeesPage);
+
+        // Act & Assert - strona 5, ale mamy tylko 1 stronę
+        mockMvc.perform(get("/employees/search")
+                        .param("page", "5"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/employees/search?page=0*"));
+    }
+
+    // ===== POMOCNICZE METODY =====
+
+    private Page<EmployeeListView> createTestPage() {
+        EmployeeListView employeeView = new EmployeeListView() {
+            @Override
+            public String getName() { return "Jan Kowalski"; }
+            @Override
+            public String getEmail() { return "jan@example.com"; }
+            @Override
+            public String getCompany() { return "TechCorp"; }
+            @Override
+            public String getPosition() { return "PROGRAMMER"; }
+            @Override
+            public String getDepartmentName() { return "IT"; }
+        };
+
+        return new PageImpl<>(
+                Collections.singletonList(employeeView),
+                PageRequest.of(0, 2),
+                1
+        );
+    }
+
+    private EmployeeFormService.EmployeeFormData createFormData() {
+        EmployeeFormService.EmployeeFormData formData = mock(EmployeeFormService.EmployeeFormData.class);
+        when(formData.getPositions()).thenReturn(Arrays.asList(Position.values()));
+        when(formData.getStatuses()).thenReturn(Arrays.asList(EmploymentStatus.values()));
+        return formData;
+    }
+
+
+
+    @Test
+    void addEmployee_MissingRequiredFields_ShouldRedirectWithValidationErrors() throws Exception {
+        // Act & Assert - brak wymaganych pól
+        mockMvc.perform(post("/employees/add")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("firstName", "") // pusty
+                        .param("email", "invalid-email")) // nieprawidłowy email
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employees/add"))
+                .andExpect(flash().attributeExists("org.springframework.validation.BindingResult.employee"))
+                .andExpect(flash().attributeExists("employee"));
+    }
+
+    @Test
+    void updateEmployee_MissingRequiredFields_ShouldRedirectWithValidationErrors() throws Exception {
+        // Act & Assert
+        mockMvc.perform(post("/employees/edit")
+                                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                                .param("email", "test@example.com") // tylko email
+                        // brak innych pól
+                )
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attributeExists("org.springframework.validation.BindingResult.employee"))
+                .andExpect(flash().attributeExists("employee"));
+    }
+
+    // ===== TESTY DLA EXCEPTION HANDLING =====
+
+    @Test
+    void showImportForm_ShouldReturnCorrectView() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/employees/import"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("employees/import-form"))
+                .andExpect(model().attribute("pageTitle", "Import Pracowników"));
+    }
+
+
+
+
+    //
+
+    @Test
+    void listEmployees_WhenPageOutOfRange_ShouldBuildRedirectUrlWithAllParams() throws Exception {
+        // Arrange - strona 5, ale mamy tylko 2 strony
+        Page<EmployeeListView> employeesPage = new PageImpl<>(
+                Collections.emptyList(),
+                PageRequest.of(0, 10),
+                20 // total elements
+        );
+
+        when(employeeService.searchEmployeesAdvanced(any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(employeesPage);
+
+        when(employeeFormService.getFormData()).thenReturn(mockFormData);
+
+        // Act & Assert - strona 5, przekieruje na 1 (bo totalPages = 2, -1 = 1)
+        mockMvc.perform(get("/employees")
+                        .param("page", "5")
+                        .param("name", "Jan")
+                        .param("company", "TechCorp")
+                        .param("position", "PROGRAMMER")
+                        .param("minSalary", "5000")
+                        .param("size", "10")
+                        .param("sort", "salary"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/employees?page=1*"));
+    }
+
+
+
 }

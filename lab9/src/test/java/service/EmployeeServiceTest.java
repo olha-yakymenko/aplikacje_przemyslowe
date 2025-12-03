@@ -12,10 +12,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.core.io.Resource;
@@ -484,8 +486,6 @@ class EmployeeServiceTest {
             @Override public String getEmail() { return "jan@example.com"; }
             @Override public String getCompany() { return "TechCorp"; }
             @Override public String getPosition() { return "PROGRAMMER"; }
-            @Override public Double getSalary() { return 8000.0; }
-            @Override public EmploymentStatus getStatus() { return EmploymentStatus.ACTIVE; }
             @Override public String getDepartmentName() { return "IT"; }
         };
         Page<EmployeeListView> page = new PageImpl<>(Collections.singletonList(view), pageable, 1);
@@ -509,8 +509,6 @@ class EmployeeServiceTest {
             @Override public String getEmail() { return "jan@example.com"; }
             @Override public String getCompany() { return "TechCorp"; }
             @Override public String getPosition() { return "PROGRAMMER"; }
-            @Override public Double getSalary() { return 8000.0; }
-            @Override public EmploymentStatus getStatus() { return EmploymentStatus.ACTIVE; }
             @Override public String getDepartmentName() { return "IT"; }
         };
         Page<EmployeeListView> page = new PageImpl<>(Collections.singletonList(view), pageable, 1);
@@ -856,4 +854,366 @@ class EmployeeServiceTest {
             throw new RuntimeException("Failed to invoke private method", e);
         }
     }
+
+    @Test
+    void searchEmployeesDynamic_WithAllFilters_ShouldReturnFilteredResults() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Employee> page = new PageImpl<>(Arrays.asList(testEmployee), pageable, 1);
+
+        when(employeeRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        // When
+        Page<Employee> result = employeeService.searchEmployeesDynamic(
+                "Jan", "TechCorp", Position.PROGRAMMER, EmploymentStatus.ACTIVE,
+                5000.0, 10000.0, "IT", pageable);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        verify(employeeRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void searchEmployeesDynamic_WithNullFilters_ShouldReturnAll() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Employee> page = new PageImpl<>(Arrays.asList(testEmployee), pageable, 1);
+
+        when(employeeRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        // When
+        Page<Employee> result = employeeService.searchEmployeesDynamic(
+                null, null, null, null,
+                null, null, null, pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void searchEmployeesDynamic_WithEmptyStringFilters_ShouldReturnAll() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Employee> page = new PageImpl<>(Arrays.asList(testEmployee), pageable, 1);
+
+        when(employeeRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        // When
+        Page<Employee> result = employeeService.searchEmployeesDynamic(
+                "", "", null, null,
+                null, null, "", pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void searchEmployeesWithSpecifications_ShouldCallDynamicMethod() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Employee> page = new PageImpl<>(Arrays.asList(testEmployee), pageable, 1);
+
+        when(employeeRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        // When
+        Page<Employee> result = employeeService.searchEmployeesWithSpecifications(
+                "Jan", "TechCorp", Position.PROGRAMMER, EmploymentStatus.ACTIVE,
+                5000.0, 10000.0, "IT", pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    void searchEmployeesFull_ShouldCallDynamicMethod() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Employee> page = new PageImpl<>(Arrays.asList(testEmployee), pageable, 1);
+
+        when(employeeRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+
+        // When
+        Page<Employee> result = employeeService.searchEmployeesFull(
+                "Jan", "TechCorp", Position.PROGRAMMER, EmploymentStatus.ACTIVE,
+                5000.0, 10000.0, "IT", pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+    }
+
+
+    @Test
+    void searchEmployeesAdvanced_WithAllFilters_ShouldCallRepositoryMethod() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        EmployeeListView view = new EmployeeListView() {
+            @Override public String getName() { return "Jan Kowalski"; }
+            @Override public String getEmail() { return "jan@example.com"; }
+            @Override public String getCompany() { return "TechCorp"; }
+            @Override public String getPosition() { return "PROGRAMMER"; }
+
+            @Override public String getDepartmentName() { return "IT"; }
+        };
+        Page<EmployeeListView> page = new PageImpl<>(Collections.singletonList(view), pageable, 1);
+
+        when(employeeRepository.findWithFiltersProjection(
+                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(page);
+
+        // When
+        Page<EmployeeListView> result = employeeService.searchEmployeesAdvanced(
+                "Jan", "TechCorp", Position.PROGRAMMER, EmploymentStatus.ACTIVE,
+                5000.0, 10000.0, "IT", pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findWithFiltersProjection(
+                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class));
+    }
+
+    @Test
+    void searchEmployeesAdvanced_WithNoFilters_ShouldCallFindAllProjection() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EmployeeListView> page = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+        when(employeeRepository.findAllProjection(pageable)).thenReturn(page);
+
+        // When
+        Page<EmployeeListView> result = employeeService.searchEmployeesAdvanced(
+                null, null, null, null,
+                null, null, null, pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findAllProjection(pageable);
+        verify(employeeRepository, never()).findWithFiltersProjection(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void searchEmployeesWithProjection_ShouldCallAdvancedMethod() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EmployeeListView> page = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+        when(employeeRepository.findWithFiltersProjection(
+                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(page);
+
+        // When
+        Page<EmployeeListView> result = employeeService.searchEmployeesWithProjection(
+                "Jan", null, null, null,
+                null, null, null, pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findWithFiltersProjection(
+                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class));
+    }
+
+    @Test
+    void getAllEmployeesProjection_ShouldReturnAll() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EmployeeListView> page = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+        when(employeeRepository.findAllProjection(pageable)).thenReturn(page);
+
+        // When
+        Page<EmployeeListView> result = employeeService.getAllEmployeesProjection(pageable);
+
+        // Then
+        assertNotNull(result);
+        verify(employeeRepository, times(1)).findAllProjection(pageable);
+    }
+
+
+
+    @Test
+    void getEmployeePhoto_EmployeeWithoutPhoto_ShouldThrowException() {
+        // Given
+        String email = "jan@example.com";
+        testEmployee.setPhotoFileName(null);
+
+        when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(testEmployee));
+
+        // When & Then - użycie Optional.map() powoduje rzucenie wyjątku
+        ResponseEntity<Resource> result = employeeService.getEmployeePhoto(email);
+        assertEquals(404, result.getStatusCodeValue());
+    }
+
+    @Test
+    void getEmployeePhoto_EmployeeNotFound_ShouldReturnNotFound() {
+        // Given
+        String email = "nonexistent@example.com";
+        when(employeeRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        // When
+        ResponseEntity<Resource> result = employeeService.getEmployeePhoto(email);
+
+        // Then
+        assertEquals(404, result.getStatusCodeValue());
+    }
+
+    @Test
+    void addAllEmployees_WithNewEmployees_ShouldSaveAll() {
+        // Given
+        Employee emp1 = new Employee("Emp1", "emp1@example.com", "Company", Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+        Employee emp2 = new Employee("Emp2", "emp2@example.com", "Company", Position.PROGRAMMER, 6000.0, EmploymentStatus.ACTIVE);
+        List<Employee> employees = Arrays.asList(emp1, emp2);
+
+        when(employeeRepository.existsByEmail("emp1@example.com")).thenReturn(false);
+        when(employeeRepository.existsByEmail("emp2@example.com")).thenReturn(false);
+        when(employeeRepository.save(emp1)).thenReturn(emp1);
+        when(employeeRepository.save(emp2)).thenReturn(emp2);
+
+        // When
+        employeeService.addAllEmployees(employees);
+
+        // Then
+        verify(employeeRepository, times(1)).existsByEmail("emp1@example.com");
+        verify(employeeRepository, times(1)).existsByEmail("emp2@example.com");
+        verify(employeeRepository, times(1)).save(emp1);
+        verify(employeeRepository, times(1)).save(emp2);
+    }
+
+    @Test
+    void addAllEmployees_WithDuplicateEmails_ShouldUpdateExisting() {
+        // Given
+        Employee existingEmp = new Employee("Old Emp", "emp@example.com", "Old Company", Position.PROGRAMMER, 4000.0, EmploymentStatus.ACTIVE);
+        existingEmp.setId(1L);
+
+        Employee newEmp = new Employee("New Emp", "emp@example.com", "New Company", Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE);
+
+        List<Employee> employees = Collections.singletonList(newEmp);
+
+        when(employeeRepository.existsByEmail("emp@example.com")).thenReturn(true);
+        when(employeeRepository.findByEmail("emp@example.com")).thenReturn(Optional.of(existingEmp));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(existingEmp);
+
+        // When
+        employeeService.addAllEmployees(employees);
+
+        // Then
+        verify(employeeRepository, times(1)).findByEmail("emp@example.com");
+        verify(employeeRepository, times(1)).save(any(Employee.class));
+        assertEquals(1L, newEmp.getId()); // ID should be set from existing employee
+    }
+
+    @Test
+    void addAllEmployees_EmptyList_ShouldDoNothing() {
+        // Given
+        List<Employee> employees = Collections.emptyList();
+
+        // When
+        employeeService.addAllEmployees(employees);
+
+        // Then
+        verify(employeeRepository, never()).existsByEmail(any());
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void addAllEmployees_ExceptionDuringSave_ShouldContinue() {
+        // Given
+        Employee emp1 = new Employee("Emp1", "emp1@example.com", "Company", Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+        Employee emp2 = new Employee("Emp2", "emp2@example.com", "Company", Position.PROGRAMMER, 6000.0, EmploymentStatus.ACTIVE);
+        List<Employee> employees = Arrays.asList(emp1, emp2);
+
+        when(employeeRepository.existsByEmail("emp1@example.com")).thenReturn(false);
+        when(employeeRepository.existsByEmail("emp2@example.com")).thenReturn(false);
+        when(employeeRepository.save(emp1)).thenThrow(new RuntimeException("Database error"));
+        when(employeeRepository.save(emp2)).thenReturn(emp2);
+
+        // When
+        employeeService.addAllEmployees(employees);
+
+        // Then
+        // Should continue despite exception
+        verify(employeeRepository, times(2)).existsByEmail(any());
+        verify(employeeRepository, times(2)).save(any());
+    }
+    @Test
+    void getEmployeePhoto_InternalServerError_ShouldReturn500() throws Exception {
+        // Given
+        String email = "jan@example.com";
+        String photoFileName = "jan_example_com.jpg";
+        testEmployee.setPhotoFileName(photoFileName);
+
+        when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(testEmployee));
+        when(fileStorageService.getPhotosStorageLocation()).thenThrow(new RuntimeException("Storage error"));
+
+        // When
+        ResponseEntity<Resource> result = employeeService.getEmployeePhoto(email);
+
+        // Then
+        assertEquals(500, result.getStatusCodeValue());
+    }
+
+
+
+    @Test
+    void updateEmployee_ChangeToExistingEmail_ShouldThrowDuplicateEmailException() throws InvalidDataException {
+        // Given
+        Employee existingEmployee = testEmployee;
+        existingEmployee.setId(1L);
+        existingEmployee.setEmail("old@example.com");
+
+        Employee updatedEmployee = new Employee();
+        updatedEmployee.setId(1L);
+        updatedEmployee.setEmail("new@example.com");
+        updatedEmployee.setName("Updated Name");
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(existingEmployee));
+        when(employeeRepository.existsByEmail("new@example.com")).thenReturn(true);
+
+        // When & Then
+        assertThrows(DuplicateEmailException.class, () -> {
+            employeeService.updateEmployee(updatedEmployee);
+        });
+
+        verify(employeeRepository, times(1)).existsByEmail("new@example.com");
+    }
+
+    @Test
+    void updateEmployee_SameEmail_ShouldUpdateSuccessfully() throws InvalidDataException {
+        // Given
+        Employee existingEmployee = testEmployee;
+        existingEmployee.setId(1L);
+        existingEmployee.setEmail("same@example.com");
+        existingEmployee.setDepartment(testDepartment);
+
+        Employee updatedEmployee = new Employee();
+        updatedEmployee.setId(1L);
+        updatedEmployee.setEmail("same@example.com");
+        updatedEmployee.setName("Updated Name");
+        updatedEmployee.setCompany("New Company");
+        updatedEmployee.setPosition(Position.MANAGER);
+        updatedEmployee.setSalary(10000.0);
+        updatedEmployee.setStatus(EmploymentStatus.ON_LEAVE);
+
+        when(employeeRepository.findById(1L)).thenReturn(Optional.of(existingEmployee));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(existingEmployee);
+
+        // When
+        Employee result = employeeService.updateEmployee(updatedEmployee);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Updated Name", existingEmployee.getName());
+        assertEquals("New Company", existingEmployee.getCompany());
+        assertEquals(Position.MANAGER, existingEmployee.getPosition());
+        assertEquals(10000.0, existingEmployee.getSalary(), 0.001);
+        assertEquals(EmploymentStatus.ON_LEAVE, existingEmployee.getStatus());
+
+        // Department should remain unchanged
+        assertNotNull(existingEmployee.getDepartment());
+    }
+
+
 }

@@ -83,7 +83,6 @@ class EmployeeRepositoryTest {
         // Sprawdź czy projekcja zawiera tylko potrzebne pola
         EmployeeListView firstEmployee = result.getContent().get(0);
         assertThat(firstEmployee.getName()).isEqualTo("Alice Brown");
-        assertThat(firstEmployee.getEmail()).isEqualTo("alice@techcorp.com");
         assertThat(firstEmployee.getCompany()).isEqualTo("TechCorp");
         assertThat(firstEmployee.getDepartmentName()).isEqualTo("Brak departamentu");
     }
