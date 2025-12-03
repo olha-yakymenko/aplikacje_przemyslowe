@@ -251,35 +251,35 @@ public class EmployeeService {
     }
 // ===== METODY Z PAGINACJĄ I PROJEKCJĄ =====
 
-    // ✅ POPRAWIONE: Usuń debug printy
-    public Page<EmployeeListView> getAllEmployeesSummary(Pageable pageable) {
-        return employeeRepository.findAllEmployeesSummary(pageable);
-    }
+//    // ✅ POPRAWIONE: Usuń debug printy
+//    public Page<EmployeeListView> getAllEmployeesSummary(Pageable pageable) {
+//        return employeeRepository.findAllEmployeesSummary(pageable);
+//    }
+//
+//    public Page<EmployeeListView> findEmployeesWithFiltersOptimized(String name, String company, String position,
+//                                                                    Double minSalary, Double maxSalary, Pageable pageable) {
+//        Position positionEnum = null;
+//        if (position != null) {
+//            try {
+//                positionEnum = Position.valueOf(position.toUpperCase());
+//            } catch (IllegalArgumentException e) {
+//                // Pozostaw null jeśli konwersja nie powiedzie się
+//            }
+//        }
+//
+//        return employeeRepository.findEmployeesWithFiltersOptimized(
+//                name, company, positionEnum, minSalary, maxSalary, pageable);
+//    }
 
-    public Page<EmployeeListView> findEmployeesWithFiltersOptimized(String name, String company, String position,
-                                                                    Double minSalary, Double maxSalary, Pageable pageable) {
-        Position positionEnum = null;
-        if (position != null) {
-            try {
-                positionEnum = Position.valueOf(position.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // Pozostaw null jeśli konwersja nie powiedzie się
-            }
-        }
 
-        return employeeRepository.findEmployeesWithFiltersOptimized(
-                name, company, positionEnum, minSalary, maxSalary, pageable);
-    }
-
-
-    // ✅ POPRAWIONE: Zamiast Page<Employee> zwracaj Page<EmployeeListView>
-    public Page<EmployeeListView> searchEmployeesWithFilters(String name, String company, Position position,
-                                                             EmploymentStatus status, Double minSalary, Double maxSalary,
-                                                             String departmentName, Pageable pageable) {
-        // Użyj nowej metody z projekcją
-        return employeeRepository.findEmployeesWithFiltersProjection(
-                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
-    }
+//    // ✅ POPRAWIONE: Zamiast Page<Employee> zwracaj Page<EmployeeListView>
+//    public Page<EmployeeListView> searchEmployeesWithFilters(String name, String company, Position position,
+//                                                             EmploymentStatus status, Double minSalary, Double maxSalary,
+//                                                             String departmentName, Pageable pageable) {
+//        // Użyj nowej metody z projekcją
+//        return employeeRepository.findEmployeesWithFiltersProjection(
+//                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
+//    }
 
     // ✅ DODANE: Nowa metoda z projekcją dla statusu
     public Page<EmployeeListView> getEmployeesByStatusProjection(EmploymentStatus status, Pageable pageable) {
@@ -816,5 +816,127 @@ public class EmployeeService {
     public Double findHighestSalaryByCompany(String company) {
         validateCompany(company);
         return employeeRepository.findMaxSalaryByCompany(company);
+    }
+
+
+    // ✅ DODAJ TE METODY DO EmployeeService.java:
+
+    /**
+     * Zwraca unikalne nazwy firm (optymalizacja przez DISTINCT w SQL)
+     */
+    public List<String> getAllUniqueCompanies() {
+        // DODAJ TĘ METODĘ W EmployeeRepository:
+        // @Query("SELECT DISTINCT e.company FROM Employee e ORDER BY e.company")
+        // List<String> findDistinctCompanies();
+        return employeeRepository.findDistinctCompanies();
+    }
+
+    /**
+     * Zwraca unikalne nazwy departamentów (optymalizacja przez SQL)
+     */
+    public List<String> getAllDepartmentNames() {
+        // DODAJ TĘ METODĘ W EmployeeRepository LUB DepartmentRepository
+        return departmentRepository.findAllDepartmentNames();
+    }
+
+    /**
+     * Zwraca listę stanowisk (enum, ale można pobrać z bazy)
+     */
+    public List<Position> getAllPositions() {
+        // Jeśli chcesz pobrać z bazy używane stanowiska:
+        return employeeRepository.findDistinctPositions();
+
+    }
+
+    // ✅ DODAJ TĘ METODĘ DO EmployeeService.java:
+
+    public Page<EmployeeListView> searchEmployeesWithFilters(
+            String name, String company, Position position, EmploymentStatus status,
+            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+
+        // ✅ Wersja 1: Użyj istniejącej metody z repozytorium (jeśli masz)
+        return employeeRepository.findEmployeesWithFiltersProjection(
+                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
+
+    }
+
+
+
+    // ✅ W EmployeeService.java ZASTĄP metodę searchEmployeesAdvanced:
+    public Page<EmployeeListView> searchEmployeesAdvanced(
+            String name, String company, Position position, EmploymentStatus status,
+            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+
+        System.out.println("=== SERVICE: Using Specifications ===");
+        System.out.println("Parameters received:");
+        System.out.println("  name: '" + name + "'");
+        System.out.println("  company: '" + company + "'");
+        System.out.println("  position: " + position);
+        System.out.println("  departmentName: '" + departmentName + "'");
+
+        // Naprawienie parametrów
+        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
+            departmentName = null;
+        }
+
+        // 1. Utwórz Specification
+        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
+                name, company, position, status, minSalary, maxSalary, departmentName);
+
+        // 2. Wykonaj zapytanie z Specification
+        Page<Employee> employeesPage = employeeRepository.findAll(spec, pageable);
+
+        System.out.println("Found " + employeesPage.getTotalElements() + " employees");
+
+        // 3. Mapuj Employee na EmployeeListView
+        return employeesPage.map(this::convertToEmployeeListView);
+    }
+
+    // ✅ Dodaj metodę konwertującą:
+    private EmployeeListView convertToEmployeeListView(Employee employee) {
+        return new EmployeeListView() {
+            @Override
+            public String getName() {
+                return employee.getName();
+            }
+
+            @Override
+            public String getEmail() {
+                return employee.getEmail();
+            }
+
+            @Override
+            public String getCompany() {
+                return employee.getCompany();
+            }
+
+            @Override
+            public String getPosition() {
+                return employee.getPosition() != null ? employee.getPosition().name() : null;
+            }
+
+            @Override
+            public Double getSalary() {
+                return employee.getSalary();
+            }
+
+            @Override
+            public EmploymentStatus getStatus() {
+                return employee.getStatus();
+            }
+
+            @Override
+            public String getDepartmentName() {
+                return employee.getDepartment() != null ?
+                        employee.getDepartment().getName() : "Brak departamentu";
+            }
+        };
+    }
+    /**
+     * Proste wyszukiwanie po firmie z projekcją
+     */
+    public Page<EmployeeListView> searchEmployeesByCompany(String company, Pageable pageable) {
+        validateCompany(company);
+        return employeeRepository.findByCompanyProjection(company, pageable);
     }
 }

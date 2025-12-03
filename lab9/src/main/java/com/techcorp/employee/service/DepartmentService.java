@@ -139,4 +139,8 @@ public class DepartmentService {
     public List<Employee> getEmployeesWithoutDepartment() {
         return employeeService.getEmployeesWithoutDepartment();
     }
+
+    public List<String> getAllDepartmentNames() {
+        return departmentRepository.findAllDepartmentNames();
+    }
 }

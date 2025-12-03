@@ -17,4 +17,7 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
     Optional<Department> findByIdWithEmployees(Long id);
 
     List<Department> findByLocation(String location);
+
+    @Query("SELECT DISTINCT d.name FROM Department d ORDER BY d.name")
+    List<String> findAllDepartmentNames();
 }

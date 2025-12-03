@@ -240,13 +240,13 @@ public class EmployeeController {
     }
 
     // GET wszystkich pracowników z PAGINACJĄ i OPTYMALIZACJĄ
-    @GetMapping
-    public ResponseEntity<Page<EmployeeListView>> getAllEmployees(
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
-
-        Page<EmployeeListView> employees = employeeService.getAllEmployeesSummary(pageable);
-        return ResponseEntity.ok(employees);
-    }
+//    @GetMapping
+//    public ResponseEntity<Page<EmployeeListView>> getAllEmployees(
+//            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+//
+//        Page<EmployeeListView> employees = employeeService.getAllEmployeesSummary(pageable);
+//        return ResponseEntity.ok(employees);
+//    }
 
     // GET z ZAAWANSOWANYM WYSZUKIWANIEM i PAGINACJĄ
     @GetMapping("/search")
@@ -265,21 +265,21 @@ public class EmployeeController {
         return ResponseEntity.ok(employees);
     }
 
-    // GET z OPTYMALIZOWANYM WYSZUKIWANIEM (Projekcja)
-    @GetMapping("/search/optimized")
-    public ResponseEntity<Page<EmployeeListView>> searchEmployeesOptimized(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String company,
-            @RequestParam(required = false) String position,
-            @RequestParam(required = false) Double minSalary,
-            @RequestParam(required = false) Double maxSalary,
-            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
-
-        Page<EmployeeListView> employees = employeeService.findEmployeesWithFiltersOptimized(
-                name, company, position, minSalary, maxSalary, pageable
-        );
-        return ResponseEntity.ok(employees);
-    }
+//    // GET z OPTYMALIZOWANYM WYSZUKIWANIEM (Projekcja)
+//    @GetMapping("/search/optimized")
+//    public ResponseEntity<Page<EmployeeListView>> searchEmployeesOptimized(
+//            @RequestParam(required = false) String name,
+//            @RequestParam(required = false) String company,
+//            @RequestParam(required = false) String position,
+//            @RequestParam(required = false) Double minSalary,
+//            @RequestParam(required = false) Double maxSalary,
+//            @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+//
+//        Page<EmployeeListView> employees = employeeService.findEmployeesWithFiltersOptimized(
+//                name, company, position, minSalary, maxSalary, pageable
+//        );
+//        return ResponseEntity.ok(employees);
+//    }
 
     // GET pracownika po emailu
     @GetMapping("/{email}")

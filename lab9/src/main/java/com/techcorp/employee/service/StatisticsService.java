@@ -146,7 +146,6 @@
 
 
 
-
 package com.techcorp.employee.service;
 
 import com.techcorp.employee.dto.CompanyStatisticsDTO;
@@ -155,6 +154,7 @@ import com.techcorp.employee.repository.EmployeeRepository;
 import com.techcorp.employee.repository.DepartmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -164,7 +164,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional(readOnly = true)  // <-- Tylko odczyt, optymalizacja
+@Transactional(readOnly = true)
 public class StatisticsService {
 
     @Autowired
@@ -180,44 +180,44 @@ public class StatisticsService {
 
         // OGÓLNE STATYSTYKI - W SQL
         statistics.put("totalEmployees", employeeRepository.countAllEmployees());
-        statistics.put("avgSalary", employeeRepository.findAverageSalary());
-        statistics.put("maxSalary", employeeRepository.findMaxSalary());
-        statistics.put("minSalary", employeeRepository.findMinSalary());
-        statistics.put("totalSalaryCost", employeeRepository.findTotalSalaryCost());
+        statistics.put("avgSalary", getSafeDouble(employeeRepository.findAverageSalary()));
+        statistics.put("maxSalary", getSafeDouble(employeeRepository.findMaxSalary()));
+        statistics.put("minSalary", getSafeDouble(employeeRepository.findMinSalary()));
+        statistics.put("totalSalaryCost", getSafeDouble(employeeRepository.findTotalSalaryCost()));
 
-        // STATYSTYKI PER FIRMA - JEDNO ZAPYTANIE GROUP BY
+        // STATYSTYKI PER FIRMA
         statistics.put("companyStats", getCompanyStatisticsFromSQL());
 
-        // ROZKŁAD STANOWISK - GROUP BY w SQL
+        // ROZKŁAD STANOWISK
         statistics.put("positionDistribution", getPositionDistributionFromSQL());
 
-        // ROZKŁAD STATUSÓW - GROUP BY w SQL
+        // ROZKŁAD STATUSÓW
         statistics.put("statusDistribution", getStatusDistributionFromSQL());
 
         // STATYSTYKI DEPARTAMENTÓW
         statistics.put("totalDepartments", departmentRepository.count());
         statistics.put("employeesWithoutDept",
-                employeeRepository.countEmployeesWithoutDepartment());
+                getSafeLong(employeeRepository.countEmployeesWithoutDepartment()));
 
         return statistics;
     }
 
     public CompanyStatistics getCompanyStatistics(String companyName) {
-        // Użyj DTO z repozytorium
+        // Użyj DTO z repozytorium i nowego konstruktora
         CompanyStatisticsDTO dto = employeeRepository.getCompanyStatisticsDTO(companyName)
                 .orElse(new CompanyStatisticsDTO(companyName, 0L, 0.0, 0.0, ""));
 
+        // Użyj poprawnego konstruktora z 5 parametrami
         return new CompanyStatistics(
                 dto.getCompanyName(),
                 dto.getEmployeeCount(),
                 dto.getAverageSalary(),
                 dto.getHighestSalary(),
-                dto.getTopEarnerName()
+                dto.getTopEarnerName()  // To jest poprawny 5-ty parametr
         );
     }
 
     public List<Employee> getEmployeesByCompany(String companyName) {
-        // Paginacja dla dużych zbiorów!
         return employeeRepository.findByCompany(companyName, PageRequest.of(0, 1000))
                 .getContent();
     }
@@ -231,7 +231,7 @@ public class StatisticsService {
                 ? employeeRepository.findAverageSalaryByCompany(company)
                 : employeeRepository.findAverageSalary();
 
-        response.put("averageSalary", avgSalary != null ? avgSalary : 0.0);
+        response.put("averageSalary", getSafeDouble(avgSalary));
         return response;
     }
 
@@ -256,7 +256,7 @@ public class StatisticsService {
                 ));
     }
 
-    // ===== METODY POMOCNICZE (SQL zamiast Java) =====
+    // ===== METODY POMOCNICZE =====
 
     private Map<String, CompanyStatistics> getCompanyStatisticsFromSQL() {
         List<CompanyStatisticsDTO> dtos = employeeRepository.getCompanyStatisticsDTO();
@@ -328,7 +328,7 @@ public class StatisticsService {
                         dept -> {
                             Map<String, Object> deptStats = new HashMap<>();
                             deptStats.put("employeeCount",
-                                    employeeRepository.countEmployeesByDepartment(dept.getId()));
+                                    getSafeLong(employeeRepository.countEmployeesByDepartment(dept.getId())));
                             deptStats.put("avgSalary",
                                     calculateDeptAvgSalary(dept.getId()));
                             return deptStats;
@@ -337,13 +337,26 @@ public class StatisticsService {
     }
 
     private Double calculateDeptAvgSalary(Long deptId) {
-        // Możesz dodać tę metodę do repozytorium:
-        // @Query("SELECT AVG(e.salary) FROM Employee e WHERE e.department.id = :deptId")
-        // Double findAverageSalaryByDepartment(@Param("deptId") Long deptId);
+        // Oblicz średnią pensję dla departamentu
+        List<Employee> deptEmployees = employeeRepository.findByDepartmentId(deptId);
 
-        return employeeRepository.findByDepartmentId(deptId).stream()
+        if (deptEmployees.isEmpty()) {
+            return 0.0;
+        }
+
+        return deptEmployees.stream()
                 .mapToDouble(Employee::getSalary)
                 .average()
                 .orElse(0.0);
+    }
+
+    // ===== METODY POMOCNICZE DLA NULL SAFETY =====
+
+    private Double getSafeDouble(Double value) {
+        return value != null ? value : 0.0;
+    }
+
+    private Long getSafeLong(Long value) {
+        return value != null ? value : 0L;
     }
 }

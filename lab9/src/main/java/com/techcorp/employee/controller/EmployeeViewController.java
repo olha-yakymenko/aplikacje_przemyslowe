@@ -3,12 +3,11 @@ package com.techcorp.employee.controller;
 import com.techcorp.employee.dto.EmployeeDTO;
 import com.techcorp.employee.dto.EmployeeListView;
 import com.techcorp.employee.exception.InvalidDataException;
-import com.techcorp.employee.model.Employee;
-import com.techcorp.employee.model.Position;
+import com.techcorp.employee.model.*;
+import com.techcorp.employee.service.DepartmentService;
 import com.techcorp.employee.service.EmployeeService;
 import com.techcorp.employee.service.EmployeeFormService;
 import com.techcorp.employee.service.ImportService;
-import com.techcorp.employee.model.ImportSummary;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/employees")
@@ -31,18 +31,127 @@ public class EmployeeViewController {
     private final EmployeeService employeeService;
     private final EmployeeFormService employeeFormService;
     private final ImportService importService;
+    private final DepartmentService departmentService;
 
     public EmployeeViewController(EmployeeService employeeService,
                                   EmployeeFormService employeeFormService,
-                                  ImportService importService) {
+                                  ImportService importService, DepartmentService departmentService) {
         this.employeeService = employeeService;
         this.employeeFormService = employeeFormService;
         this.importService = importService;
+        this.departmentService = departmentService;
     }
 
     // ✅ OPTYMALIZOWANA METODA Z PAGINACJĄ I PROJEKCJĄ
+//    @GetMapping
+//    public String listEmployees(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "2") int size,
+//            @RequestParam(defaultValue = "name") String sort,
+//            Model model) {
+//
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+//
+//        // Użyj OPTYMALIZOWANEJ metody z projekcją
+//        Page<EmployeeListView> employeesPage = employeeService.getAllEmployeesSummary(pageable);
+//
+//        model.addAttribute("employees", employeesPage.getContent());
+//        model.addAttribute("currentPage", page);
+//        model.addAttribute("totalPages", employeesPage.getTotalPages());
+//        model.addAttribute("totalItems", employeesPage.getTotalElements());
+//        model.addAttribute("pageSize", size);
+//        model.addAttribute("sortField", sort);
+//        model.addAttribute("pageTitle", "Lista Pracowników");
+//
+//        return "employees/list";
+//    }
+
+
+    // W EmployeeViewController.java - rozszerz metodę listEmployees:
+
+//    @GetMapping
+//    public String listEmployees(
+//            @RequestParam(required = false) String name,
+//            @RequestParam(required = false) String company,
+//            @RequestParam(required = false) Position position,
+//            @RequestParam(required = false) EmploymentStatus status,
+//            @RequestParam(required = false) Double minSalary,
+//            @RequestParam(required = false) Double maxSalary,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "2") int size,
+//            @RequestParam(defaultValue = "name") String sort,
+//            Model model) {
+//
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+//
+//        // ✅ Użyj zaawansowanego wyszukiwania z serwisu
+//        Page<EmployeeListView> employeesPage = employeeService.searchEmployeesAdvanced(
+//                name, company, position, status, minSalary, maxSalary, null, pageable);
+//
+//        model.addAttribute("employees", employeesPage.getContent());
+//        model.addAttribute("currentPage", page);
+//        model.addAttribute("totalPages", employeesPage.getTotalPages());
+//        model.addAttribute("totalItems", employeesPage.getTotalElements());
+//        model.addAttribute("pageSize", size);
+//        model.addAttribute("sortField", sort);
+//        model.addAttribute("pageTitle", "Lista Pracowników");
+//
+//        // ✅ Dodaj dane dla formularza
+//        EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
+//        model.addAttribute("positions", formData.getPositions());
+//        model.addAttribute("statuses", formData.getStatuses());
+//
+//        // ✅ Lista firm z serwisu (SQL)
+//        List<String> companies = employeeService.getAllUniqueCompanies();
+//        model.addAttribute("companies", companies);
+//
+//        // ✅ Zapisz wartości wyszukiwania dla formularza
+//        model.addAttribute("searchName", name);
+//        model.addAttribute("searchCompany", company);
+//        model.addAttribute("searchPosition", position);
+//        model.addAttribute("searchStatus", status);
+//        model.addAttribute("searchMinSalary", minSalary);
+//        model.addAttribute("searchMaxSalary", maxSalary);
+//
+//        return "employees/list";
+//    }
+
+
+//
+//    @GetMapping
+//    public String listEmployees(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "2") int size,
+//            @RequestParam(defaultValue = "name") String sort,
+//            Model model) {
+//
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+//
+//        // Użyj OPTYMALIZOWANEJ metody z projekcją
+//        Page<EmployeeListView> employeesPage = employeeService.getAllEmployeesSummary(pageable);
+//
+//        model.addAttribute("employees", employeesPage.getContent());
+//        model.addAttribute("currentPage", page);
+//        model.addAttribute("totalPages", employeesPage.getTotalPages());
+//        model.addAttribute("totalItems", employeesPage.getTotalElements());
+//        model.addAttribute("pageSize", size);
+//        model.addAttribute("sortField", sort);
+//        model.addAttribute("pageTitle", "Lista Pracowników");
+//
+//        return "employees/list";
+//    }
+
+
+    // ✅ TYLKO JEDNA METODA listEmployees w EmployeeViewController.java:
     @GetMapping
     public String listEmployees(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) Position position,
+            @RequestParam(required = false) EmploymentStatus status,
+            @RequestParam(required = false) Double minSalary,
+            @RequestParam(required = false) Double maxSalary,
+            @RequestParam(required = false) String departmentName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "2") int size,
             @RequestParam(defaultValue = "name") String sort,
@@ -50,8 +159,15 @@ public class EmployeeViewController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
 
-        // Użyj OPTYMALIZOWANEJ metody z projekcją
-        Page<EmployeeListView> employeesPage = employeeService.getAllEmployeesSummary(pageable);
+        // DEBUG: Wyświetl parametry
+        System.out.println("=== DEBUG: listEmployees ===");
+        System.out.println("name: " + name);
+        System.out.println("company: " + company);
+        System.out.println("position: " + position);
+
+        // ✅ Użyj metody z zaawansowanym wyszukiwaniem
+        Page<EmployeeListView> employeesPage = employeeService.searchEmployeesAdvanced(
+                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
 
         model.addAttribute("employees", employeesPage.getContent());
         model.addAttribute("currentPage", page);
@@ -61,43 +177,34 @@ public class EmployeeViewController {
         model.addAttribute("sortField", sort);
         model.addAttribute("pageTitle", "Lista Pracowników");
 
-        return "employees/list";
-    }
+        // ✅ Dodaj dane dla formularza wyszukiwania
+        EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
+        model.addAttribute("positions", formData.getPositions());
+        model.addAttribute("statuses", formData.getStatuses());
 
-    // ✅ ALTERNATYWNA WERSJA: Z OPTYMALIZOWANYM WYSZUKIWANIEM
-    @GetMapping("/optimized")
-    public String listEmployeesOptimized(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String company,
-            @RequestParam(required = false) Position position,
-            @RequestParam(required = false) Double minSalary,
-            @RequestParam(required = false) Double maxSalary,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            Model model) {
+        // ✅ Lista firm z serwisu (SQL)
+        List<String> companies = employeeService.getAllUniqueCompanies();
+        model.addAttribute("companies", companies);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+        // ✅ Lista departamentów
+        List<String> departments = departmentService.getAllDepartmentNames();
+        model.addAttribute("departments", departments);
 
-        // Użyj OPTYMALIZOWANEJ metody z filtrami
-        Page<EmployeeListView> employeesPage = employeeService.findEmployeesWithFiltersOptimized(
-                name, company, position != null ? position.name() : null,
-                minSalary, maxSalary, pageable);
-
-        model.addAttribute("employees", employeesPage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", employeesPage.getTotalPages());
-        model.addAttribute("totalItems", employeesPage.getTotalElements());
-        model.addAttribute("pageTitle", "Lista Pracowników (Optymalizowana)");
-
-        // Dodaj parametry wyszukiwania dla formularza
+        // ✅ Zapisz wartości wyszukiwania dla formularza
         model.addAttribute("searchName", name);
         model.addAttribute("searchCompany", company);
         model.addAttribute("searchPosition", position);
+        model.addAttribute("searchStatus", status);
         model.addAttribute("searchMinSalary", minSalary);
         model.addAttribute("searchMaxSalary", maxSalary);
+        model.addAttribute("searchDepartmentName", departmentName);
 
-        return "employees/list-optimized"; // Możesz użyć tego samego widoku
+        System.out.println("=== DEBUG END ===");
+        return "employees/list";
     }
+
+
+
 
     @GetMapping("/add")
     public String showAddForm(Model model) {
@@ -242,11 +349,69 @@ public class EmployeeViewController {
         return "redirect:/employees";
     }
 
+//    @GetMapping("/search")
+//    public String showSearchForm(Model model) {
+//        model.addAttribute("pageTitle", "Wyszukaj Pracowników");
+//        return "employees/search-form";
+//    }
+
+
+    // ✅ DODAJ TĘ METODĘ DO EmployeeViewController.java
     @GetMapping("/search")
-    public String showSearchForm(Model model) {
-        model.addAttribute("pageTitle", "Wyszukaj Pracowników");
-        return "employees/search-form";
+    public String showSearchPage(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) Position position,
+            @RequestParam(required = false) EmploymentStatus status,
+            @RequestParam(required = false) Double minSalary,
+            @RequestParam(required = false) Double maxSalary,
+            @RequestParam(required = false) String departmentName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "name") String sort,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+
+        // ✅ Użyj metody z zaawansowanym wyszukiwaniem
+        Page<EmployeeListView> employeesPage = employeeService.searchEmployeesAdvanced(
+                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
+
+        // ✅ Dodaj dane do modelu
+        model.addAttribute("employees", employeesPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalItems", employeesPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("sortField", sort);
+        model.addAttribute("pageTitle", "Wyszukiwanie Pracowników");
+
+        // ✅ Dodaj dane dla formularza wyszukiwania
+        EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
+        model.addAttribute("positions", formData.getPositions());
+        model.addAttribute("statuses", formData.getStatuses());
+
+        // ✅ Lista firm z serwisu (SQL)
+        List<String> companies = employeeService.getAllUniqueCompanies();
+        model.addAttribute("companies", companies);
+
+        // ✅ Lista departamentów
+        List<String> departments = departmentService.getAllDepartmentNames();
+        model.addAttribute("departments", departments);
+
+        // ✅ Zapisz wartości wyszukiwania dla formularza
+        model.addAttribute("searchName", name);
+        model.addAttribute("searchCompany", company);
+        model.addAttribute("searchPosition", position);
+        model.addAttribute("searchStatus", status);
+        model.addAttribute("searchMinSalary", minSalary);
+        model.addAttribute("searchMaxSalary", maxSalary);
+        model.addAttribute("searchDepartmentName", departmentName);
+
+        return "employees/search-full"; // Nowy widok
     }
+
+
 
     // ✅ OPTYMALIZOWANE WYSZUKIWANIE Z PAGINACJĄ
     // ✅ POPRAWIONE: Użyj metody z projekcją
@@ -320,5 +485,65 @@ public class EmployeeViewController {
         }
 
         return "redirect:/employees";
+    }
+
+
+    // W EmployeeViewController.java - ZASTĄP:
+    @GetMapping("/search/advanced")
+    public String showAdvancedSearchForm(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) Position position,
+            @RequestParam(required = false) EmploymentStatus status,
+            @RequestParam(required = false) Double minSalary,
+            @RequestParam(required = false) Double maxSalary,
+            @RequestParam(required = false) String departmentName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "2") int size,
+            Model model) {
+
+        model.addAttribute("pageTitle", "Zaawansowane wyszukiwanie");
+
+        // ✅ TYLKO metody z serwisu (które używają SQL)
+        EmployeeFormService.EmployeeFormData formData = employeeFormService.getFormData();
+        model.addAttribute("positions", formData.getPositions()); // Z enuma
+        model.addAttribute("statuses", formData.getStatuses());   // Z enuma
+
+        // ✅ SQL przez serwis
+        List<String> companies = employeeService.getAllUniqueCompanies();
+        model.addAttribute("companies", companies);
+
+        // ✅ SQL przez serwis (może być EmployeeService lub DepartmentService)
+        List<String> departments = departmentService.getAllDepartmentNames();
+        model.addAttribute("departments", departments);
+
+        // ✅ Jeśli są kryteria, użyj metody z SQL projekcją
+        if (name != null || company != null || position != null || status != null ||
+                minSalary != null || maxSalary != null || departmentName != null) {
+
+            Pageable pageable = PageRequest.of(page, size, Sort.by("name"));
+
+            // ✅ Metoda z SQL w repozytorium (przez serwis)
+            Page<EmployeeListView> employeesPage = employeeService.searchEmployeesAdvanced(
+                    name, company, position, status, minSalary, maxSalary,
+                    departmentName, pageable);
+
+            model.addAttribute("employees", employeesPage.getContent());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", employeesPage.getTotalPages());
+            model.addAttribute("totalItems", employeesPage.getTotalElements());
+            model.addAttribute("hasSearchResults", true);
+        }
+
+        // Przekaż parametry wyszukiwania z powrotem do formularza
+        model.addAttribute("searchName", name);
+        model.addAttribute("searchCompany", company);
+        model.addAttribute("searchPosition", position);
+        model.addAttribute("searchStatus", status);
+        model.addAttribute("searchMinSalary", minSalary);
+        model.addAttribute("searchMaxSalary", maxSalary);
+        model.addAttribute("searchDepartmentName", departmentName);
+
+        return "employees/search-advanced";
     }
 }
