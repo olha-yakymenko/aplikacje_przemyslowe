@@ -873,6 +873,8 @@ public class EmployeeService {
         System.out.println("  company: '" + company + "'");
         System.out.println("  position: " + position);
         System.out.println("  departmentName: '" + departmentName + "'");
+        System.out.println("  status: '" + status + "'");
+
 
         // Naprawienie parametrów
         if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {

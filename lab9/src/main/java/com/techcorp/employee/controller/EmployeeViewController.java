@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -164,10 +166,28 @@ public class EmployeeViewController {
         System.out.println("name: " + name);
         System.out.println("company: " + company);
         System.out.println("position: " + position);
+        System.out.println("status: " + status);
 
         // ✅ Użyj metody z zaawansowanym wyszukiwaniem
         Page<EmployeeListView> employeesPage = employeeService.searchEmployeesAdvanced(
                 name, company, position, status, minSalary, maxSalary, departmentName, pageable);
+
+        // ✅ SPRAWDŹ CZY STRONA ISTNIEJE
+        if (page >= employeesPage.getTotalPages() && employeesPage.getTotalPages() > 0) {
+            // Przekieruj na ostatnią istniejącą stronę
+            return "redirect:/employees?page=" + (employeesPage.getTotalPages() - 1) +
+                    "&size=" + size +
+                    "&sort=" + sort +
+                    (name != null ? "&name=" + URLEncoder.encode(name, StandardCharsets.UTF_8) : "") +
+                    (company != null ? "&company=" + URLEncoder.encode(company, StandardCharsets.UTF_8) : "");
+        }
+
+        // ✅ SPRAWDŹ CZY STRONA JEST UJEMNA
+        if (page < 0) {
+            return "redirect:/employees?page=0" +
+                    "&size=" + size +
+                    "&sort=" + sort;
+        }
 
         model.addAttribute("employees", employeesPage.getContent());
         model.addAttribute("currentPage", page);
