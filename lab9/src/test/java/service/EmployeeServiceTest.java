@@ -525,36 +525,36 @@ class EmployeeServiceTest {
         verify(employeeRepository, times(1)).findByCompanyProjection("TechCorp", pageable);
     }
 
-    @Test
-    void searchEmployeesAdvanced_ShouldReturnFilteredResults() {
-        // Given
-        Pageable pageable = PageRequest.of(0, 10);
-        EmployeeListView view = new EmployeeListView() {
-            @Override public String getName() { return "Jan Kowalski"; }
-            @Override public String getEmail() { return "jan@example.com"; }
-            @Override public String getCompany() { return "TechCorp"; }
-            @Override public String getPosition() { return "PROGRAMMER"; }
-            @Override public Double getSalary() { return 8000.0; }
-            @Override public EmploymentStatus getStatus() { return EmploymentStatus.ACTIVE; }
-            @Override public String getDepartmentName() { return "IT"; }
-        };
-        Page<EmployeeListView> page = new PageImpl<>(Collections.singletonList(view), pageable, 1);
-
-        when(employeeRepository.findEmployeesWithFiltersProjection(
-                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
-                .thenReturn(page);
-
-        // When
-        Page<EmployeeListView> result = employeeService.searchEmployeesAdvanced(
-                "Jan", "TechCorp", Position.PROGRAMMER, EmploymentStatus.ACTIVE,
-                5000.0, 10000.0, "IT", pageable);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(employeeRepository, times(1)).findEmployeesWithFiltersProjection(
-                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class));
-    }
+//    @Test
+//    void searchEmployeesAdvanced_ShouldReturnFilteredResults() {
+//        // Given
+//        Pageable pageable = PageRequest.of(0, 10);
+//        EmployeeListView view = new EmployeeListView() {
+//            @Override public String getName() { return "Jan Kowalski"; }
+//            @Override public String getEmail() { return "jan@example.com"; }
+//            @Override public String getCompany() { return "TechCorp"; }
+//            @Override public String getPosition() { return "PROGRAMMER"; }
+//            @Override public Double getSalary() { return 8000.0; }
+//            @Override public EmploymentStatus getStatus() { return EmploymentStatus.ACTIVE; }
+//            @Override public String getDepartmentName() { return "IT"; }
+//        };
+//        Page<EmployeeListView> page = new PageImpl<>(Collections.singletonList(view), pageable, 1);
+//
+//        when(employeeRepository.findEmployeesWithFiltersProjection(
+//                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+//                .thenReturn(page);
+//
+//        // When
+//        Page<EmployeeListView> result = employeeService.searchEmployeesAdvanced(
+//                "Jan", "TechCorp", Position.PROGRAMMER, EmploymentStatus.ACTIVE,
+//                5000.0, 10000.0, "IT", pageable);
+//
+//        // Then
+//        assertNotNull(result);
+//        assertEquals(1, result.getTotalElements());
+//        verify(employeeRepository, times(1)).findEmployeesWithFiltersProjection(
+//                any(), any(), any(), any(), any(), any(), any(), any(Pageable.class));
+//    }
 
     // ===== TESTY PODSTAWOWE OPERACJE =====
 

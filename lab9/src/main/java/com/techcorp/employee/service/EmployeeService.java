@@ -678,38 +678,37 @@ public class EmployeeService {
         return employeeRepository.findDistinctCompanies();
     }
 
-//    public Page<EmployeeListView> searchEmployeesAdvanced(
-//            String name, String company, Position position, EmploymentStatus status,
-//            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
-//
-//        System.out.println("=== SERVICE: Using Specifications ===");
-//        System.out.println("Parameters received:");
-//        System.out.println("  name: '" + name + "'");
-//        System.out.println("  company: '" + company + "'");
-//        System.out.println("  position: " + position);
-//        System.out.println("  departmentName: '" + departmentName + "'");
-//        System.out.println("  status: '" + status + "'");
-//
-//
-//        // Naprawienie parametrów
-//        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
-//            departmentName = null;
-//        }
-//
-//        // 1. Utwórz Specification
-//        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
-//                name, company, position, status, minSalary, maxSalary, departmentName);
-//
-//        // 2. Wykonaj zapytanie z Specification
-//        Page<Employee> employeesPage = employeeRepository.findAll(spec, pageable);
-//
-//        System.out.println("Found " + employeesPage.getTotalElements() + " employees");
-//
-//        // 3. Mapuj Employee na EmployeeListView
-//        return employeesPage.map(this::convertToEmployeeListView);
-//    }
+    public Page<EmployeeListView> searchEmployeesAdvanced(
+            String name, String company, Position position, EmploymentStatus status,
+            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
 
-    // ✅ Dodaj metodę konwertującą:
+        System.out.println("=== SERVICE: Using Specifications ===");
+        System.out.println("Parameters received:");
+        System.out.println("  name: '" + name + "'");
+        System.out.println("  company: '" + company + "'");
+        System.out.println("  position: " + position);
+        System.out.println("  departmentName: '" + departmentName + "'");
+        System.out.println("  status: '" + status + "'");
+
+
+        // Naprawienie parametrów
+        if (departmentName != null && "null".equalsIgnoreCase(departmentName)) {
+            departmentName = null;
+        }
+
+        // 1. Utwórz Specification
+        Specification<Employee> spec = EmployeeSpecification.withDynamicQuery(
+                name, company, position, status, minSalary, maxSalary, departmentName);
+
+        // 2. Wykonaj zapytanie z Specification
+        Page<Employee> employeesPage = employeeRepository.findAll(spec, pageable);
+
+        System.out.println("Found " + employeesPage.getTotalElements() + " employees");
+
+        // 3. Mapuj Employee na EmployeeListView
+        return employeesPage.map(this::convertToEmployeeListView);
+    }
+
     private EmployeeListView convertToEmployeeListView(Employee employee) {
         return new EmployeeListView() {
             @Override
@@ -751,13 +750,16 @@ public class EmployeeService {
     }
 
 
-    public Page<EmployeeListView> searchEmployeesAdvanced(
-            String name, String company, Position position, EmploymentStatus status,
-            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+//    public Page<EmployeeListView> searchEmployeesAdvanced(
+//            String name, String company, Position position, EmploymentStatus status,
+//            Double minSalary, Double maxSalary, String departmentName, Pageable pageable) {
+//
+//        return employeeRepository.findEmployeesWithFiltersProjection(
+//                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
+//    }
 
-        return employeeRepository.findEmployeesWithFiltersProjection(
-                name, company, position, status, minSalary, maxSalary, departmentName, pageable);
-    }
+
+
 
 
 

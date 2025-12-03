@@ -120,20 +120,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
             "FROM Employee e GROUP BY e.status")
     List<Object[]> getStatusStatistics();
 
-    // ZAAWANSOWANE WYSZUKIWANIE
-    @Query("SELECT e FROM Employee e WHERE " +
-            "(:name IS NULL OR LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-            "(:company IS NULL OR LOWER(e.company) = LOWER(:company)) AND " +
-            "(:position IS NULL OR e.position = :position) AND " +
-            "(:minSalary IS NULL OR e.salary >= :minSalary) AND " +
-            "(:maxSalary IS NULL OR e.salary <= :maxSalary)")
-    Page<Employee> findEmployeesWithFilters(
-            @Param("name") String name,
-            @Param("company") String company,
-            @Param("position") Position position,
-            @Param("minSalary") Double minSalary,
-            @Param("maxSalary") Double maxSalary,
-            Pageable pageable);
+
 
     @Query("SELECT e FROM Employee e WHERE e.salary = (SELECT MAX(e2.salary) FROM Employee e2)")
     List<Employee> findHighestPaidEmployees();
@@ -192,6 +179,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
             @Param("maxSalary") Double maxSalary,
             @Param("departmentName") String departmentName,
             Pageable pageable);
+
+
+//    Page<EmployeeListView> findAll(@Nullable Specification<Employee> spec, Pageable pageable, Class<EmployeeListView> type);
 
 
 }
