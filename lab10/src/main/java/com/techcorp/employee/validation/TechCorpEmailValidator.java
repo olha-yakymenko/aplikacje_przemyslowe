@@ -13,9 +13,6 @@ public class TechCorpEmailValidator implements ConstraintValidator<TechCorpEmail
 
     @Override
     public boolean isValid(String email, ConstraintValidatorContext context) {
-        if (email == null || email.isEmpty()) {
-            return true;
-        }
         String normalizedEmail = email.toLowerCase().trim();
         return normalizedEmail.endsWith(REQUIRED_DOMAIN.toLowerCase());
     }

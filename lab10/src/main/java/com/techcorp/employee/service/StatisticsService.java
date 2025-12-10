@@ -64,13 +64,13 @@ public class StatisticsService {
         CompanyStatisticsDTO dto = employeeRepository.getCompanyStatisticsDTO(companyName)
                 .orElse(new CompanyStatisticsDTO(companyName, 0L, 0.0, 0.0, ""));
 
-        // Użyj poprawnego konstruktora z 5 parametrami
         return new CompanyStatistics(
                 dto.getCompanyName(),
                 dto.getEmployeeCount(),
                 dto.getAverageSalary(),
                 dto.getHighestSalary(),
-                dto.getTopEarnerName()  // To jest poprawny 5-ty parametr
+                dto.getTopEarnerName()
+
         );
     }
 
@@ -195,7 +195,6 @@ public class StatisticsService {
     }
 
     private Double calculateDeptAvgSalary(Long deptId) {
-        // Oblicz średnią pensję dla departamentu
         List<Employee> deptEmployees = employeeRepository.findByDepartmentId(deptId);
 
         if (deptEmployees.isEmpty()) {
