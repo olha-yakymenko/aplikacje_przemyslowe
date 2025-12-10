@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<employees>
+    <employee>
+        <firstName>John</firstName>
+        <lastName>Smith</lastName>
+        <email>jan@example.com</email>
+        <company>TechCorp</company>
+        <position>DEVELOPER</position>
+        <salary>5000.00</salary>
+    </employee>
+    <employee>
+        <firstName>Anna</firstName>
+        <lastName>Kowalski</lastName>
+        <email>anna.kowalski@businessinc.com</email>
+        <company>BusinessInc</company>
+        <position>MANAGER</position>
+        <salary>7500.50</salary>
+    </employee>
+    <employee>
+        <firstName>Michael</firstName>
+        <lastName>Johnson</lastName>
+        <email>michael.johnson@softworks.com</email>
+        <company>SoftWorks</company>
+        <position>ANALYST</position>
+        <salary>6000.00</salary>
+    </employee>
+    <employee>
+        <firstName>Sarah</firstName>
+        <lastName>Wilson</lastName>
+        <email>sarah.wilson@datasys.com</email>
+        <company>DataSys</company>
+        <position>DEVELOPER</position>
+        <salary>5500.75</salary>
+    </employee>
+    <employee>
+        <firstName>Robert</firstName>
+        <lastName>Brown</lastName>
+        <email>robert.brown@innovate.com</email>
+        <company>InnovateCorp</company>
+        <position>MANAGER</position>
+        <salary>8000.00</salary>
+    </employee>
+</employees>
