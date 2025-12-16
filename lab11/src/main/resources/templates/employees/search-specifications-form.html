@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Zaawansowane Wyszukiwanie (Specifications)</title>
+</head>
+<body>
+<h1>Zaawansowane Wyszukiwanie Pracowników</h1>
+
+<form th:action="@{/employees/search/specifications}" method="get">
+    <!-- Podstawowe kryteria -->
+    <div>
+        <label>Imię/Nazwisko:</label>
+        <input type="text" name="name" th:value="${searchName}">
+    </div>
+
+    <div>
+        <label>Firma:</label>
+        <input type="text" name="company" th:value="${searchCompany}">
+    </div>
+
+    <div>
+        <label>Email:</label>
+        <input type="text" name="email" th:value="${searchEmail}">
+    </div>
+
+    <!-- Status i Pozycja -->
+    <div>
+        <label>Pozycja:</label>
+        <select name="position">
+            <option value="">-- Wybierz --</option>
+            <option th:each="pos : ${positions}"
+                    th:value="${pos}"
+                    th:text="${pos}"
+                    th:selected="${searchPosition == pos}"></option>
+        </select>
+    </div>
+
+    <div>
+        <label>Status:</label>
+        <select name="status">
+            <option value="">-- Wybierz --</option>
+            <option th:each="stat : ${statuses}"
+                    th:value="${stat}"
+                    th:text="${stat}"
+                    th:selected="${searchStatus == stat}"></option>
+        </select>
+    </div>
+
+    <!-- Wynagrodzenie -->
+    <div>
+        <label>Min. wynagrodzenie:</label>
+        <input type="number" name="minSalary" step="0.01" th:value="${searchMinSalary}">
+    </div>
+
+    <div>
+        <label>Max. wynagrodzenie:</label>
+        <input type="number" name="maxSalary" step="0.01" th:value="${searchMaxSalary}">
+    </div>
+
+    <!-- Dział -->
+    <div>
+        <label>Dział:</label>
+        <input type="text" name="departmentName" th:value="${searchDepartmentName}">
+    </div>
+
+    <!-- Czy ma zdjęcie -->
+    <div>
+        <label>Ma zdjęcie:</label>
+        <select name="hasPhoto">
+            <option value="">-- Nie ma znaczenia --</option>
+            <option value="true" th:selected="${searchHasPhoto == true}">Tak</option>
+            <option value="false" th:selected="${searchHasPhoto == false}">Nie</option>
+        </select>
+    </div>
+
+    <button type="submit">Szukaj</button>
+</form>
+</body>
+</html>

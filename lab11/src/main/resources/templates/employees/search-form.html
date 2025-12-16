@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyszukaj Pracowników - System Zarządzania Pracownikami</title>
+<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+</head>
+<body>
+
+<div layout:fragment="content">
+
+    <!-- W search-form.html, dodaj przycisk: -->
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Wyszukaj</button>
+<!--        <a th:href="@{/employees/search/advanced}" class="btn btn-outline-secondary">-->
+<!--            Zaawansowane filtry-->
+<!--        </a>-->
+        <a th:href="@{/employees}" class="btn btn-secondary">Anuluj</a>
+    </div>
+
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">Wyszukaj Pracowników</h1>
+            <a th:href="@{/employees}" class="btn btn-secondary">Powrót do listy</a>
+        </div>
+
+        <div class="search-form-container">
+            <form th:action="@{/employees/search}" method="post" class="search-form">
+                <div class="form-group">
+                    <label for="company">Nazwa firmy:</label>
+                    <input type="text" id="company" name="company" class="form-control"
+                           placeholder="Wpisz nazwę firmy..." required>
+                </div>
+                <button type="submit" class="btn btn-primary">Wyszukaj</button>
+            </form>
+        </div>
+    </section>
+</div>
+
+</body>
+</html>
