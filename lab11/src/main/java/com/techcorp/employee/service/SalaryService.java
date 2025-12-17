@@ -37,7 +37,7 @@ public class SalaryService {
     @Transactional(
             isolation = Isolation.REPEATABLE_READ,
             rollbackFor = {InvalidSalaryException.class, RuntimeException.class},
-            timeout = 30
+            timeout = 30 //bez - ryzyko deadlock
     )
     public void updateSalary(Long employeeId, BigDecimal newSalary) throws InvalidSalaryException {
         logger.info("Starting salary update with PESSIMISTIC_WRITE lock for employee ID: {}", employeeId);

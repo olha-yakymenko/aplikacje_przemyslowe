@@ -38,7 +38,6 @@ public class SalaryFacade {
         for (Employee employee : employees) {
             try {
                 BigDecimal newSalary = calculateNewSalary(employee.getSalary(), percentageIncrease);
-                // Wywołanie przez wstrzyknięty serwis (proxy Springa) - transakcja działa
                 salaryService.updateSalary(employee.getId(), newSalary);
                 successCount++;
             } catch (InvalidSalaryException e) {
@@ -61,35 +60,6 @@ public class SalaryFacade {
         System.out.println(summary);
     }
 
-
-    // Metoda pomocnicza do przetwarzania wsadowego
-    private void processBatchRaise(List<Employee> employees, BigDecimal percentageIncrease, String groupName) {
-        auditService.logEvent("Starting raise for " + groupName + ": " + percentageIncrease + "%");
-
-        int successCount = 0;
-        int failureCount = 0;
-
-        for (Employee employee : employees) {
-            try {
-                BigDecimal newSalary = calculateNewSalary(employee.getSalary(), percentageIncrease);
-                // Wywołanie przez wstrzyknięty serwis - transakcja działa
-                salaryService.updateSalary(employee.getId(), newSalary);
-                successCount++;
-            } catch (InvalidSalaryException e) {
-                auditService.logEvent("Failed to update salary for " +
-                        employee.getName() + " in " + groupName + ": " + e.getMessage());
-                failureCount++;
-            }
-        }
-
-        String summary = String.format(
-                "Raise for %s completed. Success: %d, Failures: %d, Total: %d",
-                groupName, successCount, failureCount, employees.size()
-        );
-
-        auditService.logEvent(summary);
-        System.out.println(summary);
-    }
 
     private BigDecimal calculateNewSalary(BigDecimal currentSalary, BigDecimal percentageIncrease) {
         if (currentSalary == null || percentageIncrease == null) {
