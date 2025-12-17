@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -46,13 +47,13 @@ class EmployeeRepositoryTest {
 
         // Create employees
         Employee emp1 = new Employee("John Doe", "john@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE, itDepartment);
+                Position.PROGRAMMER, new BigDecimal(5000.0), EmploymentStatus.ACTIVE, itDepartment);
         Employee emp2 = new Employee("Jane Smith", "jane@techcorp.com", "TechCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE, hrDepartment);
+                Position.MANAGER, new BigDecimal(8000.0), EmploymentStatus.ACTIVE, hrDepartment);
         Employee emp3 = new Employee("Bob Johnson", "bob@techcorp.com", "OtherCorp",
-                Position.PROGRAMMER, 4500.0, EmploymentStatus.TERMINATED, null);
+                Position.PROGRAMMER, new BigDecimal(4500.0), EmploymentStatus.TERMINATED, null);
         Employee emp4 = new Employee("Alice Brown", "alice@techcorp.com", "TechCorp",
-                Position.PRESIDENT, 6000.0, EmploymentStatus.ACTIVE, null);
+                Position.PRESIDENT, new BigDecimal(6000.0), EmploymentStatus.ACTIVE, null);
 
         employeeRepository.saveAll(List.of(emp1, emp2, emp3, emp4));
 
@@ -100,7 +101,7 @@ class EmployeeRepositoryTest {
                     "emp" + paddedNumber + "@techcorp.com",
                     "TestCorp",
                     Position.PROGRAMMER,
-                    3000.0 + i * 100,
+                    BigDecimal.valueOf(3000 + i * 100),
                     EmploymentStatus.ACTIVE
             );
             employeeRepository.save(emp);
@@ -152,7 +153,7 @@ class EmployeeRepositoryTest {
                         () -> assertThat(employee.getEmail()).isEqualTo("john@techcorp.com"),
                         () -> assertThat(employee.getCompany()).isEqualTo("TechCorp"),
                         () -> assertThat(employee.getPosition()).isEqualTo(Position.PROGRAMMER),
-                        () -> assertThat(employee.getSalary()).isEqualTo(5000.0),
+                        () -> assertThat(employee.getSalary()).isEqualTo(new BigDecimal(5000)),
                         () -> assertThat(employee.getStatus()).isEqualTo(EmploymentStatus.ACTIVE),
                         () -> assertThat(employee.getDepartment()).isNotNull(),
                         () -> assertThat(employee.getDepartment().getName()).isEqualTo("IT")

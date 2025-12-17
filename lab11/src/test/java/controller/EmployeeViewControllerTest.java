@@ -22,6 +22,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.validation.BindingResult;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +63,7 @@ class EmployeeViewControllerTest {
                 "jan@techcorp.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                8000.0,
+                new BigDecimal(8000),
                 EmploymentStatus.ACTIVE
         );
         testEmployee.setId(1L);
@@ -73,7 +74,7 @@ class EmployeeViewControllerTest {
                 "jan@techcorp.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                8000.0,
+                new BigDecimal(8000),
                 EmploymentStatus.ACTIVE
         );
     }
@@ -263,7 +264,7 @@ class EmployeeViewControllerTest {
                 email,
                 "TechCorp",
                 Position.PROGRAMMER,
-                7000.0,
+                new BigDecimal(7000),
                 EmploymentStatus.ACTIVE
         );
         existingEmployee.setId(1L);

@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -128,9 +129,9 @@ class StatisticsServiceTest {
     void getEmployeesByCompany_WithValidCompany_ShouldReturnEmployees() {
         // Given
         Employee emp1 = createEmployee("Jan Kowalski", "jan@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal(5000), EmploymentStatus.ACTIVE);
         Employee emp2 = createEmployee("Anna Nowak", "anna@techcorp.com", "TechCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE);
+                Position.MANAGER, new BigDecimal(8000), EmploymentStatus.ACTIVE);
         List<Employee> employees = Arrays.asList(emp1, emp2);
 
         Page<Employee> page = new PageImpl<>(employees);
@@ -268,7 +269,7 @@ class StatisticsServiceTest {
     void getAdvancedStatistics_ShouldReturnAllAdvancedStats() {
         // Given
         Employee emp1 = createEmployee("Jan", "jan@tech.com", "TechCorp",
-                Position.PRESIDENT, 15000.0, EmploymentStatus.ACTIVE);
+                Position.PRESIDENT, new BigDecimal(15000), EmploymentStatus.ACTIVE);
         List<Employee> topEarners = Arrays.asList(emp1);
 
         Page<Employee> topEarnersPage = new PageImpl<>(topEarners);
@@ -277,7 +278,7 @@ class StatisticsServiceTest {
 
         List<Employee> belowAvg = Arrays.asList(
                 createEmployee("Anna", "anna@tech.com", "TechCorp",
-                        Position.PROGRAMMER, 3000.0, EmploymentStatus.ACTIVE)
+                        Position.PROGRAMMER, new BigDecimal(3000), EmploymentStatus.ACTIVE)
         );
         when(employeeRepository.findEmployeesBelowAverageSalary()).thenReturn(belowAvg);
 
@@ -311,7 +312,7 @@ class StatisticsServiceTest {
 
     // Pomocnicza metoda do tworzenia pracowników
     private Employee createEmployee(String name, String email, String company,
-                                    Position position, double salary, EmploymentStatus status) {
+                                    Position position, BigDecimal salary, EmploymentStatus status) {
         return new Employee(name, email, company, position, salary, status);
     }
 }

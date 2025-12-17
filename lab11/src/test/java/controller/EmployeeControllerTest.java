@@ -25,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
@@ -58,7 +59,7 @@ class EmployeeControllerTest {
                 "jan@techcorp.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                8000.0,
+                new BigDecimal(8000.0),
                 EmploymentStatus.ACTIVE
         );
         testEmployee.setId(1L); // Dodaj ID dla testów update
@@ -69,7 +70,7 @@ class EmployeeControllerTest {
                 "jan@techcorp.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                8000.0,
+                new BigDecimal(8000.0),
                 EmploymentStatus.ACTIVE
         );
     }
@@ -274,7 +275,7 @@ class EmployeeControllerTest {
         // Given
         EmployeeDTO mismatchedDTO = new EmployeeDTO(
                 "Jan", "Kowalski", "different@techcorp.com",
-                "TechCorp", Position.PROGRAMMER, 8000.0, EmploymentStatus.ACTIVE
+                "TechCorp", Position.PROGRAMMER, new BigDecimal(8000.0), EmploymentStatus.ACTIVE
         );
 
         // When & Then
@@ -295,7 +296,7 @@ class EmployeeControllerTest {
 
         EmployeeDTO dtoWithMatchingEmail = new EmployeeDTO(
                 "Jan", "Kowalski", "nonexistent@techcorp.com",
-                "TechCorp", Position.PROGRAMMER, 8000.0, EmploymentStatus.ACTIVE
+                "TechCorp", Position.PROGRAMMER, new BigDecimal(8000.0), EmploymentStatus.ACTIVE
         );
 
         // When & Then
@@ -367,7 +368,7 @@ class EmployeeControllerTest {
                 "jan@techcorp.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                8000.0,
+                new BigDecimal(8000.0),
                 EmploymentStatus.ON_LEAVE
         );
 

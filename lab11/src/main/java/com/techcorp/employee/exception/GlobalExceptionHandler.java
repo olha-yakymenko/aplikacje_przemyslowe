@@ -193,6 +193,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(InvalidSalaryException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSalary(
+            InvalidSalaryException ex, WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage(), // "Salary cannot be negative"
+                HttpStatus.BAD_REQUEST.value(),
+                request.getDescription(false)
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
 
 
 //

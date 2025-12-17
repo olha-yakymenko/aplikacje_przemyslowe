@@ -3,6 +3,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,11 +16,11 @@ class PositionTest {
     @DisplayName("Should return correct base salary for each position")
     void testGetBaseSalary() {
         assertAll("Base salaries validation",
-                () -> assertEquals(25000, Position.PRESIDENT.getBaseSalary(), 0.001),
-                () -> assertEquals(18000, Position.VICE_PRESIDENT.getBaseSalary(), 0.001),
-                () -> assertEquals(12000, Position.MANAGER.getBaseSalary(), 0.001),
-                () -> assertEquals(8000, Position.PROGRAMMER.getBaseSalary(), 0.001),
-                () -> assertEquals(3000, Position.INTERN.getBaseSalary(), 0.001)
+                () -> assertEquals(new BigDecimal(25000.0), Position.PRESIDENT.getBaseSalary(), String.valueOf(0.001)),
+                () -> assertEquals(new BigDecimal(18000), Position.VICE_PRESIDENT.getBaseSalary(), String.valueOf(0.001)),
+                () -> assertEquals(new BigDecimal(12000), Position.MANAGER.getBaseSalary(), String.valueOf(0.001)),
+                () -> assertEquals(new BigDecimal(8000), Position.PROGRAMMER.getBaseSalary(), String.valueOf(0.001)),
+                () -> assertEquals(new BigDecimal(3000), Position.INTERN.getBaseSalary(), String.valueOf(0.001))
         );
     }
 
@@ -38,7 +40,8 @@ class PositionTest {
     @EnumSource(Position.class)
     @DisplayName("Should have positive base salary for all positions")
     void testAllPositionsHavePositiveBaseSalary(Position position) {
-        assertTrue(position.getBaseSalary() > 0,
+        assertTrue(position.getBaseSalary().compareTo(BigDecimal.ZERO) > 0
+                ,
                 "Position " + position + " should have positive base salary");
     }
 
@@ -108,15 +111,28 @@ class PositionTest {
     @DisplayName("Should have base salaries in descending order by hierarchy")
     void testBaseSalariesCorrelateWithHierarchy() {
         assertAll("Salary hierarchy correlation",
-                () -> assertTrue(Position.PRESIDENT.getBaseSalary() > Position.VICE_PRESIDENT.getBaseSalary(),
-                        "PRESIDENT should have higher salary than VICE_PRESIDENT"),
-                () -> assertTrue(Position.VICE_PRESIDENT.getBaseSalary() > Position.MANAGER.getBaseSalary(),
-                        "VICE_PRESIDENT should have higher salary than MANAGER"),
-                () -> assertTrue(Position.MANAGER.getBaseSalary() > Position.PROGRAMMER.getBaseSalary(),
-                        "MANAGER should have higher salary than PROGRAMMER"),
-                () -> assertTrue(Position.PROGRAMMER.getBaseSalary() > Position.INTERN.getBaseSalary(),
-                        "PROGRAMMER should have higher salary than INTERN")
+                () -> assertTrue(
+                        Position.PRESIDENT.getBaseSalary()
+                                .compareTo(Position.VICE_PRESIDENT.getBaseSalary()) > 0,
+                        "PRESIDENT should have higher salary than VICE_PRESIDENT"
+                ),
+                () -> assertTrue(
+                        Position.VICE_PRESIDENT.getBaseSalary()
+                                .compareTo(Position.MANAGER.getBaseSalary()) > 0,
+                        "VICE_PRESIDENT should have higher salary than MANAGER"
+                ),
+                () -> assertTrue(
+                        Position.MANAGER.getBaseSalary()
+                                .compareTo(Position.PROGRAMMER.getBaseSalary()) > 0,
+                        "MANAGER should have higher salary than PROGRAMMER"
+                ),
+                () -> assertTrue(
+                        Position.PROGRAMMER.getBaseSalary()
+                                .compareTo(Position.INTERN.getBaseSalary()) > 0,
+                        "PROGRAMMER should have higher salary than INTERN"
+                )
         );
+
     }
 
     @Test

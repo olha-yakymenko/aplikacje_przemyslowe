@@ -7,18 +7,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 
 @Service
 public class SalaryService {
 
     private static final Logger logger = LoggerFactory.getLogger(SalaryService.class);
-    private static final double MAX_INCREASE_PERCENT = 100.0;
-    private static final double MAX_DECREASE_PERCENT = 50.0;
-    private static final double MAX_SALARY_LIMIT = 1_000_000.0;
-    private static final double MIN_SALARY = 0.0;
+    private static final BigDecimal MAX_INCREASE_PERCENT = new BigDecimal("100.0");
+    private static final BigDecimal MAX_DECREASE_PERCENT = new BigDecimal("50.0");
+    private static final BigDecimal MAX_SALARY_LIMIT = new BigDecimal("1000000.00");
+    private static final BigDecimal MIN_SALARY = BigDecimal.ZERO;
+    private static final BigDecimal ONE_HUNDRED = new BigDecimal("100.00");
 
     private final EmployeeRepository employeeRepository;
     private final AuditService auditService;
@@ -30,20 +34,37 @@ public class SalaryService {
     }
 
 
-    @Transactional(rollbackFor = {InvalidSalaryException.class, RuntimeException.class})
-    public void updateSalary(Long employeeId, Double newSalary) throws InvalidSalaryException {
-        logger.info("Starting salary update transaction for employee ID: {}", employeeId);
+    @Transactional(
+            isolation = Isolation.REPEATABLE_READ,
+            rollbackFor = {InvalidSalaryException.class, RuntimeException.class},
+            timeout = 30
+    )
+    public void updateSalary(Long employeeId, BigDecimal newSalary) throws InvalidSalaryException {
+        logger.info("Starting salary update with PESSIMISTIC_WRITE lock for employee ID: {}", employeeId);
 
         Employee employee = findEmployeeWithLock(employeeId);
-        Double oldSalary = employee.getSalary();
+        BigDecimal oldSalary = employee.getSalary();
 
-        logSalaryUpdateAttempt(employee, oldSalary, newSalary);
+        auditService.logSalaryUpdateAttempt(
+                employee.getId(),
+                employee.getName(),
+                oldSalary.doubleValue(),
+                newSalary.doubleValue()
+        );
+
         validateSalary(newSalary, oldSalary);
 
-        updateEmployeeSalary(employee, newSalary);
-        logSalaryUpdateSuccess(employee, oldSalary, newSalary);
+        employee.setSalary(newSalary);
+        employeeRepository.save(employee);
 
-        logger.info("Salary update transaction completed successfully for: {}", employee.getName());
+        auditService.logSalaryUpdateSuccess(
+                employee.getId(),
+                employee.getName(),
+                oldSalary.doubleValue(),
+                newSalary.doubleValue()
+        );
+
+        logger.info("Salary updated for: {} (ID: {})", employee.getName(), employeeId);
     }
 
 
@@ -59,82 +80,62 @@ public class SalaryService {
         return employeeOpt.get();
     }
 
-    private void logSalaryUpdateAttempt(Employee employee, Double oldSalary, Double newSalary) {
-        auditService.logSalaryUpdateAttempt(
-                employee.getId(),
-                employee.getName(),
-                oldSalary,
-                newSalary
-        );
-    }
 
-    private void updateEmployeeSalary(Employee employee, Double newSalary) {
-        employee.setSalary(newSalary);
-        logger.info("Salary updated in database for: {}", employee.getName());
-    }
+    private void validateSalary(BigDecimal newSalary, BigDecimal oldSalary) throws InvalidSalaryException {
+        if (newSalary == null || newSalary.compareTo(MIN_SALARY) < 0) {
+            throw new InvalidSalaryException("Salary must be a positive number");
+        }
 
-    private void logSalaryUpdateSuccess(Employee employee, Double oldSalary, Double newSalary) {
-        auditService.logSalaryUpdateSuccess(
-                employee.getId(),
-                employee.getName(),
-                oldSalary,
-                newSalary
-        );
-    }
+        if (newSalary.compareTo(MAX_SALARY_LIMIT) > 0) {
+            throw new InvalidSalaryException(
+                    String.format("Salary exceeds maximum allowed limit (%s)",
+                            MAX_SALARY_LIMIT.toPlainString())
+            );
+        }
 
-    private void validateSalary(Double newSalary, Double oldSalary) throws InvalidSalaryException {
-        validateSalaryNotNullAndPositive(newSalary);
-        validateSalaryLimit(newSalary);
         validateSalaryChangePercentage(oldSalary, newSalary);
     }
 
-    private void validateSalaryNotNullAndPositive(Double newSalary) throws InvalidSalaryException {
-        if (newSalary == null || newSalary < MIN_SALARY) {
-            throw new InvalidSalaryException("Salary must be a positive number");
-        }
-    }
 
-    private void validateSalaryLimit(Double newSalary) throws InvalidSalaryException {
-        if (newSalary > MAX_SALARY_LIMIT) {
-            throw new InvalidSalaryException(
-                    String.format("Salary exceeds maximum allowed limit (%.2f)", MAX_SALARY_LIMIT)
-            );
-        }
-    }
-
-    private void validateSalaryChangePercentage(Double oldSalary, Double newSalary)
+    private void validateSalaryChangePercentage(BigDecimal oldSalary, BigDecimal newSalary)
             throws InvalidSalaryException {
 
-        if (oldSalary == 0.0) {
-            if (newSalary > 0) {
+        if (oldSalary.compareTo(BigDecimal.ZERO) == 0) {
+            if (newSalary.compareTo(BigDecimal.ZERO) > 0) {
                 throw new InvalidSalaryException("Cannot calculate percentage increase from zero salary");
             }
             return;
         }
 
-        double changePercentage = calculatePercentageChange(oldSalary, newSalary);
+        BigDecimal changePercentage = calculatePercentageChange(oldSalary, newSalary);
 
-        if (changePercentage > MAX_INCREASE_PERCENT) {
+        if (changePercentage.compareTo(MAX_INCREASE_PERCENT) > 0) {
             throw new InvalidSalaryException(
-                    String.format("Salary increase too large (%.2f -> %.2f). Max %.0f%% increase allowed.",
-                            oldSalary, newSalary, MAX_INCREASE_PERCENT)
+                    String.format("Salary increase too large (%s -> %s). Max %s%% increase allowed.",
+                            oldSalary.setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                            newSalary.setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                            MAX_INCREASE_PERCENT.toPlainString())
             );
         }
 
-        if (changePercentage < -MAX_DECREASE_PERCENT) {
+        if (changePercentage.compareTo(MAX_DECREASE_PERCENT.negate()) < 0) {
             throw new InvalidSalaryException(
-                    String.format("Salary decrease too large (%.2f -> %.2f). Max %.0f%% decrease allowed.",
-                            oldSalary, newSalary, MAX_DECREASE_PERCENT)
+                    String.format("Salary decrease too large (%s -> %s). Max %s%% decrease allowed.",
+                            oldSalary.setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                            newSalary.setScale(2, RoundingMode.HALF_UP).toPlainString(),
+                            MAX_DECREASE_PERCENT.toPlainString())
             );
         }
     }
 
-    private double calculatePercentageChange(Double oldValue, Double newValue) {
-        if (oldValue == 0.0) {
-            return 0.0;
+
+    private BigDecimal calculatePercentageChange(BigDecimal oldValue, BigDecimal newValue) {
+        if (oldValue.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
         }
 
-        return ((newValue - oldValue) / oldValue) * 100.0;
+        return newValue.subtract(oldValue)
+                .divide(oldValue, 4, RoundingMode.HALF_UP)
+                .multiply(ONE_HUNDRED);
     }
-
 }

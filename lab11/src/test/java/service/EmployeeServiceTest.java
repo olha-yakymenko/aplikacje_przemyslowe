@@ -23,6 +23,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.core.io.Resource;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -56,7 +57,7 @@ class EmployeeServiceTest {
                 "jan@example.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                8000.0,
+                new BigDecimal(8.000),
                 EmploymentStatus.ACTIVE
         );
         testEmployee.setId(1L);
@@ -753,9 +754,9 @@ class EmployeeServiceTest {
     void getAvailableManagers_ShouldReturnManagers() {
         // Given
         Employee manager = new Employee("Manager", "manager@example.com", "TechCorp",
-                Position.MANAGER, 10000.0, EmploymentStatus.ACTIVE);
+                Position.MANAGER, new BigDecimal(10000.0), EmploymentStatus.ACTIVE);
         Employee programmer = new Employee("Programmer", "programmer@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal(5000.0), EmploymentStatus.ACTIVE);
 
         List<Employee> employees = Arrays.asList(manager, programmer);
         when(employeeRepository.findAll()).thenReturn(employees);
@@ -1051,8 +1052,8 @@ class EmployeeServiceTest {
     @Test
     void addAllEmployees_WithNewEmployees_ShouldSaveAll() {
         // Given
-        Employee emp1 = new Employee("Emp1", "emp1@example.com", "Company", Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        Employee emp2 = new Employee("Emp2", "emp2@example.com", "Company", Position.PROGRAMMER, 6000.0, EmploymentStatus.ACTIVE);
+        Employee emp1 = new Employee("Emp1", "emp1@example.com", "Company", Position.PROGRAMMER, new BigDecimal(5000.0), EmploymentStatus.ACTIVE);
+        Employee emp2 = new Employee("Emp2", "emp2@example.com", "Company", Position.PROGRAMMER, new BigDecimal(6000.0), EmploymentStatus.ACTIVE);
         List<Employee> employees = Arrays.asList(emp1, emp2);
 
         when(employeeRepository.existsByEmail("emp1@example.com")).thenReturn(false);
@@ -1075,10 +1076,10 @@ class EmployeeServiceTest {
     @Test
     void addAllEmployees_WithDuplicateEmails_ShouldUpdateExisting() {
         // Given
-        Employee existingEmp = new Employee("Old Emp", "emp@example.com", "Old Company", Position.PROGRAMMER, 4000.0, EmploymentStatus.ACTIVE);
+        Employee existingEmp = new Employee("Old Emp", "emp@example.com", "Old Company", Position.PROGRAMMER, new BigDecimal(4000.0), EmploymentStatus.ACTIVE);
         existingEmp.setId(1L);
 
-        Employee newEmp = new Employee("New Emp", "emp@example.com", "New Company", Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE);
+        Employee newEmp = new Employee("New Emp", "emp@example.com", "New Company", Position.MANAGER, new BigDecimal(8000.0), EmploymentStatus.ACTIVE);
 
         List<Employee> employees = Collections.singletonList(newEmp);
 
@@ -1166,7 +1167,7 @@ class EmployeeServiceTest {
         updatedEmployee.setName("Updated Name");
         updatedEmployee.setCompany("New Company");
         updatedEmployee.setPosition(Position.MANAGER);
-        updatedEmployee.setSalary(10000.0);
+        updatedEmployee.setSalary(new BigDecimal(10000.0));
         updatedEmployee.setStatus(EmploymentStatus.ON_LEAVE);
 
         when(employeeRepository.findById(1L)).thenReturn(Optional.of(existingEmployee));
@@ -1181,7 +1182,7 @@ class EmployeeServiceTest {
                 () -> assertEquals("Updated Name", existingEmployee.getName()),
                 () -> assertEquals("New Company", existingEmployee.getCompany()),
                 () -> assertEquals(Position.MANAGER, existingEmployee.getPosition()),
-                () -> assertEquals(10000.0, existingEmployee.getSalary(), 0.001),
+                () -> assertEquals(new BigDecimal(10000.0), existingEmployee.getSalary(), String.valueOf(0.001)),
                 () -> assertEquals(EmploymentStatus.ON_LEAVE, existingEmployee.getStatus()),
                 () -> assertNotNull(existingEmployee.getDepartment())
         );

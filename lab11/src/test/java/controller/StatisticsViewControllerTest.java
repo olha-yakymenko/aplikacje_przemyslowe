@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -104,9 +105,9 @@ public class StatisticsViewControllerTest {
         );
 
         Employee employee1 = new Employee("Anna Nowak", "anna@techcorp.com", "TechCorp",
-                Position.MANAGER, 10000.0, EmploymentStatus.ACTIVE);
+                Position.MANAGER, new BigDecimal(10000), EmploymentStatus.ACTIVE);
         Employee employee2 = new Employee("Jan Kowalski", "jan@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal(5000), EmploymentStatus.ACTIVE);
         List<Employee> companyEmployees = Arrays.asList(employee1, employee2);
 
         when(statisticsService.getCompanyStatisticsDTO(companyName)).thenReturn(statsDTO);

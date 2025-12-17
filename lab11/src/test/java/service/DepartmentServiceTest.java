@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,7 +53,7 @@ class DepartmentServiceTest {
                 "jan@example.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                8000.0,
+                new BigDecimal(8000),
                 EmploymentStatus.ACTIVE
         );
         testEmployee.setId(1L);
@@ -62,7 +63,7 @@ class DepartmentServiceTest {
                 "anna@example.com",
                 "TechCorp",
                 Position.MANAGER,
-                12000.0,
+                new BigDecimal(12000),
                 EmploymentStatus.ACTIVE
         );
         testManager.setId(2L);

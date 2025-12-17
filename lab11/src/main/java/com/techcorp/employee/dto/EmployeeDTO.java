@@ -159,6 +159,8 @@ import com.techcorp.employee.model.Position;
 import com.techcorp.employee.validation.TechCorpEmail;
 import jakarta.validation.constraints.*;
 
+import java.math.BigDecimal;
+
 public class EmployeeDTO {
     @NotBlank(message = "Imię jest wymagane")
     @Size(min = 2, max = 50, message = "Imię musi mieć od 2 do 50 znaków")
@@ -183,7 +185,7 @@ public class EmployeeDTO {
     @NotNull(message = "Wynagrodzenie jest wymagane")
     @DecimalMin(value = "0.0", inclusive = false, message = "Wynagrodzenie musi być większe niż 0")
     @Max(value = 1000000, message = "Wynagrodzenie nie może przekraczać 1,000,000")
-    private Double salary;
+    private BigDecimal salary;
 
     @NotNull(message = "Status jest wymagany")
     private EmploymentStatus status;
@@ -195,7 +197,7 @@ public class EmployeeDTO {
     public EmployeeDTO() {}
 
     public EmployeeDTO(String firstName, String lastName, String email, String company,
-                       Position position, Double salary, EmploymentStatus status) {
+                       Position position, BigDecimal salary, EmploymentStatus status) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -221,8 +223,8 @@ public class EmployeeDTO {
     public Position getPosition() { return position; }
     public void setPosition(Position position) { this.position = position; }
 
-    public Double getSalary() { return salary; }
-    public void setSalary(Double salary) { this.salary = salary; }
+    public BigDecimal getSalary() { return salary; }
+    public void setSalary(BigDecimal salary) { this.salary = salary; }
 
     public EmploymentStatus getStatus() { return status; }
     public void setStatus(EmploymentStatus status) { this.status = status; }

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,7 +52,7 @@ class EmployeeServicePaginationTest {
                     "emp" + i + "@techcorp.com",
                     company,
                     position,
-                    3000.0 + i * 100,
+                    BigDecimal.valueOf(3000 + i * 100),
                     status
             );
             employeeRepository.save(emp);

@@ -75,7 +75,6 @@ public class ApiService {
                 JsonObject company = user.getAsJsonObject("company");
                 String companyName = company.get("name").getAsString();
 
-                // Tworzenie pracownika z domyślnym stanowiskiem PROGRAMMER
                 Employee employee = new Employee(
                         fullName,
                         email,

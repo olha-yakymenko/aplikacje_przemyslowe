@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 
@@ -82,7 +83,7 @@ class EmployeeRepositorySpecificationTest {
         employee.setCompany(company);
         employee.setPosition(position);
         employee.setStatus(status);
-        employee.setSalary(salary);
+        employee.setSalary(BigDecimal.valueOf(salary));
         employee.setDepartment(department);
         return employee;
     }

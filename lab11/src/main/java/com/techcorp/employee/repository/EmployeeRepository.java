@@ -242,7 +242,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Employee e WHERE e.id = :id")
     Optional<Employee> findByIdWithLock(@Param("id") Long id);
-
 }
 
 

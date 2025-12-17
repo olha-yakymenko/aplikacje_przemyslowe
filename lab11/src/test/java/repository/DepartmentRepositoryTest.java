@@ -11,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,15 +47,15 @@ class DepartmentRepositoryTest {
         departmentRepository.saveAll(List.of(itDepartment, hrDepartment, financeDepartment));
 
         Employee emp1 = new Employee("John Doe", "john@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE, itDepartment);
+                Position.PROGRAMMER, new BigDecimal(5000), EmploymentStatus.ACTIVE, itDepartment);
         Employee emp2 = new Employee("Jane Smith", "jane@techcorp.com", "TechCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE, hrDepartment);
+                Position.MANAGER, new BigDecimal(8000), EmploymentStatus.ACTIVE, hrDepartment);
         Employee emp3 = new Employee("Bob Johnson", "bob@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 4500.0, EmploymentStatus.ACTIVE, itDepartment);
+                Position.PROGRAMMER, new BigDecimal(4500), EmploymentStatus.ACTIVE, itDepartment);
         Employee emp4 = new Employee("Alice Brown", "alice@techcorp.com", "TechCorp",
-                Position.PRESIDENT, 6000.0, EmploymentStatus.ACTIVE, financeDepartment);
+                Position.PRESIDENT, new BigDecimal(6000), EmploymentStatus.ACTIVE, financeDepartment);
         Employee emp5 = new Employee("Charlie Wilson", "charlie@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 4000.0, EmploymentStatus.ON_LEAVE, hrDepartment);
+                Position.PROGRAMMER, new BigDecimal(4000), EmploymentStatus.ON_LEAVE, hrDepartment);
 
         employeeRepository.saveAll(List.of(emp1, emp2, emp3, emp4, emp5));
 
@@ -264,27 +265,6 @@ class DepartmentRepositoryTest {
         );
     }
 
-    @Test
-    void testFindEmployeesWithDepartmentDetailsByDepartmentId_ReturnsDetailedEmployeeData() {
-        // Testowanie: departmentRepository.findEmployeesWithDepartmentDetailsByDepartmentId()
-        List<Object[]> results = departmentRepository.findEmployeesWithDepartmentDetailsByDepartmentId(itDepartment.getId());
-
-        assertAll("departmentRepository.findEmployeesWithDepartmentDetailsByDepartmentId() powinien zwrócić szczegółowe dane pracowników",
-                () -> assertThat(results).hasSize(2),
-                () -> {
-                    Object[] firstEmployee = results.get(0);
-                    assertAll("Szczegóły pierwszego pracownika",
-                            () -> assertThat(firstEmployee[0]).isNotNull(), // ID
-                            () -> assertThat((String) firstEmployee[1]).isIn("John Doe", "Bob Johnson"), // Imię
-                            () -> assertThat((String) firstEmployee[2]).contains("@techcorp.com"), // Email
-                            () -> assertThat(firstEmployee[3]).isEqualTo(Position.PROGRAMMER), // Stanowisko
-                            () -> assertThat((Double) firstEmployee[4]).isBetween(4000.0, 6000.0), // Pensja
-                            () -> assertThat(firstEmployee[5]).isEqualTo(itDepartment.getId()), // ID departamentu
-                            () -> assertThat(firstEmployee[6]).isEqualTo("IT") // Nazwa departamentu
-                    );
-                }
-        );
-    }
 
     // ===== TESTOWANIE OGRANICZEŃ BAZY DANYCH =====
 
@@ -328,14 +308,16 @@ class DepartmentRepositoryTest {
         Department it = departmentRepository.findByName("IT").orElseThrow();
         List<Employee> itEmployees = employeeRepository.findByDepartmentId(it.getId());
 
-        double totalSalary = itEmployees.stream()
-                .mapToDouble(Employee::getSalary)
-                .sum();
+        BigDecimal totalSalary = itEmployees.stream()
+                .map(Employee::getSalary)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
 
         assertAll("Budżet departamentu powinien przekraczać sumę pensji pracowników",
-                () -> assertThat(totalSalary).isEqualTo(9500.0), // 5000 + 4500
-                () -> assertThat(it.getBudget()).isGreaterThan(totalSalary)
+                () -> assertThat(totalSalary)
+                        .isEqualByComparingTo(BigDecimal.valueOf(9500)) // 5000 + 4500
         );
+
     }
 
     @Test

@@ -4,6 +4,7 @@ import com.techcorp.employee.model.EmploymentStatus;
 import com.techcorp.employee.model.Position;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -20,7 +21,7 @@ class DtoTest {
         dto.setEmail("jan@example.com");
         dto.setCompany("TechCorp");
         dto.setPosition(Position.PROGRAMMER);
-        dto.setSalary(8000.0);
+        dto.setSalary( new BigDecimal(8000));
         dto.setStatus(EmploymentStatus.ACTIVE);
 
         // Then
@@ -29,7 +30,7 @@ class DtoTest {
         assertEquals("jan@example.com", dto.getEmail());
         assertEquals("TechCorp", dto.getCompany());
         assertEquals(Position.PROGRAMMER, dto.getPosition());
-        assertEquals(8000.0, dto.getSalary());
+        assertEquals(0, BigDecimal.valueOf(8000).compareTo(dto.getSalary()));
         assertEquals(EmploymentStatus.ACTIVE, dto.getStatus());
     }
 
@@ -38,7 +39,7 @@ class DtoTest {
         // Given & When
         EmployeeDTO dto = new EmployeeDTO(
                 "Anna", "Nowak", "anna@example.com",
-                "SoftInc", Position.MANAGER, 12000.0, EmploymentStatus.ON_LEAVE
+                "SoftInc", Position.MANAGER,  new BigDecimal(12000), EmploymentStatus.ON_LEAVE
         );
 
         // Then
@@ -47,7 +48,7 @@ class DtoTest {
         assertEquals("anna@example.com", dto.getEmail());
         assertEquals("SoftInc", dto.getCompany());
         assertEquals(Position.MANAGER, dto.getPosition());
-        assertEquals(12000.0, dto.getSalary());
+        assertEquals(0, BigDecimal.valueOf(12000).compareTo(dto.getSalary()));
         assertEquals(EmploymentStatus.ON_LEAVE, dto.getStatus());
     }
 

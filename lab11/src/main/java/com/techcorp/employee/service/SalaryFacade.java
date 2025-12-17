@@ -6,6 +6,7 @@ import com.techcorp.employee.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -26,7 +27,7 @@ public class SalaryFacade {
     }
 
 
-    public void applyCompanyWideRaise(String company, Double percentageIncrease) {
+    public void applyCompanyWideRaise(String company, BigDecimal percentageIncrease) {
         System.out.println("Starting company-wide raise for: " + company);
         auditService.logEvent("Starting company-wide raise for " + company + ": " + percentageIncrease + "%");
 
@@ -36,7 +37,7 @@ public class SalaryFacade {
 
         for (Employee employee : employees) {
             try {
-                Double newSalary = calculateNewSalary(employee.getSalary(), percentageIncrease);
+                BigDecimal newSalary = calculateNewSalary(employee.getSalary(), percentageIncrease);
                 // Wywołanie przez wstrzyknięty serwis (proxy Springa) - transakcja działa
                 salaryService.updateSalary(employee.getId(), newSalary);
                 successCount++;
@@ -60,33 +61,9 @@ public class SalaryFacade {
         System.out.println(summary);
     }
 
-    /**
-     * Podwyżka dla pracowników z określonego stanowiska.
-     */
-    public void applyPositionBasedRaise(String positionName, Double percentageIncrease) {
-        System.out.println("Starting position-based raise for: " + positionName);
-
-        // Pobranie wszystkich pracowników z danego stanowiska
-        List<Employee> allEmployees = employeeRepository.findAll();
-        List<Employee> filteredEmployees = allEmployees.stream()
-                .filter(e -> e.getPosition().name().equalsIgnoreCase(positionName))
-                .toList();
-
-        processBatchRaise(filteredEmployees, percentageIncrease, "position " + positionName);
-    }
-
-    /**
-     * Podwyżka dla pracowników bez departamentu.
-     */
-    public void applyRaiseForEmployeesWithoutDepartment(Double percentageIncrease) {
-        System.out.println("Starting raise for employees without department");
-
-        List<Employee> employees = employeeRepository.findByDepartmentIsNull();
-        processBatchRaise(employees, percentageIncrease, "employees without department");
-    }
 
     // Metoda pomocnicza do przetwarzania wsadowego
-    private void processBatchRaise(List<Employee> employees, Double percentageIncrease, String groupName) {
+    private void processBatchRaise(List<Employee> employees, BigDecimal percentageIncrease, String groupName) {
         auditService.logEvent("Starting raise for " + groupName + ": " + percentageIncrease + "%");
 
         int successCount = 0;
@@ -94,7 +71,7 @@ public class SalaryFacade {
 
         for (Employee employee : employees) {
             try {
-                Double newSalary = calculateNewSalary(employee.getSalary(), percentageIncrease);
+                BigDecimal newSalary = calculateNewSalary(employee.getSalary(), percentageIncrease);
                 // Wywołanie przez wstrzyknięty serwis - transakcja działa
                 salaryService.updateSalary(employee.getId(), newSalary);
                 successCount++;
@@ -114,7 +91,14 @@ public class SalaryFacade {
         System.out.println(summary);
     }
 
-    private Double calculateNewSalary(Double currentSalary, Double percentageIncrease) {
-        return currentSalary * (1 + percentageIncrease / 100);
+    private BigDecimal calculateNewSalary(BigDecimal currentSalary, BigDecimal percentageIncrease) {
+        if (currentSalary == null || percentageIncrease == null) {
+            throw new IllegalArgumentException("Arguments cannot be null");
+        }
+        BigDecimal multiplier = BigDecimal.ONE
+                .add(percentageIncrease.divide(new BigDecimal("100"), 4, java.math.RoundingMode.HALF_UP));
+
+        return currentSalary.multiply(multiplier)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 }

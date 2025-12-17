@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,17 +196,22 @@ public class StatisticsService {
                 ));
     }
 
-    private Double calculateDeptAvgSalary(Long deptId) {
+    private BigDecimal calculateDeptAvgSalary(Long deptId) {
         List<Employee> deptEmployees = employeeRepository.findByDepartmentId(deptId);
 
         if (deptEmployees.isEmpty()) {
-            return 0.0;
+            return BigDecimal.ZERO;
         }
 
-        return deptEmployees.stream()
-                .mapToDouble(Employee::getSalary)
-                .average()
-                .orElse(0.0);
+        BigDecimal totalSalary = deptEmployees.stream()
+                .map(Employee::getSalary)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return totalSalary.divide(
+                new BigDecimal(deptEmployees.size()),
+                2,
+                RoundingMode.HALF_UP
+        );
     }
 
     // ===== METODY POMOCNICZE DLA NULL SAFETY =====

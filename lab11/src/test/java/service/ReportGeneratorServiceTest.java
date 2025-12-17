@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -52,8 +53,8 @@ class ReportGeneratorServiceTest {
         // Given
         String company = "TechCorp";
         List<Employee> employees = Arrays.asList(
-                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, 8000.0),
-                createEmployee("Jane Smith", "jane@techcorp.com", "TechCorp", Position.MANAGER, 12000.0)
+                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, new BigDecimal(8000)),
+                createEmployee("Jane Smith", "jane@techcorp.com", "TechCorp", Position.MANAGER, new BigDecimal(12000))
         );
 
         when(employeeService.getEmployeesByCompany(company)).thenReturn(employees);
@@ -90,8 +91,8 @@ class ReportGeneratorServiceTest {
     void generateCsvReport_WithoutCompany_ShouldGenerateAllEmployeesReport() throws Exception {
         // Given
         List<Employee> employees = Arrays.asList(
-                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, 8000.0),
-                createEmployee("Bob Wilson", "bob@other.com", "OtherCorp", Position.INTERN, 3000.0)
+                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, new BigDecimal(8000)),
+                createEmployee("Bob Wilson", "bob@other.com", "OtherCorp", Position.INTERN, new BigDecimal(3000))
         );
 
         when(employeeService.getAllEmployees()).thenReturn(employees);
@@ -126,7 +127,7 @@ class ReportGeneratorServiceTest {
     void generateCsvReport_WithEmptyCompany_ShouldGenerateAllEmployeesReport() throws Exception {
         // Given
         List<Employee> employees = Arrays.asList(
-                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, 8000.0)
+                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, new BigDecimal(8000))
         );
 
         when(employeeService.getAllEmployees()).thenReturn(employees);
@@ -152,7 +153,7 @@ class ReportGeneratorServiceTest {
     void generateCsvReport_WithWhitespaceCompany_ShouldGenerateAllEmployeesReport() throws Exception {
         // Given
         List<Employee> employees = Arrays.asList(
-                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.VICE_PRESIDENT, 18000.0)
+                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.VICE_PRESIDENT, new BigDecimal(18000))
         );
 
         when(employeeService.getAllEmployees()).thenReturn(employees);
@@ -179,7 +180,7 @@ class ReportGeneratorServiceTest {
         // Given
         String company = "Tech Corp & Partners";
         List<Employee> employees = Arrays.asList(
-                createEmployee("John Doe", "john@techcorp.com", company, Position.MANAGER, 12000.0)
+                createEmployee("John Doe", "john@techcorp.com", company, Position.MANAGER, new BigDecimal(12000))
         );
 
         when(employeeService.getEmployeesByCompany(company)).thenReturn(employees);
@@ -265,11 +266,11 @@ class ReportGeneratorServiceTest {
         // Given
         String company = "MixedCorp";
         List<Employee> employees = Arrays.asList(
-                createEmployee("President CEO", "ceo@company.com", company, Position.PRESIDENT, 25000.0),
-                createEmployee("Vice President", "vp@company.com", company, Position.VICE_PRESIDENT, 18000.0),
-                createEmployee("Team Manager", "manager@company.com", company, Position.MANAGER, 12000.0),
-                createEmployee("Senior Programmer", "dev@company.com", company, Position.PROGRAMMER, 10000.0),
-                createEmployee("Summer Intern", "intern@company.com", company, Position.INTERN, 3000.0)
+                createEmployee("President CEO", "ceo@company.com", company, Position.PRESIDENT, new BigDecimal(25000)),
+                createEmployee("Vice President", "vp@company.com", company, Position.VICE_PRESIDENT, new BigDecimal(18000)),
+                createEmployee("Team Manager", "manager@company.com", company, Position.MANAGER, new BigDecimal(12000)),
+                createEmployee("Senior Programmer", "dev@company.com", company, Position.PROGRAMMER, new BigDecimal(10000)),
+                createEmployee("Summer Intern", "intern@company.com", company, Position.INTERN, new BigDecimal(3000))
         );
 
         when(employeeService.getEmployeesByCompany(company)).thenReturn(employees);
@@ -311,7 +312,7 @@ class ReportGeneratorServiceTest {
     void convertToCsv_ShouldFormatEmployeeDataCorrectly() {
         // Given
         ReportGeneratorService service = new ReportGeneratorService();
-        Employee employee = createEmployee("John The Boss Doe", "john.doe@company.com", "Test Corp", Position.PRESIDENT, 25000.0);
+        Employee employee = createEmployee("John The Boss Doe", "john.doe@company.com", "Test Corp", Position.PRESIDENT, new BigDecimal(25000));
 
         // When
         String csvLine = service.convertToCsv(employee);
@@ -330,7 +331,7 @@ class ReportGeneratorServiceTest {
         // Given
         String company = "TechCorp";
         List<Employee> employees = Arrays.asList(
-                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, 8000.0)
+                createEmployee("John Doe", "john@techcorp.com", "TechCorp", Position.PROGRAMMER, new BigDecimal(8000))
         );
 
         when(employeeService.getEmployeesByCompany(company)).thenReturn(employees);
@@ -342,7 +343,7 @@ class ReportGeneratorServiceTest {
         }, "Should throw exception for invalid path");
     }
 
-    private Employee createEmployee(String name, String email, String company, Position position, double salary) {
+    private Employee createEmployee(String name, String email, String company, Position position, BigDecimal salary) {
         try {
             Employee employee = new Employee(name, email, company, position, salary, EmploymentStatus.ACTIVE);
             employee.setPhotoFileName("photo.jpg");

@@ -506,6 +506,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -692,7 +693,7 @@ public class DepartmentViewControllerTest {
         // Given
         Department department = createDepartment(1L, "IT", "Warszawa", "Dział technologii", "manager@techcorp.com", 100000.0);
         List<Employee> availableEmployees = Arrays.asList(
-                new Employee("Jan Kowalski", "jan@techcorp.com", "TechCorp", Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE)
+                new Employee("Jan Kowalski", "jan@techcorp.com", "TechCorp", Position.PROGRAMMER, new BigDecimal(5000.0), EmploymentStatus.ACTIVE)
         );
 
         when(departmentService.getDepartmentById(1L)).thenReturn(Optional.of(department));
@@ -813,7 +814,7 @@ public class DepartmentViewControllerTest {
     public void testShowAddForm() throws Exception {
         // Given
         Employee manager = new Employee("Jan Manager", "manager@techcorp.com", "TechCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE);
+                Position.MANAGER, new BigDecimal(8000.0), EmploymentStatus.ACTIVE);
         List<Employee> managers = Arrays.asList(manager);
 
         when(employeeService.getAvailableManagers()).thenReturn(managers);
@@ -933,7 +934,7 @@ public class DepartmentViewControllerTest {
         // Given
         Department department = createDepartment(1L, "IT", "Warszawa", "Dział technologii", "manager@techcorp.com", 100000.0);
         Employee manager = new Employee("Jan Manager", "manager@techcorp.com", "TechCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE);
+                Position.MANAGER, new BigDecimal(8000.0), EmploymentStatus.ACTIVE);
         List<Employee> managers = Arrays.asList(manager);
 
         when(departmentService.getDepartmentById(1L)).thenReturn(Optional.of(department));
@@ -1059,9 +1060,9 @@ public class DepartmentViewControllerTest {
         // Given
         Department department = createDepartment(1L, "IT", "Warszawa", "Dział technologii", "manager@techcorp.com", 100000.0);
         Employee manager = new Employee("Jan Manager", "manager@techcorp.com", "TechCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ACTIVE);
+                Position.MANAGER, new BigDecimal(8000.0), EmploymentStatus.ACTIVE);
         Employee employee = new Employee("Jan Developer", "dev@techcorp.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal(5000.0), EmploymentStatus.ACTIVE);
         // Ustawienie departmentu dla pracownika
         employee.setDepartment(department);
 

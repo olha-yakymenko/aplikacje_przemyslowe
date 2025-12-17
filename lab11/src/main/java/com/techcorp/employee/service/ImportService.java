@@ -30,6 +30,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -214,7 +216,7 @@ Employee parseEmployeeFromCsv(
         validateEmailFormat(email, lineNumber);
 
         Position position = parsePosition(positionStr, lineNumber);
-        double salary = parseSalary(salaryStr, lineNumber);
+        BigDecimal salary = parseSalary(salaryStr, lineNumber);
 
         // Tworzymy pełne imię i nazwisko
         String fullName = firstName + " " + lastName;
@@ -324,7 +326,7 @@ Employee parseEmployeeFromCsv(
         validateEmailFormat(email, elementNumber);
 
         Position position = parsePosition(positionStr, elementNumber);
-        double salary = parseSalary(salaryStr, elementNumber);
+        BigDecimal salary = parseSalary(salaryStr, elementNumber);
 
         // Tworzymy pełne imię i nazwisko
         String fullName = firstName + " " + lastName;
@@ -378,22 +380,42 @@ Employee parseEmployeeFromCsv(
         }
     }
 
-    private double parseSalary(String salaryStr, int lineNumber) throws InvalidDataException {
+    private BigDecimal parseSalary(String salaryStr, int lineNumber) throws InvalidDataException {
         if (salaryStr == null || salaryStr.trim().isEmpty()) {
-            throw new InvalidDataException("Salary cannot be empty");
+            throw new InvalidDataException("Wynagrodzenie nie może być puste (linia " + lineNumber + ")");
         }
 
+        String trimmedSalary = salaryStr.trim();
+
         try {
-            double salary = Double.parseDouble(salaryStr.trim());
-            if (salary < 0) {
-                throw new InvalidDataException("Salary cannot be negative: " + salary);
+            BigDecimal salary = new BigDecimal(trimmedSalary);
+
+            if (salary.compareTo(BigDecimal.ZERO) < 0) {
+                throw new InvalidDataException(
+                        "Wynagrodzenie nie może być ujemne: " + salary.toPlainString() + " (linia " + lineNumber + ")"
+                );
             }
-            if (salary > 1_000_000) {
-                throw new InvalidDataException("Salary seems unrealistic: " + salary);
+
+            BigDecimal MAX_SALARY = new BigDecimal("1000000.00");
+            if (salary.compareTo(MAX_SALARY) > 0) {
+                throw new InvalidDataException(
+                        "Wynagrodzenie wydaje się nierealistyczne: " + salary.toPlainString() +
+                                ". Maksymalna wartość: " + MAX_SALARY.toPlainString() + " (linia " + lineNumber + ")"
+                );
             }
-            return salary;
+
+            return salary.setScale(2, RoundingMode.HALF_UP);
+
         } catch (NumberFormatException e) {
-            throw new InvalidDataException("Invalid salary format: '" + salaryStr + "'. Must be a number.");
+            throw new InvalidDataException(
+                    "Nieprawidłowy format wynagrodzenia: '" + trimmedSalary +
+                            "'. Musi być liczbą (linia " + lineNumber + ")"
+            );
+        } catch (ArithmeticException e) {
+            throw new InvalidDataException(
+                    "Nieprawidłowa wartość wynagrodzenia: '" + trimmedSalary +
+                            "' (linia " + lineNumber + ")"
+            );
         }
     }
 

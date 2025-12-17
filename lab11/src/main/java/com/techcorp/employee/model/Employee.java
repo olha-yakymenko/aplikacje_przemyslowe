@@ -3,6 +3,8 @@ package com.techcorp.employee.model;
 import com.techcorp.employee.validation.TechCorpEmail;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+
+import java.math.BigDecimal;
 import java.util.Objects;
 
 @Entity
@@ -34,7 +36,7 @@ public class Employee {
 
     @Min(value = 0, message = "Wynagrodzenie musi być liczbą dodatnią")
     @Column(nullable = false)
-    private double salary;
+    private BigDecimal salary;
 
     @NotNull(message = "Status jest wymagany")
     @Enumerated(EnumType.STRING)
@@ -51,7 +53,7 @@ public class Employee {
     // Konstruktory
     public Employee() {}
 
-    public Employee(String name, String email, String company, Position position, double salary, EmploymentStatus status) {
+    public Employee(String name, String email, String company, Position position, BigDecimal salary, EmploymentStatus status) {
         this.name = name.trim();
         this.email = email.trim().toLowerCase();
         this.company = company.trim();
@@ -60,7 +62,7 @@ public class Employee {
         this.status = status;
     }
 
-    public Employee(String name, String email, String company, Position position, double salary, EmploymentStatus status, Department department) {
+    public Employee(String name, String email, String company, Position position, BigDecimal salary, EmploymentStatus status, Department department) {
         this.name = name.trim();
         this.email = email.trim().toLowerCase();
         this.company = company.trim();
@@ -70,7 +72,7 @@ public class Employee {
         this.department = department;
     }
 
-    public Employee(String name, String email, String company, Position position, double salary) {
+    public Employee(String name, String email, String company, Position position, BigDecimal salary) {
         this.name = name.trim();
         this.email = email.trim().toLowerCase();
         this.company = company.trim();
@@ -78,6 +80,9 @@ public class Employee {
         this.salary = salary;
         this.status = EmploymentStatus.ACTIVE;
     }
+//
+//    public Employee(String name, String email, String company, Position position, double salary, EmploymentStatus employmentStatus) {
+//    }
 
 
 //    public Employee(String name, String email, String company, String position, double)
@@ -118,9 +123,9 @@ public class Employee {
         this.position = position;
     }
 
-    public double getSalary() { return salary; }
-    public void setSalary(double salary) {
-        if (salary < 0) {
+    public BigDecimal getSalary() { return salary; }
+    public void setSalary(BigDecimal salary) {
+        if (salary.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Salary cannot be negative");
         }
         this.salary = salary;

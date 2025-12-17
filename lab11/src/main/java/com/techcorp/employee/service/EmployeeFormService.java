@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -75,11 +76,12 @@ public class EmployeeFormService {
         return dto;
     }
 
-    public FormValidationResult validateEmployee(
-            @Valid EmployeeDTO employeeDTO) {
+    public FormValidationResult validateEmployee(@Valid EmployeeDTO employeeDTO) {
         FormValidationResult result = new FormValidationResult();
 
-        if (employeeDTO.getSalary() == null || employeeDTO.getSalary() <= 0) {
+        if (employeeDTO.getSalary() == null) {
+            result.addError("salary", "Wynagrodzenie jest wymagane");
+        } else if (employeeDTO.getSalary().compareTo(BigDecimal.ZERO) <= 0) {
             result.addError("salary", "Wynagrodzenie musi być większe niż 0");
         }
 

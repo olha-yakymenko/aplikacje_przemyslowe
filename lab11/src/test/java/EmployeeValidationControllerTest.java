@@ -12,6 +12,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
+
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -79,7 +81,7 @@ class EmployeeValidationControllerTest {
         invalidEmployee.setEmail("jan.kowalski@gmail.com");
         invalidEmployee.setCompany("TechCorp");
         invalidEmployee.setPosition(Position.PROGRAMMER);
-        invalidEmployee.setSalary(5000.0);
+        invalidEmployee.setSalary(new BigDecimal(5000));
         invalidEmployee.setStatus(EmploymentStatus.ACTIVE);
 
         mockMvc.perform(post("/api/employees")
@@ -98,7 +100,7 @@ class EmployeeValidationControllerTest {
         invalidEmployee.setEmail("test@techcorp.com");
         invalidEmployee.setCompany("A");
         invalidEmployee.setPosition(Position.PROGRAMMER);
-        invalidEmployee.setSalary(5000.0);
+        invalidEmployee.setSalary(new BigDecimal(5000));
         invalidEmployee.setStatus(EmploymentStatus.ACTIVE);
 
         mockMvc.perform(post("/api/employees")
@@ -119,7 +121,7 @@ class EmployeeValidationControllerTest {
         invalidEmployee.setEmail("jan.kowalski@techcorp.com");
         invalidEmployee.setCompany("TechCorp");
         invalidEmployee.setPosition(Position.PROGRAMMER);
-        invalidEmployee.setSalary(-100.0);
+        invalidEmployee.setSalary(new BigDecimal(-100));
         invalidEmployee.setStatus(EmploymentStatus.ACTIVE);
 
         mockMvc.perform(post("/api/employees")
@@ -128,14 +130,14 @@ class EmployeeValidationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.salary", is("Wynagrodzenie musi być większe niż 0")));
 
-        invalidEmployee.setSalary(2_000_000.0);
+        invalidEmployee.setSalary(new BigDecimal(2000000));
         mockMvc.perform(post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidEmployee)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.salary", is("Wynagrodzenie nie może przekraczać 1,000,000")));
 
-        invalidEmployee.setSalary(0.0);
+        invalidEmployee.setSalary(new BigDecimal(0));
         mockMvc.perform(post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidEmployee)))
@@ -154,7 +156,7 @@ class EmployeeValidationControllerTest {
         invalidEmployee.setEmail(email);
         invalidEmployee.setCompany("TechCorp");
         invalidEmployee.setPosition(Position.PROGRAMMER);
-        invalidEmployee.setSalary(-100.0);
+        invalidEmployee.setSalary(new BigDecimal(-100));
         invalidEmployee.setStatus(EmploymentStatus.ACTIVE);
 
         mockMvc.perform(put("/api/employees/{email}", email)
@@ -177,7 +179,7 @@ class EmployeeValidationControllerTest {
         invalidEmployee.setEmail("bad-email-format");
         invalidEmployee.setCompany("TechCorp");
         invalidEmployee.setPosition(Position.PROGRAMMER);
-        invalidEmployee.setSalary(5000.0);
+        invalidEmployee.setSalary(new BigDecimal(5000));
         invalidEmployee.setStatus(EmploymentStatus.ACTIVE);
 
         mockMvc.perform(post("/api/employees")

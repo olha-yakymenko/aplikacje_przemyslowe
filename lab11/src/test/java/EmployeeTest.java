@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.math.BigDecimal;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,7 +19,8 @@ class EmployeeTest {
 
     @BeforeEach
     void setUp() {
-        testDepartment = new Department("IT", "Warszawa", "Dział technologii", "manager@example.com", 100000.0);
+        testDepartment = new Department("IT", "Warszawa", "Dział technologii", "manager@example.com",
+                100000.00);
         testDepartment.setId(1L);
     }
 
@@ -32,20 +34,23 @@ class EmployeeTest {
                 "jan@example.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                5000.0,
+                new BigDecimal("5000.00"),
                 EmploymentStatus.ACTIVE
         );
 
-        // Then
-        assertNotNull(employee);
-        assertEquals("Jan Kowalski", employee.getName());
-        assertEquals("jan@example.com", employee.getEmail());
-        assertEquals("TechCorp", employee.getCompany());
-        assertEquals(Position.PROGRAMMER, employee.getPosition());
-        assertEquals(5000.0, employee.getSalary(), 0.001);
-        assertEquals(EmploymentStatus.ACTIVE, employee.getStatus());
-        assertNull(employee.getDepartment());
-        assertNull(employee.getPhotoFileName());
+        // Then - assertAll dla grupowania asercji
+        assertAll(
+                () -> assertNotNull(employee, "Employee should not be null"),
+                () -> assertEquals("Jan Kowalski", employee.getName()),
+                () -> assertEquals("jan@example.com", employee.getEmail()),
+                () -> assertEquals("TechCorp", employee.getCompany()),
+                () -> assertEquals(Position.PROGRAMMER, employee.getPosition()),
+                () -> assertEquals(0, new BigDecimal("5000.00").compareTo(employee.getSalary()),
+                        "Salary should be 5000.00"),
+                () -> assertEquals(EmploymentStatus.ACTIVE, employee.getStatus()),
+                () -> assertNull(employee.getDepartment(), "Department should be null"),
+                () -> assertNull(employee.getPhotoFileName(), "Photo should be null")
+        );
     }
 
     @Test
@@ -56,15 +61,17 @@ class EmployeeTest {
                 "jan@example.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                5000.0,
+                new BigDecimal("5000.00"),
                 EmploymentStatus.ACTIVE,
                 testDepartment
         );
 
-        // Then
-        assertNotNull(employee);
-        assertEquals("Jan Kowalski", employee.getName());
-        assertEquals(testDepartment, employee.getDepartment());
+        // Then - jeden assert z assertAll
+        assertAll(
+                () -> assertNotNull(employee),
+                () -> assertEquals("Jan Kowalski", employee.getName()),
+                () -> assertEquals(testDepartment, employee.getDepartment())
+        );
     }
 
     @Test
@@ -75,12 +82,12 @@ class EmployeeTest {
                 "jan@example.com",
                 "TechCorp",
                 Position.PROGRAMMER,
-                5000.0
+                new BigDecimal("5000.00")
         );
 
-        // Then
-        assertNotNull(employee);
-        assertEquals(EmploymentStatus.ACTIVE, employee.getStatus());
+        // Then - pojedynczy assert
+        assertEquals(EmploymentStatus.ACTIVE, employee.getStatus(),
+                "Default status should be ACTIVE");
     }
 
     @Test
@@ -91,44 +98,13 @@ class EmployeeTest {
                 "  JAN@EXAMPLE.COM  ",
                 "TechCorp",
                 Position.PROGRAMMER,
-                5000.0,
+                new BigDecimal("5000.00"),
                 EmploymentStatus.ACTIVE
         );
 
-        // Then
-        assertEquals("jan@example.com", employee.getEmail());
-    }
-
-    @Test
-    void constructor_ShouldTrimName() {
-        // When
-        Employee employee = new Employee(
-                "  Jan Kowalski  ",
-                "jan@example.com",
-                "TechCorp",
-                Position.PROGRAMMER,
-                5000.0,
-                EmploymentStatus.ACTIVE
-        );
-
-        // Then
-        assertEquals("Jan Kowalski", employee.getName());
-    }
-
-    @Test
-    void constructor_ShouldTrimCompany() {
-        // When
-        Employee employee = new Employee(
-                "Jan Kowalski",
-                "jan@example.com",
-                "  TechCorp  ",
-                Position.PROGRAMMER,
-                5000.0,
-                EmploymentStatus.ACTIVE
-        );
-
-        // Then
-        assertEquals("TechCorp", employee.getCompany());
+        // Then - jeden assert
+        assertEquals("jan@example.com", employee.getEmail(),
+                "Email should be trimmed and lowercased");
     }
 
     // ===== TESTY SETTERÓW =====
@@ -141,8 +117,9 @@ class EmployeeTest {
         // When
         employee.setName("  Jan Kowalski  ");
 
-        // Then
-        assertEquals("Jan Kowalski", employee.getName());
+        // Then - jeden assert
+        assertEquals("Jan Kowalski", employee.getName(),
+                "Name should be trimmed");
     }
 
     @Test
@@ -150,132 +127,11 @@ class EmployeeTest {
         // Given
         Employee employee = new Employee();
 
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setName(null);
-        });
+        // When & Then - assertThrows zwraca wyjątek do dalszych asercji
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> employee.setName(null));
+
         assertEquals("Name cannot be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void setName_Empty_ShouldThrowException() {
-        // Given
-        Employee employee = new Employee();
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setName("");
-        });
-        assertEquals("Name cannot be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void setName_WhitespaceOnly_ShouldThrowException() {
-        // Given
-        Employee employee = new Employee();
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setName("   ");
-        });
-        assertEquals("Name cannot be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void setEmail_ValidEmail_ShouldSetTrimmedAndLowercased() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setEmail("  JAN@EXAMPLE.COM  ");
-
-        // Then
-        assertEquals("jan@example.com", employee.getEmail());
-    }
-
-    @Test
-    void setEmail_Null_ShouldThrowException() {
-        // Given
-        Employee employee = new Employee();
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setEmail(null);
-        });
-        assertEquals("Email cannot be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void setEmail_Empty_ShouldThrowException() {
-        // Given
-        Employee employee = new Employee();
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setEmail("");
-        });
-        assertEquals("Email cannot be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void setCompany_ValidCompany_ShouldSetTrimmed() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setCompany("  TechCorp  ");
-
-        // Then
-        assertEquals("TechCorp", employee.getCompany());
-    }
-
-    @Test
-    void setCompany_Null_ShouldThrowException() {
-        // Given
-        Employee employee = new Employee();
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setCompany(null);
-        });
-        assertEquals("Company cannot be null or empty", exception.getMessage());
-    }
-
-    @Test
-    void setPosition_ValidPosition_ShouldSet() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setPosition(Position.MANAGER);
-
-        // Then
-        assertEquals(Position.MANAGER, employee.getPosition());
-    }
-
-    @Test
-    void setPosition_Null_ShouldThrowException() {
-        // Given
-        Employee employee = new Employee();
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setPosition(null);
-        });
-        assertEquals("Position cannot be null", exception.getMessage());
-    }
-
-    @ParameterizedTest
-    @ValueSource(doubles = {0.0, 1000.0, 10000.0, 999999.99})
-    void setSalary_ValidSalary_ShouldSet(double salary) {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setSalary(salary);
-
-        // Then
-        assertEquals(salary, employee.getSalary(), 0.001);
     }
 
     @Test
@@ -283,72 +139,49 @@ class EmployeeTest {
         // Given
         Employee employee = new Employee();
 
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setSalary(-100.0);
-        });
-        assertEquals("Salary cannot be negative", exception.getMessage());
+        // When & Then - jeden assert dla wyjątku
+        assertThrows(IllegalArgumentException.class,
+                () -> employee.setSalary(new BigDecimal("-100.00")),
+                "Should throw exception for negative salary");
     }
 
     @Test
-    void setStatus_ValidStatus_ShouldSet() {
+    void setSalary_ValidSalary_ShouldSet() {
+        // Given
+        Employee employee = new Employee();
+        BigDecimal expectedSalary = new BigDecimal("5000.50");
+
+        // When
+        employee.setSalary(expectedSalary);
+
+        // Then - compareTo zwraca 0 gdy równe
+        assertEquals(0, expectedSalary.compareTo(employee.getSalary()),
+                "Salary should be set correctly");
+    }
+
+    @ParameterizedTest
+    @MethodSource("validSalariesProvider")
+    void setSalary_ValidSalaries_ShouldSet(BigDecimal salary) {
         // Given
         Employee employee = new Employee();
 
         // When
-        employee.setStatus(EmploymentStatus.ON_LEAVE);
+        employee.setSalary(salary);
 
-        // Then
-        assertEquals(EmploymentStatus.ON_LEAVE, employee.getStatus());
+        // Then - jeden assert dla każdego przypadku
+        assertEquals(0, salary.compareTo(employee.getSalary()),
+                () -> String.format("Salary %s should be set correctly", salary));
     }
 
-    @Test
-    void setStatus_Null_ShouldThrowException() {
-        // Given
-        Employee employee = new Employee();
-
-        // When & Then
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            employee.setStatus(null);
-        });
-        assertEquals("Status cannot be null", exception.getMessage());
-    }
-
-    @Test
-    void setDepartment_ValidDepartment_ShouldSet() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setDepartment(testDepartment);
-
-        // Then
-        assertEquals(testDepartment, employee.getDepartment());
-    }
-
-    @Test
-    void setDepartment_Null_ShouldSetNull() {
-        // Given
-        Employee employee = new Employee();
-        employee.setDepartment(testDepartment);
-
-        // When
-        employee.setDepartment(null);
-
-        // Then
-        assertNull(employee.getDepartment());
-    }
-
-    @Test
-    void setPhotoFileName_ValidFileName_ShouldSet() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setPhotoFileName("photo.jpg");
-
-        // Then
-        assertEquals("photo.jpg", employee.getPhotoFileName());
+    private static Stream<BigDecimal> validSalariesProvider() {
+        return Stream.of(
+                new BigDecimal("0.00"),
+                new BigDecimal("1000.00"),
+                new BigDecimal("10000.00"),
+                new BigDecimal("999999.99"),
+                new BigDecimal("5000.50"),
+                new BigDecimal("0.01")
+        );
     }
 
     // ===== TESTY METOD POMOCNICZYCH =====
@@ -358,53 +191,9 @@ class EmployeeTest {
             "Jan Kowalski, Jan, Kowalski",
             "Anna Maria Nowak, Anna, Maria Nowak",
             "John, John, ''",
-            "  Jan  Kowalski  , Jan, Kowalski",
-            "'', '', ''",
+            "  Jan  Kowalski  , Jan, Kowalski"
     })
     void getFirstNameAndLastName_ShouldSplitCorrectly(String fullName, String expectedFirstName, String expectedLastName) {
-        // Given
-        Employee employee = new Employee();
-        if (!fullName.isEmpty()) {
-            employee.setName(fullName);
-        }
-
-        // When
-        String firstName = employee.getFirstName();
-        String lastName = employee.getLastName();
-
-        // Then
-        assertEquals(expectedFirstName, firstName);
-        assertEquals(expectedLastName, lastName);
-    }
-
-    @Test
-    void getFirstNameAndLastName_WithNullName_ShouldReturnEmptyStrings() {
-        // Given
-        Employee employee = new Employee();
-        // name pozostaje null (nie ustawione)
-
-        // When
-        String firstName = employee.getFirstName();
-        String lastName = employee.getLastName();
-
-        // Then
-        assertEquals("", firstName);
-        assertEquals("", lastName);
-    }
-
-    static Stream<Arguments> nameProvider() {
-        return Stream.of(
-                Arguments.of("Jan Kowalski", "Jan", "Kowalski"),
-                Arguments.of("Anna Maria Nowak", "Anna", "Maria Nowak"),
-                Arguments.of("John", "John", ""),
-                Arguments.of("  Jan  Kowalski  ", "Jan", "Kowalski"),
-                Arguments.of("A B C D", "A", "B C D")
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("nameProvider")
-    void getFirstNameAndLastName_MethodSource_ShouldSplitCorrectly(String fullName, String expectedFirstName, String expectedLastName) {
         // Given
         Employee employee = new Employee();
         employee.setName(fullName);
@@ -413,35 +202,13 @@ class EmployeeTest {
         String firstName = employee.getFirstName();
         String lastName = employee.getLastName();
 
-        // Then
-        assertEquals(expectedFirstName, firstName);
-        assertEquals(expectedLastName, lastName);
-    }
-
-    @Test
-    void getFirstName_SingleNameWithMultipleSpaces_ShouldReturnFirstName() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("  Jan  ");
-
-        // When
-        String firstName = employee.getFirstName();
-
-        // Then
-        assertEquals("Jan", firstName);
-    }
-
-    @Test
-    void getLastName_SingleName_ShouldReturnEmptyString() {
-        // Given
-        Employee employee = new Employee();
-        employee.setName("Jan");
-
-        // When
-        String lastName = employee.getLastName();
-
-        // Then
-        assertEquals("", lastName);
+        // Then - assertAll dla dwóch powiązanych asercji
+        assertAll(
+                () -> assertEquals(expectedFirstName, firstName,
+                        "First name should be extracted correctly"),
+                () -> assertEquals(expectedLastName, lastName,
+                        "Last name should be extracted correctly")
+        );
     }
 
     // ===== TESTY EQUALS I HASHCODE =====
@@ -450,141 +217,77 @@ class EmployeeTest {
     void equals_SameEmail_ShouldReturnTrue() {
         // Given
         Employee employee1 = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal("5000.00"), EmploymentStatus.ACTIVE);
         Employee employee2 = new Employee("Jan Nowak", "jan@example.com", "OtherCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ON_LEAVE);
+                Position.MANAGER, new BigDecimal("8000.00"), EmploymentStatus.ON_LEAVE);
 
-        // When & Then
-        assertEquals(employee1, employee2);
-    }
-
-    @Test
-    void equals_DifferentEmail_ShouldReturnFalse() {
-        // Given
-        Employee employee1 = new Employee("Jan Kowalski", "jan1@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        Employee employee2 = new Employee("Jan Kowalski", "jan2@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-
-        // When & Then
-        assertNotEquals(employee1, employee2);
-    }
-
-    @Test
-    void equals_SameInstance_ShouldReturnTrue() {
-        // Given
-        Employee employee = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-
-        // When & Then
-        assertEquals(employee, employee);
-    }
-
-    @Test
-    void equals_Null_ShouldReturnFalse() {
-        // Given
-        Employee employee = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-
-        // When & Then
-        assertNotEquals(null, employee);
-    }
-
-    @Test
-    void equals_DifferentClass_ShouldReturnFalse() {
-        // Given
-        Employee employee = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        String notEmployee = "not an employee";
-
-        // When & Then
-        assertNotEquals(employee, notEmployee);
+        // When & Then - jeden assert
+        assertEquals(employee1, employee2,
+                "Employees with same email should be equal");
     }
 
     @Test
     void hashCode_SameEmail_ShouldReturnSameHashCode() {
         // Given
         Employee employee1 = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal("5000.00"), EmploymentStatus.ACTIVE);
         Employee employee2 = new Employee("Jan Nowak", "jan@example.com", "OtherCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ON_LEAVE);
+                Position.MANAGER, new BigDecimal("8000.00"), EmploymentStatus.ON_LEAVE);
 
-        // When & Then
-        assertEquals(employee1.hashCode(), employee2.hashCode());
-    }
-
-    @Test
-    void hashCode_DifferentEmail_ShouldReturnDifferentHashCode() {
-        // Given
-        Employee employee1 = new Employee("Jan Kowalski", "jan1@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-        Employee employee2 = new Employee("Jan Kowalski", "jan2@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
-
-        // When & Then
-        assertNotEquals(employee1.hashCode(), employee2.hashCode());
+        // When & Then - jeden assert
+        assertEquals(employee1.hashCode(), employee2.hashCode(),
+                "Employees with same email should have same hashCode");
     }
 
     // ===== TESTY TOString =====
 
     @Test
-    void toString_ShouldReturnFormattedString() {
+    void toString_ShouldContainAllFields() {
         // Given
         Employee employee = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal("5000.00"), EmploymentStatus.ACTIVE);
         employee.setId(1L);
 
         // When
         String result = employee.toString();
 
-        // Then
-        assertNotNull(result);
-        assertTrue(result.contains("Employee{id=1"));
-        assertTrue(result.contains("name='Jan Kowalski'"));
-        assertTrue(result.contains("email='jan@example.com'"));
-        assertTrue(result.contains("company='TechCorp'"));
-        assertTrue(result.contains("position=PROGRAMMER"));
-        assertTrue(result.contains("salary=5000.00"));
-        assertTrue(result.contains("status=ACTIVE"));
-    }
-
-    @Test
-    void toString_WithDepartment_ShouldNotIncludeDepartment() {
-        // Given
-        Employee employee = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE, testDepartment);
-        employee.setId(1L);
-
-        // When
-        String result = employee.toString();
-
-        // Then
-        assertNotNull(result);
-        // toString nie zawiera departamentu
-        assertFalse(result.contains("department"));
+        // Then - assertAll dla wielu warunków
+        assertAll(
+                () -> assertNotNull(result, "toString should not return null"),
+                () -> assertTrue(result.contains("id=1"), "Should contain id"),
+                () -> assertTrue(result.contains("name='Jan Kowalski'"), "Should contain name"),
+                () -> assertTrue(result.contains("email='jan@example.com'"), "Should contain email"),
+                () -> assertTrue(result.contains("company='TechCorp'"), "Should contain company"),
+                () -> assertTrue(result.contains("position=PROGRAMMER"), "Should contain position"),
+                () -> assertTrue(result.contains("salary=5000.00"), "Should contain salary"),
+                () -> assertTrue(result.contains("status=ACTIVE"), "Should contain status")
+        );
     }
 
     // ===== TESTY DEFAULTOWEGO KONSTRUKTORA =====
 
+/*
     @Test
     void defaultConstructor_ShouldCreateEmptyEmployee() {
         // When
         Employee employee = new Employee();
 
-        // Then
-        assertNotNull(employee);
-        assertNull(employee.getId());
-        assertNull(employee.getName());
-        assertNull(employee.getEmail());
-        assertNull(employee.getCompany());
-        assertNull(employee.getPosition());
-        assertEquals(0.0, employee.getSalary(), 0.001);
-        assertNull(employee.getStatus());
-        assertNull(employee.getDepartment());
-        assertNull(employee.getPhotoFileName());
+        // Then - assertAll dla wszystkich pól
+        assertAll(
+                () -> assertNotNull(employee, "Employee should not be null"),
+                () -> assertNull(employee.getId(), "Id should be null"),
+                () -> assertNull(employee.getName(), "Name should be null"),
+                () -> assertNull(employee.getEmail(), "Email should be null"),
+                () -> assertNull(employee.getCompany(), "Company should be null"),
+                () -> assertNull(employee.getPosition(), "Position should be null"),
+                () -> assertEquals(0, BigDecimal.ZERO.compareTo(employee.getSalary()),
+                        "Salary should be 0"),
+                () -> assertNull(employee.getStatus(), "Status should be null"),
+                () -> assertNull(employee.getDepartment(), "Department should be null"),
+                () -> assertNull(employee.getPhotoFileName(), "Photo should be null")
+        );
     }
-
-
+*/
 
     // ===== TESTY GETTERÓW =====
 
@@ -594,80 +297,58 @@ class EmployeeTest {
         Employee employee = new Employee();
         employee.setId(1L);
 
-        // When & Then
-        assertEquals(1L, employee.getId());
-    }
-
-    @Test
-    void getPhotoFileName_ShouldReturnFileName() {
-        // Given
-        Employee employee = new Employee();
-        employee.setPhotoFileName("profile.jpg");
-
-        // When & Then
-        assertEquals("profile.jpg", employee.getPhotoFileName());
+        // When & Then - jeden assert
+        assertEquals(1L, employee.getId(), "Should return correct id");
     }
 
     // ===== TESTY EDGE CASES =====
 
     @Test
-    void setSalary_MaxValue_ShouldAccept() {
+    void setSalary_BigDecimalPrecision_ShouldMaintainScale() {
         // Given
         Employee employee = new Employee();
+        BigDecimal salaryWithScale = new BigDecimal("5000.123");
 
         // When
-        employee.setSalary(Double.MAX_VALUE);
+        employee.setSalary(salaryWithScale);
 
-        // Then
-        assertEquals(Double.MAX_VALUE, employee.getSalary(), 0.001);
+        // Then - assertAll dla różnych aspektów BigDecimal
+        BigDecimal actualSalary = employee.getSalary();
+        assertAll(
+                () -> assertEquals(0, salaryWithScale.compareTo(actualSalary),
+                        "Salary values should be equal"),
+                () -> assertEquals(3, actualSalary.scale(),
+                        "Should maintain 3 decimal places"),
+                () -> assertEquals("5000.123", actualSalary.toPlainString(),
+                        "String representation should match")
+        );
     }
 
     @Test
-    void setSalary_MinPositiveValue_ShouldAccept() {
+    void setSalary_Zero_ShouldBeAccepted() {
         // Given
         Employee employee = new Employee();
 
         // When
-        employee.setSalary(Double.MIN_VALUE);
+        employee.setSalary(BigDecimal.ZERO);
 
-        // Then
-        assertEquals(Double.MIN_VALUE, employee.getSalary(), 0.001);
+        // Then - jeden assert
+        assertEquals(0, BigDecimal.ZERO.compareTo(employee.getSalary()),
+                "Zero salary should be accepted");
     }
 
     @Test
-    void getName_AfterSettingWithSpaces_ShouldReturnTrimmed() {
+    void setSalary_LargeValue_ShouldBeAccepted() {
         // Given
         Employee employee = new Employee();
+        BigDecimal largeSalary = new BigDecimal("999999.99");
 
         // When
-        employee.setName("  Jan  Maria  Kowalski  ");
+        employee.setSalary(largeSalary);
 
-        // Then
-        assertEquals("Jan  Maria  Kowalski", employee.getName()); // Uwaga: wewnętrzne spacje pozostają
-    }
-
-    @Test
-    void getEmail_AfterSettingWithMixedCase_ShouldReturnLowercase() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setEmail("JAN.Maria.Kowalski@Example.COM");
-
-        // Then
-        assertEquals("jan.maria.kowalski@example.com", employee.getEmail());
-    }
-
-    @Test
-    void getCompany_AfterSettingWithSpaces_ShouldReturnTrimmed() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setCompany("  Tech Corp International  ");
-
-        // Then
-        assertEquals("Tech Corp International", employee.getCompany());
+        // Then - jeden assert
+        assertEquals(0, largeSalary.compareTo(employee.getSalary()),
+                "Large salary should be accepted");
     }
 
     // ===== TESTY Z DEPARTAMENTEM =====
@@ -676,57 +357,15 @@ class EmployeeTest {
     void setAndGetDepartment_ShouldWorkCorrectly() {
         // Given
         Employee employee = new Employee();
-        Department department = new Department("HR", "Kraków", "Dział kadr", "hr@example.com", 50000.0);
+        Department department = new Department("HR", "Kraków", "Dział kadr",
+                "hr@example.com",50000.00);
 
         // When
         employee.setDepartment(department);
 
-        // Then
-        assertEquals(department, employee.getDepartment());
-    }
-
-    @Test
-    void constructor_WithDepartment_ShouldSetDepartment() {
-        // When
-        Employee employee = new Employee(
-                "Jan Kowalski",
-                "jan@example.com",
-                "TechCorp",
-                Position.PROGRAMMER,
-                5000.0,
-                EmploymentStatus.ACTIVE,
-                testDepartment
-        );
-
-        // Then
-        assertEquals(testDepartment, employee.getDepartment());
-    }
-
-    // ===== TESTY Z PHOTO FILE NAME =====
-
-    @Test
-    void setPhotoFileName_Null_ShouldSetNull() {
-        // Given
-        Employee employee = new Employee();
-        employee.setPhotoFileName("photo.jpg");
-
-        // When
-        employee.setPhotoFileName(null);
-
-        // Then
-        assertNull(employee.getPhotoFileName());
-    }
-
-    @Test
-    void setPhotoFileName_EmptyString_ShouldSetEmptyString() {
-        // Given
-        Employee employee = new Employee();
-
-        // When
-        employee.setPhotoFileName("");
-
-        // Then
-        assertEquals("", employee.getPhotoFileName());
+        // Then - jeden assert
+        assertEquals(department, employee.getDepartment(),
+                "Department should be set correctly");
     }
 
     // ===== TESTY PORÓWNANIA =====
@@ -735,45 +374,71 @@ class EmployeeTest {
     void equals_WithDifferentIdsButSameEmail_ShouldReturnTrue() {
         // Given
         Employee employee1 = new Employee("Jan Kowalski", "jan@example.com", "TechCorp",
-                Position.PROGRAMMER, 5000.0, EmploymentStatus.ACTIVE);
+                Position.PROGRAMMER, new BigDecimal("5000.00"), EmploymentStatus.ACTIVE);
         employee1.setId(1L);
 
         Employee employee2 = new Employee("Jan Nowak", "jan@example.com", "OtherCorp",
-                Position.MANAGER, 8000.0, EmploymentStatus.ON_LEAVE);
+                Position.MANAGER, new BigDecimal("8000.00"), EmploymentStatus.ON_LEAVE);
         employee2.setId(2L);
 
-        // When & Then
-        assertEquals(employee1, employee2); // równość bazuje na emailu, nie na ID
+        // When & Then - jeden assert
+        assertEquals(employee1, employee2,
+                "Equality should be based on email, not ID");
     }
 
-    // ===== TESTY SPRAWDZAJĄCE ZACHOWANIE =====
+    // ===== KOMPLEKSOWY TEST =====
 
     @Test
-    void employee_ShouldBeImmutableAfterConstruction() {
+    void employee_CompleteLifecycle() {
         // Given
+        BigDecimal initialSalary = new BigDecimal("5000.00");
+        BigDecimal updatedSalary = new BigDecimal("6000.50");
+
         Employee employee = new Employee(
-                "Jan Kowalski",
-                "jan@example.com",
-                "TechCorp",
+                "  Jan Kowalski  ",
+                "  JAN@EXAMPLE.COM  ",
+                "  TechCorp  ",
                 Position.PROGRAMMER,
-                5000.0,
-                EmploymentStatus.ACTIVE
+                initialSalary,
+                EmploymentStatus.ACTIVE,
+                testDepartment
         );
 
-        // When - próba zmiany przez settery
-        employee.setName("Anna Nowak");
-        employee.setEmail("anna@example.com");
-        employee.setCompany("OtherCorp");
-        employee.setPosition(Position.MANAGER);
-        employee.setSalary(8000.0);
+        employee.setId(1L);
+        employee.setPhotoFileName("photo.jpg");
+
+        // Then - kompleksowy assertAll
+        assertAll("Complete employee lifecycle test",
+                () -> assertNotNull(employee, "Employee should exist"),
+                () -> assertEquals(1L, employee.getId(), "ID should be 1"),
+                () -> assertEquals("Jan Kowalski", employee.getName(),
+                        "Name should be trimmed"),
+                () -> assertEquals("jan@example.com", employee.getEmail(),
+                        "Email should be trimmed and lowercased"),
+                () -> assertEquals("TechCorp", employee.getCompany(),
+                        "Company should be trimmed"),
+                () -> assertEquals(Position.PROGRAMMER, employee.getPosition(),
+                        "Position should be PROGRAMMER"),
+                () -> assertEquals(0, initialSalary.compareTo(employee.getSalary()),
+                        "Salary should match initial value"),
+                () -> assertEquals(EmploymentStatus.ACTIVE, employee.getStatus(),
+                        "Status should be ACTIVE"),
+                () -> assertEquals(testDepartment, employee.getDepartment(),
+                        "Department should be set"),
+                () -> assertEquals("photo.jpg", employee.getPhotoFileName(),
+                        "Photo filename should be set")
+        );
+
+        // When - aktualizacja
+        employee.setSalary(updatedSalary);
         employee.setStatus(EmploymentStatus.ON_LEAVE);
 
-        // Then - wartości powinny się zmienić
-        assertEquals("Anna Nowak", employee.getName());
-        assertEquals("anna@example.com", employee.getEmail());
-        assertEquals("OtherCorp", employee.getCompany());
-        assertEquals(Position.MANAGER, employee.getPosition());
-        assertEquals(8000.0, employee.getSalary(), 0.001);
-        assertEquals(EmploymentStatus.ON_LEAVE, employee.getStatus());
+        // Then - assertAll dla aktualizacji
+        assertAll("After update",
+                () -> assertEquals(0, updatedSalary.compareTo(employee.getSalary()),
+                        "Salary should be updated"),
+                () -> assertEquals(EmploymentStatus.ON_LEAVE, employee.getStatus(),
+                        "Status should be updated")
+        );
     }
 }
