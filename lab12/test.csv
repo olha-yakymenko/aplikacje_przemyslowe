@@ -1,0 +1,6 @@
+Name,Email,Company,Position,Salary,Status
+"Doe",john.doe@company.com,"TechCorp",MANAGER,15000,00,ACTIVE
+"Brown",alice.brown@company.com,"SoftInc",MANAGER,14000,00,ACTIVE
+"Johnson",bob.johnson@company.com,"TechCorp",INTERN,2500,00,ACTIVE
+"Smith",jane.smith@company.com,"SoftInc",PROGRAMMER,9000,00,ACTIVE
+"Wilson",charlie.wilson@company.com,"DataSys",PROGRAMMER,8500,00,ACTIVE
