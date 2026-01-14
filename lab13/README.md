@@ -27,6 +27,8 @@ User
 Login: user
 Hasło: user123
 
+![img_7.png](img_7.png)
+
 ![img_6.png](img_6.png)
 
 Fragment logów aplikacji pokazującego moment otwarcia i wycofania transakcji (test testSalaryUpdateRollbackButAuditPersists):
