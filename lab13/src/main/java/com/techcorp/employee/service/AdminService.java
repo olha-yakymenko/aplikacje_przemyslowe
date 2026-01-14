@@ -15,32 +15,16 @@ public class AdminService {
     @Autowired
     private AuditLogRepository auditLogRepository;
 
-    /**
-     * Wydajne czyszczenie starych logów za pomocą batch delete
-     * Wykonuje tylko JEDNO zapytanie DELETE
-     */
     @Transactional
     public int purgeOldLogs(LocalDateTime cutoffDate) {
-        // Bez streamowania - bezpośrednie wywołanie repozytorium
-        // (Zakładamy, że w AuditLogRepository dodamy odpowiednią metodę)
         int deletedCount = auditLogRepository.deleteByEventDateBefore(cutoffDate);
         return deletedCount;
     }
 
-    /**
-     * Alternatywna wersja - usuwa wszystkie logi
-     */
+
     @Transactional
     public void purgeAllLogs() {
-        // Wydajne usuwanie wszystkich logów jednym zapytaniem
         auditLogRepository.deleteAllInBatch();
     }
 
-    /**
-     * Usuwanie logów z danego zakresu dat
-     */
-    @Transactional
-    public int purgeLogsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        return auditLogRepository.deleteByEventDateBetween(startDate, endDate);
-    }
 }

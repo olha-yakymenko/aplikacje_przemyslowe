@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
-    // Metoda batch delete będzie dostępna z JpaRepository
 
     /**
      * Wydajne usuwanie logów starszych niż podana data
@@ -19,15 +18,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     @Modifying
     @Query("DELETE FROM AuditLog a WHERE a.eventDate < :cutoffDate")
     int deleteByEventDateBefore(@Param("cutoffDate") LocalDateTime cutoffDate);
-
-    /**
-     * Wydajne usuwanie logów z zakresu dat
-     */
-    @Modifying
-    @Query("DELETE FROM AuditLog a WHERE a.eventDate BETWEEN :startDate AND :endDate")
-    int deleteByEventDateBetween(
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
 
 
 }

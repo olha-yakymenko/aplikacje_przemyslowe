@@ -145,4 +145,60 @@ class ReportServiceTest {
         assertThat(Files.readString(result).contains("LOGIN")
                 && !Files.readString(result).contains("UPDATE"));
     }
+
+
+
+    @Test
+    void generateAuditLogCsvReport_ShouldCreateValidCsvFormat() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<AuditLog> page = new PageImpl<>(logs, pageable, logs.size());
+
+        when(fileStorageService.getReportsStorageLocation()).thenReturn(tempDir);
+        when(auditLogReportRepository.findAll(pageable)).thenReturn(page);
+
+        Path reportPath = reportService.generateAuditLogCsvReport(pageable, "format_test.csv");
+        String csvContent = Files.readString(reportPath);
+
+        assertAll(
+                () -> assertThat(csvContent).contains("ID,Event Date,Event Type,Message,Affected Entity,Entity ID"),
+                () -> assertThat(csvContent).contains("LOGIN"),
+                () -> assertThat(csvContent).contains("UPDATE"),
+                () -> assertThat(csvContent).contains("User logged in"),
+                () -> assertThat(csvContent).contains("Page: 1/1"),
+                () -> assertThat(csvContent).contains("Total Records: 2")
+        );
+
+        // Sprawdź linie CSV
+        String[] lines = csvContent.split("\n");
+        assertThat(lines[0]).isEqualTo("ID,Event Date,Event Type,Message,Affected Entity,Entity ID");
+        assertThat(lines.length).isGreaterThan(2); // Nagłówek + dane + metadata
+    }
+
+
+    @Test
+    void simpleDebugTest() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<AuditLog> page = new PageImpl<>(logs, pageable, logs.size());
+
+        Path testDir = tempDir.resolve("reports");
+        Files.createDirectories(testDir);
+
+        when(fileStorageService.getReportsStorageLocation()).thenReturn(testDir);
+        when(auditLogReportRepository.findAll(pageable)).thenReturn(page);
+
+        Path result = reportService.generateAuditLogCsvReport(pageable, "debug.csv");
+
+        // Wypisz wszystko
+        System.out.println("=== DEBUG INFO ===");
+        System.out.println("Temp directory: " + tempDir.toAbsolutePath());
+        System.out.println("Reports directory: " + testDir.toAbsolutePath());
+        System.out.println("Generated file: " + result.toAbsolutePath());
+        System.out.println("File exists: " + Files.exists(result));
+        System.out.println("File size: " + Files.size(result) + " bytes");
+
+        if (Files.exists(result)) {
+            System.out.println("=== FILE CONTENT ===");
+            System.out.println(Files.readString(result));
+        }
+    }
 }
