@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layout}">
+
+<head>
+    <title>Dokumenty Departamentu - System Zarządzania Pracownikami</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title" th:text="${pageTitle}">Dokumenty Departamentu</h1>
+            <div>
+                <a th:href="@{'/departments/details/' + ${department.id}}" class="btn btn-info">Szczegóły Departamentu</a>
+                <a th:href="@{/departments}" class="btn btn-secondary">Powrót do Listy</a>
+            </div>
+        </div>
+
+        <!-- Komunikaty -->
+        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <!-- Informacje o departamencie -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Informacje o departamencie</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nazwa:</strong> <span th:text="${department.name}">Nazwa</span></p>
+                        <p><strong>Email managera:</strong>
+                            <span th:text="${department.managerEmail} ?: 'Brak'">manager@company.com</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Opis:</strong> <span th:text="${department.description}">Opis</span></p>
+                        <p><strong>Budżet:</strong>
+                            <span th:text="'$' + ${#numbers.formatDecimal(department.budget, 1, 2)} ?: '0.00'">
+                                $100000.00
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formularz dodawania dokumentu -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Dodaj nowy dokument</h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{'/departments/documents/' + ${department.id} + '/upload'}"
+                      method="post"
+                      enctype="multipart/form-data"
+                      class="form-inline">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label for="file" class="form-label">Wybierz plik (PDF, DOC, DOCX, TXT - max 10MB)</label>
+                            <input type="file"
+                                   class="form-control"
+                                   id="file"
+                                   name="file"
+                                   required
+                                   accept=".pdf,.doc,.docx,.txt">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">Dodaj dokument</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista dokumentów -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Lista dokumentów</h5>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(documents)}" class="alert alert-info">
+                    <p style="text-align: center; margin: 0;">Brak dokumentów dla tego departamentu.</p>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(documents)}">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>Nazwa pliku</th>
+                                <th>Akcje</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="doc : ${documents}">
+                                <td th:text="${doc}">nazwa.pdf</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a th:href="@{'/departments/documents/' + ${department.id} + '/download/' + ${doc}}"
+                                           class="btn btn-info btn-sm">Pobierz</a>
+                                        <a th:href="@{'/departments/documents/' + ${department.id} + '/delete/' + ${doc}}"
+                                           class="btn btn-danger btn-sm"
+                                           sec:authorize="hasRole('ADMIN')"
+                                           onclick="return confirm('Czy na pewno chcesz usunąć dokument ' + ${doc} + '?')">
+                                            Usuń
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

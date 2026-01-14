@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szczegóły Pracownika</title>
+</head>
+
+<body>
+
+<div layout:fragment="content">
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title">
+                <i class="fas fa-user"></i> Szczegóły Pracownika
+            </h1>
+            <a th:href="@{/employees}" class="btn btn-secondary">Powrót do listy</a>
+        </div>
+
+        <div class="employee-details">
+            <div class="detail-row">
+                <span class="detail-label">Imię i nazwisko:</span>
+                <span class="detail-value" th:text="${employee.name}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Email:</span>
+                <span class="detail-value" th:text="${employee.email}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Firma:</span>
+                <span class="detail-value" th:text="${employee.company}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Stanowisko:</span>
+                <span class="detail-value" th:text="${employee.position}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Wynagrodzenie:</span>
+                <span class="detail-value" th:text="'$' + ${#numbers.formatDecimal(employee.salary, 1, 2)}"></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value" th:text="${employee.status}"></span>
+            </div>
+            <div class="detail-row" th:if="${employee.department != null}">
+                <span class="detail-label">Departament:</span>
+                <span class="detail-value" th:text="${employee.department.name}"></span>
+            </div>
+        </div>
+
+        <!-- Tylko dla ADMIN -->
+        <div class="mt-4" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/employees/edit/{email}(email=${employee.email})}"
+               class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edytuj
+            </a>
+        </div>
+    </section>
+</div>
+
+<style>
+    .employee-details {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 8px;
+        max-width: 600px;
+    }
+    .detail-row {
+        display: flex;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .detail-label {
+        font-weight: 600;
+        width: 200px;
+        color: #495057;
+    }
+    .detail-value {
+        color: #212529;
+    }
+</style>
+
+</body>
+</html>

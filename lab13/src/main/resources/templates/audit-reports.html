@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szczegóły Pracownika</title>
+</head>
+
+<body>
+
+<div layout:fragment="content">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 col-md-3 sidebar">
+            <nav class="nav flex-column mt-3">
+                <a class="nav-link active" href="#">
+                    <i class="fas fa-clipboard-list me-2"></i> Raporty Audytowe
+                </a>
+                <a class="nav-link" href="#">
+                    <i class="fas fa-users me-2"></i> Raporty Pracowników
+                </a>
+                <a class="nav-link" href="#">
+                    <i class="fas fa-chart-pie me-2"></i> Statystyki
+                </a>
+                <a class="nav-link" href="#">
+                    <i class="fas fa-cog me-2"></i> Ustawienia
+                </a>
+                <hr class="mx-3">
+                <h6 class="px-3 mt-3 text-muted">Szybkie akcje</h6>
+                <a class="nav-link" href="#" onclick="generateFullReport()">
+                    <i class="fas fa-file-export me-2"></i> Pełny raport
+                </a>
+                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#filterModal">
+                    <i class="fas fa-filter me-2"></i> Filtruj dane
+                </a>
+            </nav>
+        </div>
+
+        <!-- Główna zawartość -->
+        <div class="col-lg-10 col-md-9 mt-3">
+            <!-- Alerty -->
+            <div id="alertContainer" class="alert-fixed"></div>
+
+            <!-- Nagłówek -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1" style="color: var(--primary-color);">
+                        <i class="fas fa-shield-alt me-2"></i>Raporty Audytowe
+                    </h2>
+                    <p class="text-muted">Monitoruj i eksportuj logi działań w systemie</p>
+                </div>
+                <div>
+                    <button class="btn btn-report me-2" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>Odśwież dane
+                    </button>
+                </div>
+            </div>
+
+            <!-- Karty statystyk -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Dzisiejsze zdarzenia</h6>
+                                    <h3 class="stat-number" id="todayCount">0</h3>
+                                </div>
+                                <i class="fas fa-calendar-day fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card warning">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Aktualizacje wynagrodzeń</h6>
+                                    <h3 class="stat-number" id="salaryUpdates">0</h3>
+                                </div>
+                                <i class="fas fa-money-bill-wave fa-2x text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card danger">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Błędy systemowe</h6>
+                                    <h3 class="stat-number" id="errorCount">0</h3>
+                                </div>
+                                <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted mb-2">Wszystkie logi</h6>
+                                    <h3 class="stat-number" id="totalLogs">0</h3>
+                                </div>
+                                <i class="fas fa-database fa-2x text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sekcja filtrów i eksportu -->
+            <div class="filter-section">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-3"><i class="fas fa-sliders-h me-2"></i>Filtry i eksport</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            <select class="form-select" style="width: auto;" id="eventTypeFilter">
+                                <option value="">Wszystkie typy zdarzeń</option>
+                                <option value="SALARY_UPDATE_SUCCESS">Aktualizacje wynagrodzeń</option>
+                                <option value="SALARY_UPDATE_ATTEMPT">Próby aktualizacji</option>
+                                <option value="SALARY_UPDATE_FAILURE">Błędy aktualizacji</option>
+                                <option value="GENERAL">Ogólne zdarzenia</option>
+                            </select>
+
+                            <input type="date" class="form-control" style="width: auto;" id="dateFrom">
+                            <input type="date" class="form-control" style="width: auto;" id="dateTo">
+
+                            <select class="form-select" style="width: auto;" id="pageSize">
+                                <option value="10">10 na stronę</option>
+                                <option value="25">25 na stronę</option>
+                                <option value="50" selected>50 na stronę</option>
+                                <option value="100">100 na stronę</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="btn-group">
+                            <button class="btn btn-download" onclick="exportCurrentPage()">
+                                <i class="fas fa-download me-1"></i>Eksportuj bieżącą stronę
+                            </button>
+                            <button class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+                                    data-bs-toggle="dropdown">
+                                <span class="visually-hidden">Więcej opcji</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportFullReport()">
+                                    <i class="fas fa-file-archive me-2"></i>Pełny raport (wszystkie dane)
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportFilteredReport()">
+                                    <i class="fas fa-filter me-2"></i>Raport z filtrami
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista logów audytowych -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Logi audytowe</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Loading spinner -->
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Ładowanie...</span>
+                        </div>
+                        <p class="mt-3 text-muted">Ładowanie danych audytowych...</p>
+                    </div>
+
+                    <!-- Tabela z danymi -->
+                    <div id="auditLogsContainer">
+                        <!-- Dane będą wstrzykiwane przez JavaScript -->
+                    </div>
+
+                    <!-- Paginacja -->
+                    <nav aria-label="Nawigacja stron" class="mt-4">
+                        <ul class="pagination justify-content-center pagination-custom" id="pagination">
+                            <!-- Paginacja będzie generowana dynamicznie -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Stopka -->
+            <div class="mt-4 text-center text-muted">
+                <small>
+                    <i class="fas fa-info-circle me-1"></i>
+                    Raport wygenerowany: <span id="currentTime"></span> |
+                    System TechCorp HR © 2024
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal z zaawansowanymi filtrami -->
+<div class="modal fade" id="filterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-filter me-2"></i>Zaawansowane filtry</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Typ zdarzenia</label>
+                            <select class="form-select" id="advancedEventType">
+                                <option value="">Wszystkie</option>
+                                <option value="SALARY_UPDATE_SUCCESS">Sukces aktualizacji wynagrodzenia</option>
+                                <option value="SALARY_UPDATE_ATTEMPT">Próba aktualizacji wynagrodzenia</option>
+                                <option value="SALARY_UPDATE_FAILURE">Błąd aktualizacji wynagrodzenia</option>
+                                <option value="SECURITY">Zdarzenie bezpieczeństwa</option>
+                                <option value="SYSTEM">Zdarzenie systemowe</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Zakres dat od</label>
+                            <input type="datetime-local" class="form-control" id="advancedDateFrom">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Encja</label>
+                            <input type="text" class="form-control" id="advancedEntity"
+                                   placeholder="np. Employee, Department...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Zakres dat do</label>
+                            <input type="datetime-local" class="form-control" id="advancedDateTo">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fraza w wiadomości</label>
+                    <input type="text" class="form-control" id="messageContains"
+                           placeholder="Szukana fraza w opisie zdarzenia...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-primary" onclick="applyAdvancedFilters()">
+                    <i class="fas fa-check me-1"></i>Zastosuj filtry
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Konfiguracja
+    const API_BASE = '/api/reports';
+    let currentPage = 0;
+    let currentSort = 'eventDate,desc';
+    let currentFilters = {};
+
+    // Aktualna data i czas
+    function updateCurrentTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent =
+            now.toLocaleDateString('pl-PL') + ' ' + now.toLocaleTimeString('pl-PL');
+    }
+    setInterval(updateCurrentTime, 1000);
+    updateCurrentTime();
+
+    // Formatowanie daty
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('pl-PL');
+    }
+
+    // Pobieranie danych
+    async function fetchAuditLogs(page = 0) {
+        showLoading(true);
+
+        const pageSize = document.getElementById('pageSize').value;
+        const eventType = document.getElementById('eventTypeFilter').value;
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+
+        // Budowanie URL z parametrami
+        let url = `${API_BASE}/audit-logs?page=${page}&size=${pageSize}&sort=${currentSort}`;
+
+        if (eventType) {
+            url += `&eventType=${eventType}`;
+        }
+        if (dateFrom) {
+            url += `&dateFrom=${dateFrom}`;
+        }
+        if (dateTo) {
+            url += `&dateTo=${dateTo}`;
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            // Aktualizacja statystyk
+            updateStatistics(data.content);
+
+            // Renderowanie listy
+            renderAuditLogs(data.content);
+
+            // Renderowanie paginacji
+            renderPagination(data);
+
+            // Aktualizacja stanu
+            currentPage = page;
+
+        } catch (error) {
+            showAlert('Błąd podczas ładowania danych: ' + error.message, 'danger');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // Aktualizacja statystyk
+    function updateStatistics(logs) {
+        const today = new Date().toISOString().split('T')[0];
+
+        const todayCount = logs.filter(log =>
+            log.eventDate && log.eventDate.startsWith(today)).length;
+
+        const salaryUpdates = logs.filter(log =>
+            log.eventType && log.eventType.includes('SALARY_UPDATE')).length;
+
+        const errorCount = logs.filter(log =>
+            log.eventType && log.eventType.includes('FAILURE')).length;
+
+        document.getElementById('todayCount').textContent = todayCount;
+        document.getElementById('salaryUpdates').textContent = salaryUpdates;
+        document.getElementById('errorCount').textContent = errorCount;
+        document.getElementById('totalLogs').textContent = logs.length;
+    }
+
+    // Renderowanie listy logów
+    function renderAuditLogs(logs) {
+        const container = document.getElementById('auditLogsContainer');
+
+        if (!logs || logs.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Brak danych do wyświetlenia</h5>
+                    <p class="text-muted">Wybierz inny zakres dat lub filtrów.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+
+        logs.forEach(log => {
+            // Określenie klasy CSS na podstawie typu zdarzenia
+            let itemClass = 'audit-log-item info';
+            let badgeColor = 'bg-primary';
+
+            if (log.eventType && log.eventType.includes('SALARY_UPDATE')) {
+                itemClass = 'audit-log-item salary-update';
+                badgeColor = 'bg-warning';
+            } else if (log.eventType && log.eventType.includes('FAILURE')) {
+                itemClass = 'audit-log-item security';
+                badgeColor = 'bg-danger';
+            }
+
+            html += `
+                <div class="${itemClass}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="event-badge ${badgeColor} text-white me-2">
+                                    ${log.eventType || 'GENERAL'}
+                                </span>
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>
+                                    ${formatDate(log.eventDate)}
+                                </small>
+                            </div>
+                            <p class="mb-1">${log.message || 'Brak opisu'}</p>
+                            ${log.affectedEntity ?
+                                `<small class="text-muted">
+                                    <i class="fas fa-cube me-1"></i>
+                                    ${log.affectedEntity} ${log.entityId ? `(#${log.entityId})` : ''}
+                                </small>` : ''}
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="copyLogDetails(${log.id})"
+                                title="Kopiuj szczegóły">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // Renderowanie paginacji
+    function renderPagination(data) {
+        const pagination = document.getElementById('pagination');
+
+        if (data.totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+
+        // Przycisk poprzedni
+        html += `
+            <li class="page-item ${data.first ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+        // Numery stron
+        const maxVisible = 5;
+        let startPage = Math.max(0, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(data.totalPages - 1, startPage + maxVisible - 1);
+
+        if (endPage - startPage + 1 < maxVisible) {
+            startPage = Math.max(0, endPage - maxVisible + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">
+                        ${i + 1}
+                    </a>
+                </li>
+            `;
+        }
+
+        // Przycisk następny
+        html += `
+            <li class="page-item ${data.last ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+
+        pagination.innerHTML = html;
+    }
+
+    // Zmiana strony
+    function changePage(page) {
+        fetchAuditLogs(page);
+    }
+
+    // Odświeżanie danych
+    function refreshData() {
+        fetchAuditLogs(currentPage);
+        showAlert('Dane zostały odświeżone', 'success');
+    }
+
+    // Eksport bieżącej strony
+    function exportCurrentPage() {
+        const pageSize = document.getElementById('pageSize').value;
+        const eventType = document.getElementById('eventTypeFilter').value;
+
+        let url = `${API_BASE}/audit-logs/csv?page=${currentPage}&size=${pageSize}&sort=${currentSort}`;
+
+        if (eventType) {
+            url += `&eventType=${eventType}`;
+        }
+
+        const filename = `audit_logs_page_${currentPage + 1}_${new Date().toISOString().slice(0,10)}.csv`;
+        url += `&filename=${filename}`;
+
+        window.location.href = url;
+        showAlert('Rozpoczęto pobieranie raportu CSV', 'info');
+    }
+
+    // Eksport pełnego raportu
+    function exportFullReport() {
+        window.location.href = `${API_BASE}/audit-logs/csv/full`;
+        showAlert('Rozpoczęto generowanie pełnego raportu CSV', 'info');
+    }
+
+    // Eksport z filtrami
+    function exportFilteredReport() {
+        const eventType = document.getElementById('eventTypeFilter').value;
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+
+        let url = `${API_BASE}/audit-logs/csv?size=1000&sort=${currentSort}`;
+
+        if (eventType) {
+            url += `&eventType=${eventType}`;
+        }
+        if (dateFrom) {
+            url += `&dateFrom=${dateFrom}`;
+        }
+        if (dateTo) {
+            url += `&dateTo=${dateTo}`;
+        }
+
+        const filename = `audit_logs_filtered_${new Date().toISOString().slice(0,10)}.csv`;
+        url += `&filename=${filename}`;
+
+        window.location.href = url;
+        showAlert('Rozpoczęto pobieranie filtrowanego raportu', 'info');
+    }
+
+    // Zastosuj zaawansowane filtry
+    function applyAdvancedFilters() {
+        const eventType = document.getElementById('advancedEventType').value;
+        const entity = document.getElementById('advancedEntity').value;
+        const message = document.getElementById('messageContains').value;
+        const dateFrom = document.getElementById('advancedDateFrom').value;
+        const dateTo = document.getElementById('advancedDateTo').value;
+
+        // Tutaj można dodać logikę filtrowania po stronie klienta
+        // lub wysłać zapytanie do API z dodatkowymi parametrami
+
+        showAlert('Filtry zostały zastosowane', 'success');
+        $('#filterModal').modal('hide');
+    }
+
+    // Generowanie pełnego raportu (akcja z sidebaru)
+    function generateFullReport() {
+        if (confirm('Czy na pewno chcesz wygenerować pełny raport CSV? Może to potrwać kilka minut.')) {
+            exportFullReport();
+        }
+    }
+
+    // Kopiowanie szczegółów logu
+    function copyLogDetails(logId) {
+        // Tutaj można dodać logikę kopiowania do schowka
+        navigator.clipboard.writeText(`Audit Log ID: ${logId}`)
+            .then(() => showAlert('ID logu skopiowane do schowka', 'success'))
+            .catch(err => showAlert('Błąd kopiowania: ' + err, 'danger'));
+    }
+
+    // Pokazanie/ukrycie loadera
+    function showLoading(show) {
+        document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+    }
+
+    // Wyświetlanie alertów
+    function showAlert(message, type) {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertId = 'alert-' + Date.now();
+
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = 'alert';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        alertContainer.appendChild(alert);
+
+        // Automatyczne usunięcie po 5 sekundach
+        setTimeout(() => {
+            if (document.getElementById(alertContainer).contains(alert)) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+
+    // Obsługa zmian w filtrach
+    document.getElementById('eventTypeFilter').addEventListener('change', () => {
+        fetchAuditLogs(0);
+    });
+
+    document.getElementById('dateFrom').addEventListener('change', () => {
+        fetchAuditLogs(0);
+    });
+
+    document.getElementById('dateTo').addEventListener('change', () => {
+        fetchAuditLogs(0);
+    });
+
+    document.getElementById('pageSize').addEventListener('change', () => {
+        fetchAuditLogs(0);
+    });
+
+    // Ustaw domyślne daty
+    window.onload = function() {
+        const today = new Date();
+        const weekAgo = new Date();
+        weekAgo.setDate(today.getDate() - 7);
+
+        document.getElementById('dateFrom').value = weekAgo.toISOString().slice(0, 10);
+        document.getElementById('dateTo').value = today.toISOString().slice(0, 10);
+
+        // Załaduj początkowe dane
+        fetchAuditLogs(0);
+    };
+</script>
+</body>
+</html>

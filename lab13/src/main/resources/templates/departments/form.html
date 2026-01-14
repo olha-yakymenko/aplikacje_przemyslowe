@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.w3.org/1999/xhtml"
+      layout:decorate="~{layout}">
+
+<head>
+    <title>Formularz Departamentu</title>
+<!--    <link rel="stylesheet" th:href="@{/css/style.css}">-->
+</head>
+<body>
+<div layout:fragment="content">
+    <section class="content-section">
+        <div class="section-header">
+            <h1 class="section-title" th:text="${pageTitle}">Formularz Departamentu</h1>
+            <a th:href="@{/departments}" class="btn btn-secondary">Powrót do Listy</a>
+        </div>
+
+        <div sec:authorize="hasRole('ADMIN')">
+        <div class="form-container">
+            <form th:action="@{${department.id != null} ? '/departments/edit' : '/departments/add'}"
+                  th:object="${department}" method="post">
+
+                <input type="hidden" th:field="*{id}">
+
+                <!-- Pole nazwy -->
+                <div class="form-group">
+                    <label class="form-label required-field" for="name">Nazwa Departamentu</label>
+                    <input type="text" class="form-control" id="name" th:field="*{name}"
+                           th:class="${#fields != null && #fields.hasErrors('name')} ? 'form-control is-invalid' : 'form-control'"
+                           placeholder="Wprowadź nazwę departamentu" required>
+                    <div th:if="${#fields != null && #fields.hasErrors('name')}" class="invalid-feedback">
+                        <span th:errors="*{name}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole lokalizacji -->
+                <div class="form-group">
+                    <label class="form-label required-field" for="location">Lokalizacja</label>
+                    <input type="text" class="form-control" id="location" th:field="*{location}"
+                           th:class="${#fields != null && #fields.hasErrors('location')} ? 'form-control is-invalid' : 'form-control'"
+                           placeholder="Wprowadź lokalizację" required>
+                    <div th:if="${#fields != null && #fields.hasErrors('location')}" class="invalid-feedback">
+                        <span th:errors="*{location}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole opisu -->
+                <div class="form-group">
+                    <label class="form-label" for="description">Opis</label>
+                    <textarea class="form-control" id="description" th:field="*{description}"
+                              th:class="${#fields != null && #fields.hasErrors('description')} ? 'form-control is-invalid' : 'form-control'"
+                              placeholder="Opis departamentu" rows="3"></textarea>
+                    <div th:if="${#fields != null && #fields.hasErrors('description')}" class="invalid-feedback">
+                        <span th:errors="*{description}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole managera -->
+                <div class="form-group">
+                    <label class="form-label" for="managerEmail">Manager</label>
+                    <select class="form-select" id="managerEmail" th:field="*{managerEmail}"
+                            th:class="${#fields != null && #fields.hasErrors('managerEmail')} ? 'form-select is-invalid' : 'form-select'">
+                        <option value="">Wybierz managera</option>
+                        <option th:each="manager : ${managers}"
+                                th:value="${manager.email}"
+                                th:text="${manager.firstName + ' ' + manager.lastName + ' (' + manager.position + ')'}">
+                        </option>
+                    </select>
+                    <div th:if="${#fields != null && #fields.hasErrors('managerEmail')}" class="invalid-feedback">
+                        <span th:errors="*{managerEmail}"></span>
+                    </div>
+                </div>
+
+                <!-- Pole budżetu -->
+                <div class="form-group">
+                    <label class="form-label required-field" for="budget">Budżet ($)</label>
+                    <input type="number" step="0.01" class="form-control" id="budget"
+                           th:field="*{budget}"
+                           th:class="${#fields != null && #fields.hasErrors('budget')} ? 'form-control is-invalid' : 'form-control'"
+                           placeholder="100000.00" min="0" required>
+                    <div th:if="${#fields != null && #fields.hasErrors('budget')}" class="invalid-feedback">
+                        <span th:errors="*{budget}"></span>
+                    </div>
+                </div>
+
+                <!-- Przyciski -->
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                            <span th:text="${department.id != null} ? 'Zaktualizuj Departament' : 'Dodaj Departament'">
+                                Dodaj Departament
+                            </span>
+                    </button>
+                    <a th:href="@{/departments}" class="btn btn-secondary" style="margin-left: 1rem;">Anuluj</a>
+                </div>
+            </form>
+        </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

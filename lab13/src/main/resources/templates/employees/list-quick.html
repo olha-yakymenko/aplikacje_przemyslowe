@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layout}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista Pracowników - System Zarządzania Pracownikami</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+<div layout:fragment="content">
+
+<!-- Prosta tabela tylko z podstawowymi danymi -->
+<table class="table">
+    <thead>
+    <tr>
+        <th>Imię i nazwisko</th>
+        <th>Stanowisko</th>
+        <th>Firma</th>
+        <th>Departament</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="emp : ${employees}">
+        <td th:text="${emp.name}">Jan Kowalski</td>
+        <td th:text="${emp.position}">Developer</td>
+        <td th:text="${emp.company}">TechCorp</td>
+        <td th:text="${emp.departmentName}">IT</td>
+    </tr>
+    </tbody>
+</table>
+
+<!-- Prosta paginacja -->
+<div class="pagination">
+    <a th:href="@{/employees/list(page=0, size=${pageSize}, sort=${sortField})}">Pierwsza</a>
+    <a th:href="@{/employees/list(page=${currentPage-1}, size=${pageSize}, sort=${sortField})}"
+       th:class="${currentPage == 0} ? 'disabled'">Poprzednia</a>
+
+    <span th:each="i : ${#numbers.sequence(0, totalPages-1)}">
+            <a th:href="@{/employees/list(page=${i}, size=${pageSize}, sort=${sortField})}"
+               th:text="${i+1}"
+               th:class="${currentPage == i} ? 'active'"></a>
+        </span>
+
+    <a th:href="@{/employees/list(page=${currentPage+1}, size=${pageSize}, sort=${sortField})}"
+       th:class="${currentPage >= totalPages-1} ? 'disabled'">Następna</a>
+    <a th:href="@{/employees/list(page=${totalPages-1}, size=${pageSize}, sort=${sortField})}">Ostatnia</a>
+</div>
+
+<p>
+    <a href="/employees/search">Przejdź do zaawansowanego wyszukiwania</a>
+</p>
+</div>
+</body>
+</html>

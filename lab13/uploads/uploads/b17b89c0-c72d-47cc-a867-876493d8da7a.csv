@@ -1,0 +1,6 @@
+firstName,lastName,email,company,position,salary
+John,Doe,john.doe@company.com,TechCorp,MANAGER,15000
+Jane,Smith,jane.smith@company.com,SoftInc,PROGRAMMER,9000
+Bob,Johnson,bob.johnson@company.com,TechCorp,INTERN,2500
+Alice,Brown,alice.brown@company.com,SoftInc,MANAGER,14000
+Charlie,Wilson,charlie.wilson@company.com,DataSys,PROGRAMMER,8500
